@@ -10,13 +10,15 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Calendar, User, Home, DollarSign } from 'lucide-react';
 
+type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
+
 interface Booking {
   id: string;
   check_in: string;
   check_out: string;
   guests: number;
   total_price: number;
-  status: string;
+  status: BookingStatus;
   created_at: string;
   property_id: string;
   guest_id: string;
@@ -65,7 +67,7 @@ const BookingsList = () => {
     }
   };
 
-  const updateBookingStatus = async (bookingId: string, newStatus: string) => {
+  const updateBookingStatus = async (bookingId: string, newStatus: BookingStatus) => {
     try {
       const { error } = await supabase
         .from('bookings')
@@ -82,7 +84,7 @@ const BookingsList = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: BookingStatus) => {
     switch (status) {
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
