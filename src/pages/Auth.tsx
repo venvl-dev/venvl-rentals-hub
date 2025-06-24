@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Home } from 'lucide-react';
 
@@ -16,20 +17,25 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [role, setRole] = useState<'guest' | 'host' | 'admin'>('guest');
   const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    console.log('Attempting to sign in with:', email);
+
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
+      console.error('Sign in error:', error);
       toast.error(error.message);
     } else {
+      console.log('Sign in successful:', data);
       toast.success('Successfully signed in!');
       navigate('/');
     }
@@ -40,9 +46,11 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
     
+    console.log('Attempting to sign up with:', { email, firstName, lastName, role });
+    
     const redirectUrl = `${window.location.origin}/`;
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -50,14 +58,22 @@ const Auth = () => {
         data: {
           first_name: firstName,
           last_name: lastName,
+          role: role,
         }
       }
     });
 
     if (error) {
+      console.error('Sign up error:', error);
       toast.error(error.message);
     } else {
-      toast.success('Check your email for the confirmation link!');
+      console.log('Sign up successful:', data);
+      if (data.user && !data.user.email_confirmed_at) {
+        toast.success('Check your email for the confirmation link!');
+      } else {
+        toast.success('Account created successfully!');
+        navigate('/');
+      }
     }
     setLoading(false);
   };
@@ -89,9 +105,9 @@ const Auth = () => {
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="signin-email">Email</Label>
                     <Input
-                      id="email"
+                      id="signin-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -100,9 +116,9 @@ const Auth = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="signin-password">Password</Label>
                     <Input
-                      id="password"
+                      id="signin-password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -143,9 +159,22 @@ const Auth = () => {
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="role">Account Type</Label>
+                    <Select value={role} onValueChange={(value: 'guest' | 'host' | 'admin') => setRole(value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select account type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="guest">Guest</SelectItem>
+                        <SelectItem value="host">Host</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="signup-email">Email</Label>
                     <Input
-                      id="email"
+                      id="signup-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -154,9 +183,9 @@ const Auth = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="signup-password">Password</Label>
                     <Input
-                      id="password"
+                      id="signup-password"
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -170,6 +199,15 @@ const Auth = () => {
                 </form>
               </TabsContent>
             </Tabs>
+            
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-semibold text-sm mb-2">Test Accounts</h4>
+              <div className="text-xs space-y-1">
+                <p><strong>Admin:</strong> admin@venvl.com / Password123</p>
+                <p><strong>Host:</strong> host@venvl.com / Password123</p>
+                <p><strong>Guest:</strong> guest@venvl.com / Password123</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
