@@ -35,6 +35,9 @@ export type Database = {
       }
       bookings: {
         Row: {
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
           check_in: string
           check_out: string
           created_at: string | null
@@ -47,6 +50,9 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           check_in: string
           check_out: string
           created_at?: string | null
@@ -59,6 +65,9 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
+          cancelled_by?: string | null
           check_in?: string
           check_out?: string
           created_at?: string | null
@@ -378,7 +387,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      can_cancel_booking: {
+        Args: { booking_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
