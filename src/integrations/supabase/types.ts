@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      amenities: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           check_in: string
@@ -141,11 +165,13 @@ export type Database = {
         Row: {
           address: string
           amenities: string[] | null
+          approval_status: string | null
           bathrooms: number | null
           bedrooms: number | null
           city: string
           country: string
           created_at: string | null
+          daily_price: number | null
           description: string | null
           host_id: string
           id: string
@@ -154,9 +180,11 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           max_guests: number
+          monthly_price: number | null
           postal_code: string | null
           price_per_night: number
           property_type: Database["public"]["Enums"]["property_type"]
+          rental_type: string | null
           state: string | null
           title: string
           updated_at: string | null
@@ -164,11 +192,13 @@ export type Database = {
         Insert: {
           address: string
           amenities?: string[] | null
+          approval_status?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
           city: string
           country?: string
           created_at?: string | null
+          daily_price?: number | null
           description?: string | null
           host_id: string
           id?: string
@@ -177,9 +207,11 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           max_guests?: number
+          monthly_price?: number | null
           postal_code?: string | null
           price_per_night: number
           property_type: Database["public"]["Enums"]["property_type"]
+          rental_type?: string | null
           state?: string | null
           title: string
           updated_at?: string | null
@@ -187,11 +219,13 @@ export type Database = {
         Update: {
           address?: string
           amenities?: string[] | null
+          approval_status?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
           city?: string
           country?: string
           created_at?: string | null
+          daily_price?: number | null
           description?: string | null
           host_id?: string
           id?: string
@@ -200,9 +234,11 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           max_guests?: number
+          monthly_price?: number | null
           postal_code?: string | null
           price_per_night?: number
           property_type?: Database["public"]["Enums"]["property_type"]
+          rental_type?: string | null
           state?: string | null
           title?: string
           updated_at?: string | null
@@ -213,6 +249,74 @@ export type Database = {
             columns: ["host_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_amenities: {
+        Row: {
+          amenity_id: string
+          id: string
+          property_id: string
+        }
+        Insert: {
+          amenity_id: string
+          id?: string
+          property_id: string
+        }
+        Update: {
+          amenity_id?: string
+          id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_amenities_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_amenities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_images: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          id: string
+          image_url: string
+          is_primary: boolean | null
+          property_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+          property_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_images_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
