@@ -5,14 +5,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Home, User as UserIcon, LogOut, Plus, BarChart3 } from 'lucide-react';
+import { Home, User as UserIcon, LogOut, Plus, BarChart3, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSelector from './LanguageSelector';
 
 const Header = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -70,16 +73,29 @@ const Header = () => {
         </div>
 
         <div className="flex items-center space-x-4">
+          <LanguageSelector />
+          
           {user ? (
             <>
-              {(userRole === 'host' || userRole === 'admin') && (
+              {(userRole === 'host' || userRole === 'admin' || userRole === 'super_admin') && (
                 <Button
                   variant="outline"
                   onClick={() => navigate('/host')}
                   className="flex items-center space-x-2"
                 >
                   <BarChart3 className="h-4 w-4" />
-                  <span>Host Dashboard</span>
+                  <span>{t('header.hostDashboard')}</span>
+                </Button>
+              )}
+
+              {(userRole === 'admin' || userRole === 'super_admin') && (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/admin')}
+                  className="flex items-center space-x-2"
+                >
+                  <Shield className="h-4 w-4" />
+                  <span>{t('header.adminPanel')}</span>
                 </Button>
               )}
               
@@ -89,7 +105,7 @@ const Header = () => {
                 className="flex items-center space-x-2"
               >
                 <Plus className="h-4 w-4" />
-                <span>Host your property</span>
+                <span>{t('header.hostProperty')}</span>
               </Button>
               
               <DropdownMenu>
@@ -106,23 +122,29 @@ const Header = () => {
                 <DropdownMenuContent className="w-56" align="end">
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
+                    <span>{t('header.profile')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate('/bookings')}>
-                    <span>My Bookings</span>
+                    <span>{t('header.myBookings')}</span>
                   </DropdownMenuItem>
-                  {(userRole === 'host' || userRole === 'admin') && (
+                  {(userRole === 'host' || userRole === 'admin' || userRole === 'super_admin') && (
                     <DropdownMenuItem onClick={() => navigate('/host')}>
                       <BarChart3 className="mr-2 h-4 w-4" />
-                      <span>Host Dashboard</span>
+                      <span>{t('header.hostDashboard')}</span>
+                    </DropdownMenuItem>
+                  )}
+                  {(userRole === 'admin' || userRole === 'super_admin') && (
+                    <DropdownMenuItem onClick={() => navigate('/admin')}>
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>{t('header.adminPanel')}</span>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={() => navigate('/properties')}>
-                    <span>My Properties</span>
+                    <span>{t('header.myProperties')}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sign out</span>
+                    <span>{t('header.signOut')}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -130,10 +152,10 @@ const Header = () => {
           ) : (
             <div className="flex items-center space-x-2">
               <Button variant="ghost" onClick={() => navigate('/auth')}>
-                Sign in
+                {t('header.signIn')}
               </Button>
               <Button onClick={() => navigate('/auth')}>
-                Sign up
+                {t('header.signUp')}
               </Button>
             </div>
           )}
