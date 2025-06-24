@@ -20,7 +20,7 @@ interface Property {
   max_guests: number;
 }
 
-interface SearchFilters {
+interface SearchFiltersType {
   location: string;
   checkIn?: Date;
   checkOut?: Date;
@@ -58,7 +58,7 @@ const Index = () => {
     }
   };
 
-  const handleSearch = (filters: SearchFilters) => {
+  const handleSearch = (filters: SearchFiltersType) => {
     let filtered = [...properties];
 
     // Filter by location

@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { CalendarIcon, MapPin, Users, Home, Bed, Bath, Star, User, Session } from 'lucide-react';
+import { CalendarIcon, MapPin, Users, Home, Bed, Bath, Star } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import Header from '@/components/Header';
 
