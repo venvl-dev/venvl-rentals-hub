@@ -8,38 +8,35 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PropertyListing from "./pages/PropertyListing";
-import HostDashboard from "./pages/HostDashboard";
 import GuestBookings from "./pages/GuestBookings";
+import HostDashboard from "./pages/HostDashboard";
 import AdminPanel from "./pages/AdminPanel";
+import DataSeeding from "./pages/DataSeeding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <LanguageProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
         <BrowserRouter>
-          <TooltipProvider>
-            <div className="min-h-screen">
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/property/:id" element={<PropertyListing />} />
-                <Route path="/host" element={<HostDashboard />} />
-                <Route path="/bookings" element={<GuestBookings />} />
-                <Route path="/admin" element={<AdminPanel />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-            <Toaster />
-            <Sonner />
-          </TooltipProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/property/:id" element={<PropertyListing />} />
+            <Route path="/guest/bookings" element={<GuestBookings />} />
+            <Route path="/host/dashboard" element={<HostDashboard />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/seed-data" element={<DataSeeding />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
         </BrowserRouter>
-      </LanguageProvider>
-    </QueryClientProvider>
-  );
-};
+      </TooltipProvider>
+    </LanguageProvider>
+  </QueryClientProvider>
+);
 
 export default App;

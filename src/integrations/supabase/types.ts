@@ -391,6 +391,22 @@ export type Database = {
         Args: { booking_id: string }
         Returns: boolean
       }
+      create_test_scenario: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      seed_sample_bookings_and_reviews: {
+        Args: { guest_user_id: string }
+        Returns: undefined
+      }
+      seed_sample_notifications: {
+        Args: { user_id: string; user_role?: string }
+        Returns: undefined
+      }
+      seed_sample_properties_for_host: {
+        Args: { host_user_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
