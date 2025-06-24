@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ArrowLeft, Upload, X } from 'lucide-react';
+import { PropertyType } from '@/types/property';
 
 interface Property {
   id?: string;
@@ -19,7 +19,7 @@ interface Property {
   city: string;
   state: string;
   country: string;
-  property_type: string;
+  property_type: PropertyType;
   rental_type: string;
   bedrooms: number;
   bathrooms: number;
@@ -52,7 +52,7 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
     city: '',
     state: '',
     country: 'US',
-    property_type: 'apartment',
+    property_type: 'apartment' as PropertyType,
     rental_type: 'daily',
     bedrooms: 1,
     bathrooms: 1,
@@ -185,7 +185,7 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
         // Create new property
         result = await supabase
           .from('properties')
-          .insert([propertyData]);
+          .insert(propertyData);
       }
 
       if (result.error) throw result.error;
@@ -200,12 +200,12 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
   };
 
   const propertyTypes = [
-    { value: 'apartment', label: 'Apartment' },
-    { value: 'house', label: 'House' },
-    { value: 'villa', label: 'Villa' },
-    { value: 'studio', label: 'Studio' },
-    { value: 'cabin', label: 'Cabin' },
-    { value: 'loft', label: 'Loft' }
+    { value: 'apartment' as PropertyType, label: 'Apartment' },
+    { value: 'house' as PropertyType, label: 'House' },
+    { value: 'villa' as PropertyType, label: 'Villa' },
+    { value: 'studio' as PropertyType, label: 'Studio' },
+    { value: 'cabin' as PropertyType, label: 'Cabin' },
+    { value: 'loft' as PropertyType, label: 'Loft' }
   ];
 
   const rentalTypes = [

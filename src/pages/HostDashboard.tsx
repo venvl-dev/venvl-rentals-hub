@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,26 +12,7 @@ import { Home, Plus, Calendar, BarChart3, Settings, Eye, Edit, Trash2 } from 'lu
 import PropertyForm from '@/components/host/PropertyForm';
 import BookingsList from '@/components/host/BookingsList';
 import HostStats from '@/components/host/HostStats';
-
-interface Property {
-  id: string;
-  title: string;
-  description: string;
-  city: string;
-  state: string;
-  price_per_night: number;
-  daily_price: number;
-  monthly_price: number;
-  rental_type: string;
-  property_type: string;
-  bedrooms: number;
-  bathrooms: number;
-  max_guests: number;
-  approval_status: string;
-  is_active: boolean;
-  images: string[];
-  created_at: string;
-}
+import { Property } from '@/types/property';
 
 const HostDashboard = () => {
   const [user, setUser] = useState<User | null>(null);
