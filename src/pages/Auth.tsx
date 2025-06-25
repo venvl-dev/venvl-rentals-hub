@@ -17,7 +17,7 @@ const Auth = () => {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [role, setRole] = useState<'guest' | 'host' | 'admin'>('guest');
+  const [role, setRole] = useState<'guest' | 'host' | 'admin' | 'super_admin'>('guest');
   const navigate = useNavigate();
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -34,7 +34,7 @@ const Auth = () => {
 
       if (error) {
         console.error('Sign in error:', error);
-        toast.error(error.message);
+        toast.error(`Sign in failed: ${error.message}`);
       } else {
         console.log('Sign in successful:', data);
         toast.success('Successfully signed in!');
@@ -50,6 +50,12 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!firstName.trim() || !lastName.trim()) {
+      toast.error('First name and last name are required');
+      return;
+    }
+    
     setLoading(true);
     
     console.log('Attempting to sign up with:', { email, firstName, lastName, role });
@@ -63,8 +69,8 @@ const Auth = () => {
         options: {
           emailRedirectTo: redirectUrl,
           data: {
-            first_name: firstName,
-            last_name: lastName,
+            first_name: firstName.trim(),
+            last_name: lastName.trim(),
             role: role,
           }
         }
@@ -72,11 +78,21 @@ const Auth = () => {
 
       if (error) {
         console.error('Sign up error:', error);
-        toast.error(error.message);
+        
+        // Provide more specific error messages
+        if (error.message.includes('already registered')) {
+          toast.error('This email is already registered. Please try signing in instead.');
+        } else if (error.message.includes('weak password')) {
+          toast.error('Password is too weak. Please use at least 6 characters.');
+        } else if (error.message.includes('invalid email')) {
+          toast.error('Please enter a valid email address.');
+        } else {
+          toast.error(`Sign up failed: ${error.message}`);
+        }
       } else {
         console.log('Sign up successful:', data);
         if (data.user && !data.user.email_confirmed_at) {
-          toast.success('Check your email for the confirmation link!');
+          toast.success('Registration successful! Check your email for the confirmation link.');
         } else {
           toast.success('Account created successfully!');
           navigate('/');
@@ -148,7 +164,7 @@ const Auth = () => {
                 <form onSubmit={handleSignUp} className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="firstName">First Name</Label>
+                      <Label htmlFor="firstName">First Name *</Label>
                       <Input
                         id="firstName"
                         type="text"
@@ -159,7 +175,7 @@ const Auth = () => {
                       />
                     </div>
                     <div>
-                      <Label htmlFor="lastName">Last Name</Label>
+                      <Label htmlFor="lastName">Last Name *</Label>
                       <Input
                         id="lastName"
                         type="text"
@@ -172,14 +188,15 @@ const Auth = () => {
                   </div>
                   <div>
                     <Label htmlFor="role">Account Type</Label>
-                    <Select value={role} onValueChange={(value: 'guest' | 'host' | 'admin') => setRole(value)}>
+                    <Select value={role} onValueChange={(value: 'guest' | 'host' | 'admin' | 'super_admin') => setRole(value)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select account type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="guest">Guest</SelectItem>
-                        <SelectItem value="host">Host</SelectItem>
+                        <SelectItem value="guest">Guest (Book Properties)</SelectItem>
+                        <SelectItem value="host">Host (List Properties)</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -201,8 +218,9 @@ const Auth = () => {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Create a password"
+                      placeholder="Create a password (min 6 characters)"
                       required
+                      minLength={6}
                     />
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
