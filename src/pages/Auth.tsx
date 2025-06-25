@@ -26,20 +26,26 @@ const Auth = () => {
 
     console.log('Attempting to sign in with:', email);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      console.error('Sign in error:', error);
-      toast.error(error.message);
-    } else {
-      console.log('Sign in successful:', data);
-      toast.success('Successfully signed in!');
-      navigate('/');
+      if (error) {
+        console.error('Sign in error:', error);
+        toast.error(error.message);
+      } else {
+        console.log('Sign in successful:', data);
+        toast.success('Successfully signed in!');
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Unexpected sign in error:', error);
+      toast.error('An unexpected error occurred during sign in');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -48,34 +54,40 @@ const Auth = () => {
     
     console.log('Attempting to sign up with:', { email, firstName, lastName, role });
     
-    const redirectUrl = `${window.location.origin}/`;
+    try {
+      const redirectUrl = `${window.location.origin}/`;
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-          role: role,
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            role: role,
+          }
+        }
+      });
+
+      if (error) {
+        console.error('Sign up error:', error);
+        toast.error(error.message);
+      } else {
+        console.log('Sign up successful:', data);
+        if (data.user && !data.user.email_confirmed_at) {
+          toast.success('Check your email for the confirmation link!');
+        } else {
+          toast.success('Account created successfully!');
+          navigate('/');
         }
       }
-    });
-
-    if (error) {
-      console.error('Sign up error:', error);
-      toast.error(error.message);
-    } else {
-      console.log('Sign up successful:', data);
-      if (data.user && !data.user.email_confirmed_at) {
-        toast.success('Check your email for the confirmation link!');
-      } else {
-        toast.success('Account created successfully!');
-        navigate('/');
-      }
+    } catch (error) {
+      console.error('Unexpected sign up error:', error);
+      toast.error('An unexpected error occurred during sign up');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
