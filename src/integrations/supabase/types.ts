@@ -81,13 +81,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "bookings_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "bookings_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
@@ -124,49 +117,32 @@ export type Database = {
           type?: string | null
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string | null
+          created_at: string
           first_name: string | null
           id: string
           last_name: string | null
-          phone: string | null
-          role: Database["public"]["Enums"]["user_role"] | null
-          updated_at: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
         }
         Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
+          created_at?: string
           first_name?: string | null
           id: string
           last_name?: string | null
-          phone?: string | null
-          role?: Database["public"]["Enums"]["user_role"] | null
-          updated_at?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
         }
         Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
+          created_at?: string
           first_name?: string | null
           id?: string
           last_name?: string | null
-          phone?: string | null
-          role?: Database["public"]["Enums"]["user_role"] | null
-          updated_at?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
         }
         Relationships: []
       }
@@ -252,15 +228,7 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "properties_host_id_fkey"
-            columns: ["host_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       property_amenities: {
         Row: {
@@ -364,13 +332,6 @@ export type Database = {
             columns: ["booking_id"]
             isOneToOne: false
             referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "reviews_guest_id_fkey"
-            columns: ["guest_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
