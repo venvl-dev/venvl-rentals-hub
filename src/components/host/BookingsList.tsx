@@ -9,19 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Calendar, User, Home, DollarSign } from 'lucide-react';
+import { Booking, BookingStatus } from '@/types/booking';
 
-type BookingStatus = 'pending' | 'confirmed' | 'cancelled' | 'completed';
-
-interface Booking {
-  id: string;
-  check_in: string;
-  check_out: string;
-  guests: number;
-  total_price: number;
-  status: BookingStatus;
-  created_at: string;
-  property_id: string;
-  guest_id: string;
+interface BookingWithJoinedData extends Booking {
   properties: {
     title: string;
     city: string;
@@ -34,7 +24,7 @@ interface Booking {
 }
 
 const BookingsList = () => {
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<BookingWithJoinedData[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
@@ -170,7 +160,7 @@ const BookingsList = () => {
                             {booking.profiles?.first_name} {booking.profiles?.last_name}
                           </div>
                           <div className="text-sm text-gray-600">
-                            Booked {format(new Date(booking.created_at), 'MMM dd, yyyy')}
+                            Booked {format(new Date(booking.created_at!), 'MMM dd, yyyy')}
                           </div>
                         </div>
                       </div>
