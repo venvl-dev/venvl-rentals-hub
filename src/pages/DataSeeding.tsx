@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Database, Users, Home, Calendar, MessageSquare, Bell } from 'lucide-react';
+import { Loader2, Database, Users, Home, Calendar, MessageSquare, Bell, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 
 const DataSeeding = () => {
   const [loading, setLoading] = useState(false);
@@ -123,6 +124,49 @@ const DataSeeding = () => {
         </div>
 
         <div className="grid gap-6">
+          {/* Step 1: Create Test Users */}
+          <Card className="border-blue-200 bg-blue-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-800">
+                <UserPlus className="h-5 w-5" />
+                Step 1: Create Test Users First
+              </CardTitle>
+              <CardDescription className="text-blue-700">
+                Before seeding data, you need to create test users with different roles through the authentication system.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-white p-4 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-blue-800 mb-3">Required Test Users:</h4>
+                <ul className="space-y-2 text-sm text-blue-700">
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <strong>Host User:</strong> Create a user and select "Host" as the account type
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <strong>Guest User:</strong> Create a user and select "Guest" as the account type
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <strong>Admin User:</strong> Create a user and select "Admin" as the account type
+                  </li>
+                </ul>
+              </div>
+              
+              <Link to="/auth">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700" size="lg">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Go to Authentication Page
+                </Button>
+              </Link>
+              
+              <p className="text-xs text-blue-600 text-center">
+                Create each user account separately, then return here to seed data
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Complete Test Scenario */}
           <Card>
             <CardHeader>
@@ -255,21 +299,23 @@ const DataSeeding = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Getting Started
+                Getting Started Guide
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="prose prose-sm max-w-none">
                 <h4>How to use this seeding dashboard:</h4>
                 <ol className="list-decimal list-inside space-y-2">
-                  <li>First, create test users through the authentication system:
+                  <li><strong>Create test users first:</strong>
                     <ul className="list-disc list-inside ml-6 mt-1 space-y-1">
-                      <li>Create at least one user with the "host" role</li>
-                      <li>Create at least one user with the "guest" role</li>
-                      <li>Optionally create an "admin" user</li>
+                      <li>Click "Go to Authentication Page" above</li>
+                      <li>Create a user with the "Host" role</li>
+                      <li>Create a user with the "Guest" role</li>
+                      <li>Optionally create a user with the "Admin" role</li>
+                      <li>You can use the provided test credentials or create your own</li>
                     </ul>
                   </li>
-                  <li>Run the "Complete Test Scenario" to populate all data at once</li>
+                  <li>Return to this page and run the "Complete Test Scenario" to populate all data at once</li>
                   <li>Or use individual seeding options to add specific types of data</li>
                   <li>Navigate through the app to see your seeded data in action</li>
                 </ol>
