@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,10 +41,9 @@ const BookingsList = () => {
         .select(`
           *,
           properties!inner(title, city, state, host_id),
-          profiles!inner(first_name, last_name)
+          profiles!bookings_guest_id_fkey(first_name, last_name)
         `)
         .eq('properties.host_id', user.data.user.id)
-        .eq('profiles.id', 'bookings.guest_id')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
