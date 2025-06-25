@@ -42,13 +42,13 @@ const BookingsList = () => {
         .select(`
           *,
           properties!inner(title, city, state, host_id),
-          profiles!bookings_guest_id_fkey(first_name, last_name)
+          profiles!guest_id(first_name, last_name)
         `)
         .eq('properties.host_id', user.data.user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      setBookings((data as BookingWithJoinedData[]) || []);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast.error('Failed to load bookings');
