@@ -41,7 +41,7 @@ const BookingsList = () => {
         .select(`
           *,
           properties!inner(title, city, state, host_id),
-          profiles!guest_id(first_name, last_name)
+          profiles(first_name, last_name)
         `)
         .eq('properties.host_id', user.data.user.id)
         .order('created_at', { ascending: false });
