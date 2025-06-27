@@ -61,51 +61,105 @@ const CreateTestUsers = () => {
 
       if (error) {
         if (error.message.includes('already registered')) {
-          console.log(`User ${userInfo.email} already exists, skipping...`);
-          return { success: true, message: 'User already exists' };
+          console.log(`User ${userInfo.email} already exists, checking profile consistency...`);
+          
+          // Check if user exists and has correct profile
+          const { data: existingUser } = await supabase.auth.signInWithPassword({
+            email: userInfo.email,
+            password: userInfo.password
+          });
+          
+          if (existingUser.user) {
+            // Check profile consistency
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', existingUser.user.id)
+              .single();
+              
+            if (profileError) {
+              console.error('Profile check error:', profileError);
+              // Try to create missing profile
+              const { error: createProfileError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: existingUser.user.id,
+                  first_name: userInfo.firstName,
+                  last_name: userInfo.lastName,
+                  role: userInfo.role,
+                });
+                
+              if (createProfileError) {
+                console.error('Failed to create missing profile:', createProfileError);
+                throw new Error(`Profile creation failed: ${createProfileError.message}`);
+              }
+            } else if (profile.role !== userInfo.role) {
+              // Update role if incorrect
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ role: userInfo.role })
+                .eq('id', existingUser.user.id);
+                
+              if (updateError) {
+                console.error('Role update error:', updateError);
+              }
+            }
+            
+            // Sign out the user we just signed in for checking
+            await supabase.auth.signOut();
+          }
+          
+          return { success: true, message: 'User already exists and profile verified' };
         }
         throw error;
       }
 
-      // If user is created successfully, ensure profile is created with correct role
+      // For new users, wait for the trigger to complete and verify profile creation
       if (data.user && data.user.id) {
-        // Wait a moment for the trigger to complete
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('New user created, waiting for profile creation...');
         
-        // Check if profile was created by trigger
-        const { data: existingProfile, error: profileCheckError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        if (profileCheckError && profileCheckError.code === 'PGRST116') {
-          // Profile doesn't exist, create it manually
-          console.log('Creating profile manually for user:', data.user.id);
-          const { error: profileError } = await supabase
+        // Wait a bit for the trigger to complete
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Verify profile was created correctly
+        let retries = 0;
+        const maxRetries = 5;
+        
+        while (retries < maxRetries) {
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .insert({
-              id: data.user.id,
-              first_name: userInfo.firstName,
-              last_name: userInfo.lastName,
-              role: userInfo.role,
-            });
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
 
-          if (profileError) {
-            console.error('Error creating profile:', profileError);
-            throw new Error('Profile creation failed');
+          if (!profileError && profile) {
+            console.log('Profile found:', profile);
+            if (profile.role === userInfo.role) {
+              console.log('Profile role is correct');
+              break;
+            } else {
+              console.log('Profile role incorrect, updating...');
+              const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ role: userInfo.role })
+                .eq('id', data.user.id);
+                
+              if (updateError) {
+                console.error('Role update failed:', updateError);
+              }
+              break;
+            }
+          } else {
+            console.log(`Profile not found, retry ${retries + 1}/${maxRetries}`, profileError);
+            retries++;
+            if (retries < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
           }
-        } else if (existingProfile && existingProfile.role !== userInfo.role) {
-          // Profile exists but role is wrong, update it
-          console.log('Updating profile role for user:', data.user.id);
-          const { error: updateError } = await supabase
-            .from('profiles')
-            .update({ role: userInfo.role })
-            .eq('id', data.user.id);
-
-          if (updateError) {
-            console.error('Error updating profile role:', updateError);
-          }
+        }
+        
+        if (retries >= maxRetries) {
+          console.warn('Profile verification failed after max retries, but user was created');
         }
       }
 
@@ -122,6 +176,7 @@ const CreateTestUsers = () => {
 
     for (const userInfo of testUsers) {
       try {
+        console.log(`\n--- Creating ${userInfo.role} user ---`);
         const result = await createUser(userInfo);
         if (result.success) {
           results.push(userInfo.email);
@@ -130,6 +185,7 @@ const CreateTestUsers = () => {
           toast.error(`Failed to create ${userInfo.role} user: ${result.message}`);
         }
       } catch (error) {
+        console.error(`Error creating ${userInfo.role} user:`, error);
         toast.error(`Error creating ${userInfo.role} user: ${error.message}`);
       }
     }
@@ -138,7 +194,7 @@ const CreateTestUsers = () => {
     setLoading(false);
 
     if (results.length > 0) {
-      toast.success(`Successfully created ${results.length} test users!`);
+      toast.success(`Successfully processed ${results.length} test users!`);
     }
   };
 
