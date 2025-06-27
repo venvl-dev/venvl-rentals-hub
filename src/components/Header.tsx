@@ -1,168 +1,260 @@
 
 import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Home, User as UserIcon, LogOut, Plus, BarChart3, Shield } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
-import LanguageSelector from './LanguageSelector';
+import { Input } from '@/components/ui/input';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
+import { 
+  Menu, 
+  Search, 
+  User as UserIcon, 
+  Settings, 
+  LogOut, 
+  Building2, 
+  Calendar,
+  Shield,
+  Bell
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-const Header = () => {
+export const Header = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
-  const { t } = useLanguage();
 
   useEffect(() => {
+    // Get initial session
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Fetch user role from profiles
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+        
+        setUserRole(profile?.role || null);
+      }
+    };
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
         if (session?.user) {
-          fetchUserRole(session.user.id);
+          // Fetch user role from profiles
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', session.user.id)
+            .single();
+          
+          setUserRole(profile?.role || null);
         } else {
           setUserRole(null);
         }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserRole(session.user.id);
-      }
-    });
+    getSession();
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-      setUserRole(data?.role || null);
-    } catch (error) {
-      console.error('Error fetching user role:', error);
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error('Error signing out');
+    } else {
+      toast.success('Signed out successfully');
+      navigate('/');
     }
   };
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate('/');
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const getUserDisplayName = () => {
+    if (user?.user_metadata?.first_name) {
+      return `${user.user_metadata.first_name} ${user.user_metadata.last_name || ''}`.trim();
+    }
+    return user?.email?.split('@')[0] || 'User';
+  };
+
+  const getRoleIcon = () => {
+    switch (userRole) {
+      case 'admin':
+      case 'super_admin':
+        return <Shield className="h-4 w-4" />;
+      case 'host':
+        return <Building2 className="h-4 w-4" />;
+      default:
+        return <UserIcon className="h-4 w-4" />;
+    }
+  };
+
+  const getRoleColor = () => {
+    switch (userRole) {
+      case 'admin':
+      case 'super_admin':
+        return 'text-red-600';
+      case 'host':
+        return 'text-blue-600';
+      default:
+        return 'text-gray-600';
+    }
   };
 
   return (
-    <header className="border-b bg-white sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-        <div 
-          className="flex items-center space-x-2 cursor-pointer"
-          onClick={() => navigate('/')}
-        >
-          <Home className="h-8 w-8 text-black" />
-          <span className="text-2xl font-bold text-black">VENVL</span>
-        </div>
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link to="/" className="flex items-center space-x-3 group">
+            <img 
+              src="/lovable-uploads/3996e48e-8de1-4401-a0d2-f3a7fecf5cbb.png" 
+              alt="VENVL Logo" 
+              className="h-8 w-8 group-hover:scale-105 transition-transform duration-200"
+            />
+            <span className="text-2xl font-bold text-gray-900 group-hover:text-gray-700 transition-colors">
+              VENVL
+            </span>
+          </Link>
 
-        <div className="flex items-center space-x-4">
-          <LanguageSelector />
-          
-          {user ? (
-            <>
-              {(userRole === 'host' || userRole === 'admin' || userRole === 'super_admin') && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/host')}
-                  className="flex items-center space-x-2"
-                >
-                  <BarChart3 className="h-4 w-4" />
-                  <span>{t('header.hostDashboard')}</span>
-                </Button>
-              )}
+          {/* Search Bar - Hidden on small screens */}
+          <div className="hidden md:flex flex-1 max-w-md mx-8">
+            <form onSubmit={handleSearch} className="w-full">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  type="text"
+                  placeholder="Search properties, cities..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full rounded-full border-gray-300 focus:border-black focus:ring-black bg-gray-50 hover:bg-white transition-colors"
+                />
+              </div>
+            </form>
+          </div>
 
-              {(userRole === 'admin' || userRole === 'super_admin') && (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/admin')}
-                  className="flex items-center space-x-2"
-                >
-                  <Shield className="h-4 w-4" />
-                  <span>{t('header.adminPanel')}</span>
-                </Button>
-              )}
-              
-              <Button
-                variant="outline"
-                onClick={() => navigate('/host')}
-                className="flex items-center space-x-2"
-              >
-                <Plus className="h-4 w-4" />
-                <span>{t('header.hostProperty')}</span>
-              </Button>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.user_metadata?.avatar_url} />
-                      <AvatarFallback>
-                        {user.email?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
+          {/* User Menu */}
+          <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                {/* Host Dashboard Link */}
+                {userRole === 'host' && (
+                  <Link to="/host/dashboard">
+                    <Button variant="ghost" size="sm" className="hidden sm:flex items-center space-x-2">
+                      <Building2 className="h-4 w-4" />
+                      <span>Host Dashboard</span>
+                    </Button>
+                  </Link>
+                )}
+
+                {/* Admin Panel Link */}
+                {(userRole === 'admin' || userRole === 'super_admin') && (
+                  <Link to="/admin">
+                    <Button variant="ghost" size="sm" className="hidden sm:flex items-center space-x-2">
+                      <Shield className="h-4 w-4" />
+                      <span>Admin Panel</span>
+                    </Button>
+                  </Link>
+                )}
+
+                {/* User Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="flex items-center space-x-2 px-3 py-2 rounded-full hover:bg-gray-100">
+                      <Menu className="h-4 w-4" />
+                      <div className="h-8 w-8 bg-black rounded-full flex items-center justify-center text-white text-sm font-medium">
+                        {getUserDisplayName().charAt(0).toUpperCase()}
+                      </div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <div className="px-2 py-1.5">
+                      <p className="text-sm font-medium text-gray-900">{getUserDisplayName()}</p>
+                      <div className="flex items-center space-x-1 mt-1">
+                        {getRoleIcon()}
+                        <p className={`text-xs capitalize ${getRoleColor()}`}>
+                          {userRole?.replace('_', ' ') || 'guest'}
+                        </p>
+                      </div>
+                    </div>
+                    <DropdownMenuSeparator />
+                    
+                    {userRole === 'guest' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/guest/bookings" className="flex items-center space-x-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>My Bookings</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {userRole === 'host' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/host/dashboard" className="flex items-center space-x-2">
+                          <Building2 className="h-4 w-4" />
+                          <span>Host Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    
+                    {(userRole === 'admin' || userRole === 'super_admin') && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin" className="flex items-center space-x-2">
+                          <Shield className="h-4 w-4" />
+                          <span>Admin Panel</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="text-red-600 focus:text-red-600">
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <Link to="/auth">
+                  <Button variant="ghost" className="font-medium">
+                    Sign In
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end">
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>{t('header.profile')}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/bookings')}>
-                    <span>{t('header.myBookings')}</span>
-                  </DropdownMenuItem>
-                  {(userRole === 'host' || userRole === 'admin' || userRole === 'super_admin') && (
-                    <DropdownMenuItem onClick={() => navigate('/host')}>
-                      <BarChart3 className="mr-2 h-4 w-4" />
-                      <span>{t('header.hostDashboard')}</span>
-                    </DropdownMenuItem>
-                  )}
-                  {(userRole === 'admin' || userRole === 'super_admin') && (
-                    <DropdownMenuItem onClick={() => navigate('/admin')}>
-                      <Shield className="mr-2 h-4 w-4" />
-                      <span>{t('header.adminPanel')}</span>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => navigate('/properties')}>
-                    <span>{t('header.myProperties')}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>{t('header.signOut')}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" onClick={() => navigate('/auth')}>
-                {t('header.signIn')}
-              </Button>
-              <Button onClick={() => navigate('/auth')}>
-                {t('header.signUp')}
-              </Button>
-            </div>
-          )}
+                </Link>
+                <Link to="/auth">
+                  <Button className="bg-black hover:bg-gray-800 text-white font-medium px-6">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
   );
 };
-
-export default Header;
