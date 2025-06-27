@@ -36,18 +36,52 @@ const BookingsList = () => {
       const user = await supabase.auth.getUser();
       if (!user.data.user) return;
 
-      const { data, error } = await supabase
+      // First get bookings with properties
+      const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select(`
           *,
-          properties!inner(title, city, state, host_id),
-          profiles!guest_id(first_name, last_name)
+          properties!inner(title, city, state, host_id)
         `)
         .eq('properties.host_id', user.data.user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setBookings((data as BookingWithJoinedData[]) || []);
+      if (bookingsError) throw bookingsError;
+
+      if (!bookingsData || bookingsData.length === 0) {
+        setBookings([]);
+        return;
+      }
+
+      // Get all unique guest IDs
+      const guestIds = [...new Set(bookingsData.map(booking => booking.guest_id))];
+
+      // Fetch profiles for all guests
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name')
+        .in('id', guestIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Continue without profiles data
+      }
+
+      // Map profiles by ID for easy lookup
+      const profilesMap = new Map();
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profilesMap.set(profile.id, profile);
+        });
+      }
+
+      // Combine bookings with profiles
+      const bookingsWithProfiles = bookingsData.map(booking => ({
+        ...booking,
+        profiles: profilesMap.get(booking.guest_id) || null
+      }));
+
+      setBookings(bookingsWithProfiles as BookingWithJoinedData[]);
     } catch (error) {
       console.error('Error fetching bookings:', error);
       toast.error('Failed to load bookings');
