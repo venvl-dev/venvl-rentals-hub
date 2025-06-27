@@ -7,8 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Users, Database, Trash2, Play, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
-type TableName = 'reviews' | 'bookings' | 'properties' | 'notifications' | 'profiles';
-
 const SystemSetup = () => {
   const [isInitializing, setIsInitializing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -20,11 +18,11 @@ const SystemSetup = () => {
       console.log('Starting data cleanup...');
       
       // Delete all existing data in correct order
-      const tables: TableName[] = ['reviews', 'bookings', 'properties', 'notifications', 'profiles'];
+      const tables = ['reviews', 'bookings', 'properties', 'notifications', 'profiles'];
       
       for (const table of tables) {
         console.log(`Clearing ${table}...`);
-        const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        const { error } = await supabase.from(table as any).delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (error && !error.message.includes('No rows')) {
           console.error(`Error clearing ${table}:`, error);
         }
