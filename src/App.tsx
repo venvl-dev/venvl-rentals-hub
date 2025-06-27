@@ -7,7 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import SuperAdminAuth from "./pages/SuperAdminAuth";
+import GuestSignup from "./pages/GuestSignup";
+import HostSignup from "./pages/HostSignup";
+import AdminLogin from "./pages/AdminLogin";
 import PropertyListing from "./pages/PropertyListing";
 import GuestBookings from "./pages/GuestBookings";
 import HostDashboard from "./pages/HostDashboard";
@@ -27,7 +29,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/super-admin" element={<SuperAdminAuth />} />
+            <Route path="/signup/guest" element={<GuestSignup />} />
+            <Route path="/signup/host" element={<HostSignup />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/property/:id" element={<PropertyListing />} />
             <Route path="/guest/bookings" element={<GuestBookings />} />
             <Route path="/host/dashboard" element={<HostDashboard />} />

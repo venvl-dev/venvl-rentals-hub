@@ -6,17 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2, Crown } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2 } from 'lucide-react';
 
 interface AuthCardProps {
   mode: 'signin' | 'signup';
   onToggleMode: () => void;
+  role?: 'guest' | 'host' | 'admin';
 }
 
-const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
+const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -24,7 +24,7 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
     password: '',
     firstName: '',
     lastName: '',
-    role: 'guest' as 'guest' | 'host' | 'admin' | 'super_admin'
+    role: role || 'guest' as 'guest' | 'host' | 'admin'
   });
   const navigate = useNavigate();
 
@@ -32,13 +32,12 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const redirectByRole = (role: string) => {
-    switch (role) {
+  const redirectByRole = (userRole: string) => {
+    switch (userRole) {
       case 'host':
         navigate('/host/dashboard');
         break;
       case 'admin':
-      case 'super_admin':
         navigate('/admin');
         break;
       default:
@@ -136,12 +135,11 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
     }
   };
 
-  const fillTestAccount = (type: 'guest' | 'host' | 'admin' | 'super_admin') => {
+  const fillTestAccount = (type: 'guest' | 'host' | 'admin') => {
     const accounts = {
       guest: { email: 'guest@venvl.com', password: 'Password123' },
       host: { email: 'host@venvl.com', password: 'Password123' },
-      admin: { email: 'admin@venvl.com', password: 'Password123' },
-      super_admin: { email: 'superadmin@venvl.com', password: 'SuperSecure123' }
+      admin: { email: 'admin@venvl.com', password: 'Password123' }
     };
     
     setFormData(prev => ({
@@ -150,6 +148,34 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
       password: accounts[type].password
     }));
   };
+
+  const getRoleConfig = () => {
+    switch (formData.role) {
+      case 'host':
+        return {
+          title: 'Join as a Host',
+          description: 'List your properties and start earning',
+          icon: <Building2 className="h-6 w-6" />,
+          color: 'bg-green-600 hover:bg-green-700'
+        };
+      case 'admin':
+        return {
+          title: 'Admin Access',
+          description: 'Administrative portal access',
+          icon: <Shield className="h-6 w-6" />,
+          color: 'bg-red-600 hover:bg-red-700'
+        };
+      default:
+        return {
+          title: 'Join VENVL',
+          description: 'Discover amazing properties',
+          icon: <User className="h-6 w-6" />,
+          color: 'bg-black hover:bg-gray-800'
+        };
+    }
+  };
+
+  const roleConfig = getRoleConfig();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -163,10 +189,10 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
           />
         </div>
         <h2 className="text-center text-3xl font-bold text-gray-900">
-          {mode === 'signin' ? 'Welcome back' : 'Join VENVL'}
+          {mode === 'signin' ? 'Welcome back' : roleConfig.title}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          {mode === 'signin' ? 'Sign in to your account' : 'Create your account today'}
+          {mode === 'signin' ? 'Sign in to your account' : roleConfig.description}
         </p>
       </div>
 
@@ -174,79 +200,72 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <Card className="bg-white py-8 px-4 shadow-lg sm:rounded-lg sm:px-10 border-0">
           <form onSubmit={mode === 'signin' ? handleSignIn : handleSignUp} className="space-y-6">
-            {mode === 'signup' && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
-                      First Name
+            {mode === 'signup' && !role && (
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                  I want to join as a:
+                </Label>
+                <RadioGroup
+                  value={formData.role}
+                  onValueChange={(value) => handleInputChange('role', value)}
+                  className="grid grid-cols-1 gap-3"
+                >
+                  <div className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-gray-50">
+                    <RadioGroupItem value="guest" id="guest" />
+                    <Label htmlFor="guest" className="flex items-center space-x-2 cursor-pointer flex-1">
+                      <User className="h-4 w-4" />
+                      <span>Guest - Book amazing properties</span>
                     </Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      value={formData.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      placeholder="John"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
-                      required
-                    />
                   </div>
-                  <div>
-                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                      Last Name
+                  <div className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-gray-50">
+                    <RadioGroupItem value="host" id="host" />
+                    <Label htmlFor="host" className="flex items-center space-x-2 cursor-pointer flex-1">
+                      <Building2 className="h-4 w-4" />
+                      <span>Host - List your property</span>
                     </Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      value={formData.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      placeholder="Doe"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
-                      required
-                    />
                   </div>
-                </div>
+                  <div className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-gray-50">
+                    <RadioGroupItem value="admin" id="admin" />
+                    <Label htmlFor="admin" className="flex items-center space-x-2 cursor-pointer flex-1">
+                      <Shield className="h-4 w-4" />
+                      <span>Admin - Manage platform</span>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+            )}
 
+            {mode === 'signup' && (
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                    I want to join as a:
+                  <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                    First Name
                   </Label>
-                  <RadioGroup
-                    value={formData.role}
-                    onValueChange={(value) => handleInputChange('role', value)}
-                    className="grid grid-cols-1 gap-3"
-                  >
-                    <div className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-gray-50">
-                      <RadioGroupItem value="guest" id="guest" />
-                      <Label htmlFor="guest" className="flex items-center space-x-2 cursor-pointer flex-1">
-                        <User className="h-4 w-4" />
-                        <span>Guest - Book amazing properties</span>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-gray-50">
-                      <RadioGroupItem value="host" id="host" />
-                      <Label htmlFor="host" className="flex items-center space-x-2 cursor-pointer flex-1">
-                        <Building2 className="h-4 w-4" />
-                        <span>Host - List your property</span>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-gray-50">
-                      <RadioGroupItem value="admin" id="admin" />
-                      <Label htmlFor="admin" className="flex items-center space-x-2 cursor-pointer flex-1">
-                        <Shield className="h-4 w-4" />
-                        <span>Admin - Manage platform</span>
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-gray-50 bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
-                      <RadioGroupItem value="super_admin" id="super_admin" />
-                      <Label htmlFor="super_admin" className="flex items-center space-x-2 cursor-pointer flex-1">
-                        <Crown className="h-4 w-4 text-red-600" />
-                        <span className="text-red-700 font-medium">Super Admin - Full system control</span>
-                      </Label>
-                    </div>
-                  </RadioGroup>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    value={formData.firstName}
+                    onChange={(e) => handleInputChange('firstName', e.target.value)}
+                    placeholder="John"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
+                    required
+                  />
                 </div>
-              </>
+                <div>
+                  <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                    Last Name
+                  </Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    value={formData.lastName}
+                    onChange={(e) => handleInputChange('lastName', e.target.value)}
+                    placeholder="Doe"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black"
+                    required
+                  />
+                </div>
+              </div>
             )}
 
             <div>
@@ -295,7 +314,7 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
 
             <Button 
               type="submit" 
-              className="w-full bg-black hover:bg-gray-800 text-white font-medium py-3 px-4 rounded-md transition-colors" 
+              className={`w-full text-white font-medium py-3 px-4 rounded-md transition-colors ${roleConfig.color}`}
               disabled={loading}
             >
               {loading ? (
@@ -304,7 +323,12 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
                   {mode === 'signin' ? 'Signing in...' : 'Creating account...'}
                 </>
               ) : (
-                mode === 'signin' ? 'Sign In' : 'Create Account'
+                <>
+                  {roleConfig.icon}
+                  <span className="ml-2">
+                    {mode === 'signin' ? 'Sign In' : 'Create Account'}
+                  </span>
+                </>
               )}
             </Button>
           </form>
@@ -365,19 +389,6 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
                   <div className="flex justify-between">
                     <span className="font-medium">Admin Account:</span>
                     <span>admin@venvl.com / Password123</span>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fillTestAccount('super_admin')}
-                  className="w-full text-left text-xs text-red-700 hover:text-red-900 p-2 rounded hover:bg-red-100 transition-colors border border-red-200 bg-red-50"
-                >
-                  <div className="flex justify-between">
-                    <span className="font-medium flex items-center">
-                      <Crown className="h-3 w-3 mr-1" />
-                      Super Admin:
-                    </span>
-                    <span>superadmin@venvl.com / SuperSecure123</span>
                   </div>
                 </button>
               </div>
