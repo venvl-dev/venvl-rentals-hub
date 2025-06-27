@@ -19,7 +19,7 @@ interface BookingWithJoinedData extends Booking {
   profiles: {
     first_name: string;
     last_name: string;
-  };
+  } | null;
 }
 
 const BookingsList = () => {
@@ -41,9 +41,10 @@ const BookingsList = () => {
         .select(`
           *,
           properties!inner(title, city, state, host_id),
-          profiles!guest_id(first_name, last_name)
+          profiles(first_name, last_name)
         `)
         .eq('properties.host_id', user.data.user.id)
+        .eq('profiles.id', supabase.raw('bookings.guest_id'))
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -156,7 +157,9 @@ const BookingsList = () => {
                         <User className="h-4 w-4 text-gray-400" />
                         <div>
                           <div className="font-medium">
-                            {booking.profiles?.first_name} {booking.profiles?.last_name}
+                            {booking.profiles?.first_name && booking.profiles?.last_name 
+                              ? `${booking.profiles.first_name} ${booking.profiles.last_name}`
+                              : 'Unknown Guest'}
                           </div>
                           <div className="text-sm text-gray-600">
                             Booked {format(new Date(booking.created_at!), 'MMM dd, yyyy')}
