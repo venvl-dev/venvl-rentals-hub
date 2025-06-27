@@ -93,6 +93,10 @@ const Header = () => {
       setSession(null);
       setUserRole(null);
       
+      // Clear all local storage related to auth
+      localStorage.removeItem('supabase.auth.token');
+      localStorage.clear();
+      
       // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
       
@@ -103,15 +107,14 @@ const Header = () => {
         console.log('Successfully signed out');
         toast.success('Signed out successfully');
         
-        // Clear any cached data
-        localStorage.removeItem('supabase.auth.token');
-        
         // Force redirect to home page
-        navigate('/', { replace: true });
+        window.location.href = '/';
       }
     } catch (error) {
       console.error('Unexpected sign out error:', error);
       toast.error('Error signing out');
+      // Force redirect even on error
+      window.location.href = '/';
     }
   };
 
@@ -148,6 +151,19 @@ const Header = () => {
         return 'text-blue-600';
       default:
         return 'text-gray-600';
+    }
+  };
+
+  const getRoleDisplay = () => {
+    switch (userRole) {
+      case 'super_admin':
+        return 'Super Admin';
+      case 'host':
+        return 'Host';
+      case 'guest':
+        return 'Guest';
+      default:
+        return 'Guest';
     }
   };
 
@@ -194,12 +210,12 @@ const Header = () => {
                   </Link>
                 )}
 
-                {/* Admin Panel Link */}
+                {/* Super Admin Panel Link */}
                 {userRole === 'super_admin' && (
                   <Link to="/admin/panel">
                     <Button variant="ghost" size="sm" className="hidden sm:flex items-center space-x-2">
                       <Shield className="h-4 w-4" />
-                      <span>Admin Panel</span>
+                      <span>Super Admin Panel</span>
                     </Button>
                   </Link>
                 )}
@@ -219,8 +235,8 @@ const Header = () => {
                       <p className="text-sm font-medium text-gray-900">{getUserDisplayName()}</p>
                       <div className="flex items-center space-x-1 mt-1">
                         {getRoleIcon()}
-                        <p className={`text-xs capitalize ${getRoleColor()}`}>
-                          {userRole?.replace('_', ' ') || 'guest'}
+                        <p className={`text-xs ${getRoleColor()}`}>
+                          {getRoleDisplay()}
                         </p>
                       </div>
                     </div>
@@ -248,7 +264,7 @@ const Header = () => {
                       <DropdownMenuItem asChild>
                         <Link to="/admin/panel" className="flex items-center space-x-2">
                           <Shield className="h-4 w-4" />
-                          <span>Admin Panel</span>
+                          <span>Super Admin Panel</span>
                         </Link>
                       </DropdownMenuItem>
                     )}

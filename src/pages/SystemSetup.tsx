@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,7 +69,7 @@ const SystemSetup = () => {
       setInitializationResult(data);
 
       if (data.success) {
-        toast.success('System initialized successfully!');
+        toast.success('System initialized successfully with demo data!');
       } else {
         toast.error('System initialization failed: ' + data.error);
       }
@@ -94,7 +95,7 @@ const SystemSetup = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">System Setup & Management</h1>
-          <p className="text-gray-600">Initialize VENVL with default users and demo data</p>
+          <p className="text-gray-600">Initialize VENVL with default users and demo data automatically</p>
         </div>
 
         <div className="grid gap-6">
@@ -135,7 +136,7 @@ const SystemSetup = () => {
                   ) : (
                     <Play className="h-4 w-4" />
                   )}
-                  Initialize System
+                  Initialize System + Demo Data
                 </Button>
               </div>
 
@@ -144,7 +145,7 @@ const SystemSetup = () => {
                 <AlertDescription>
                   <strong>Clear All Data:</strong> Removes all users, properties, bookings, and reviews from the database.
                   <br />
-                  <strong>Initialize System:</strong> Creates default users (super admin, host, guest) and demo data.
+                  <strong>Initialize System + Demo Data:</strong> Creates default users (super admin, host, guest) and automatically seeds demo properties, bookings, and reviews.
                 </AlertDescription>
               </Alert>
             </CardContent>
@@ -166,7 +167,7 @@ const SystemSetup = () => {
                 <div className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-semibold">Super Admin</h3>
-                    <Badge variant="destructive">Admin</Badge>
+                    <Badge variant="destructive">Super Admin</Badge>
                   </div>
                   <p className="text-sm text-gray-600 mb-1">superadmin@venvl.com</p>
                   <p className="text-sm text-gray-500">SuperAdmin123!</p>

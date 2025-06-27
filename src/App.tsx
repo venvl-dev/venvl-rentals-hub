@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import AdminLogin from "./pages/AdminLogin";
+import SuperAdminLogin from "./pages/SuperAdminLogin";
 import HostSignup from "./pages/HostSignup";
 import GuestSignup from "./pages/GuestSignup";
 import PropertyListing from "./pages/PropertyListing";
@@ -28,7 +28,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/super-admin/login" element={<SuperAdminLogin />} />
               <Route path="/host/signup" element={<HostSignup />} />
               <Route path="/guest/signup" element={<GuestSignup />} />
               <Route path="/property/:id" element={<PropertyListing />} />

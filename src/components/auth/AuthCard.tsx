@@ -10,10 +10,12 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2 } from 'lucide-react';
 
+export type AuthRole = 'guest' | 'host' | 'super_admin';
+
 interface AuthCardProps {
   mode: 'signin' | 'signup';
   onToggleMode: () => void;
-  role?: 'guest' | 'host' | 'admin' | 'super_admin';
+  role?: AuthRole;
 }
 
 const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
@@ -24,7 +26,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     password: '',
     firstName: '',
     lastName: '',
-    role: role || 'guest' as 'guest' | 'host' | 'admin' | 'super_admin'
+    role: role || 'guest' as AuthRole
   });
   const navigate = useNavigate();
 
@@ -37,7 +39,6 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
       case 'host':
         navigate('/host/dashboard');
         break;
-      case 'admin':
       case 'super_admin':
         navigate('/admin');
         break;
@@ -188,11 +189,11 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     }
   };
 
-  const fillTestAccount = (type: 'guest' | 'host' | 'admin') => {
+  const fillTestAccount = (type: 'guest' | 'host' | 'super_admin') => {
     const accounts = {
-      guest: { email: 'guest@venvl.com', password: 'Password123' },
-      host: { email: 'host@venvl.com', password: 'Password123' },
-      admin: { email: 'admin@venvl.com', password: 'Password123' }
+      guest: { email: 'guest@venvl.com', password: 'Guest123!' },
+      host: { email: 'host@venvl.com', password: 'Host123!' },
+      super_admin: { email: 'superadmin@venvl.com', password: 'SuperAdmin123!' }
     };
     
     setFormData(prev => ({
@@ -211,11 +212,10 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
           icon: <Building2 className="h-6 w-6" />,
           color: 'bg-green-600 hover:bg-green-700'
         };
-      case 'admin':
       case 'super_admin':
         return {
-          title: 'Admin Access',
-          description: 'Administrative portal access',
+          title: 'Super Admin Access',
+          description: 'System administrative portal access',
           icon: <Shield className="h-6 w-6" />,
           color: 'bg-red-600 hover:bg-red-700'
         };
@@ -276,13 +276,6 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                     <Label htmlFor="host" className="flex items-center space-x-2 cursor-pointer flex-1">
                       <Building2 className="h-4 w-4" />
                       <span>Host - List your property</span>
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-gray-50">
-                    <RadioGroupItem value="admin" id="admin" />
-                    <Label htmlFor="admin" className="flex items-center space-x-2 cursor-pointer flex-1">
-                      <Shield className="h-4 w-4" />
-                      <span>Admin - Manage platform</span>
                     </Label>
                   </div>
                 </RadioGroup>
@@ -399,16 +392,18 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
               </div>
             </div>
 
-            <div className="mt-6">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onToggleMode}
-                className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                {mode === 'signin' ? 'Create account' : 'Sign in instead'}
-              </Button>
-            </div>
+            {!role && (
+              <div className="mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onToggleMode}
+                  className="w-full border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  {mode === 'signin' ? 'Create account' : 'Sign in instead'}
+                </Button>
+              </div>
+            )}
           </div>
 
           {mode === 'signin' && (
@@ -422,7 +417,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                 >
                   <div className="flex justify-between">
                     <span className="font-medium">Guest Account:</span>
-                    <span>guest@venvl.com / Password123</span>
+                    <span>guest@venvl.com / Guest123!</span>
                   </div>
                 </button>
                 <button
@@ -432,17 +427,17 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                 >
                   <div className="flex justify-between">
                     <span className="font-medium">Host Account:</span>
-                    <span>host@venvl.com / Password123</span>
+                    <span>host@venvl.com / Host123!</span>
                   </div>
                 </button>
                 <button
                   type="button"
-                  onClick={() => fillTestAccount('admin')}
+                  onClick={() => fillTestAccount('super_admin')}
                   className="w-full text-left text-xs text-blue-700 hover:text-blue-900 p-2 rounded hover:bg-blue-100 transition-colors"
                 >
                   <div className="flex justify-between">
-                    <span className="font-medium">Admin Account:</span>
-                    <span>admin@venvl.com / Password123</span>
+                    <span className="font-medium">Super Admin Account:</span>
+                    <span>superadmin@venvl.com / SuperAdmin123!</span>
                   </div>
                 </button>
               </div>

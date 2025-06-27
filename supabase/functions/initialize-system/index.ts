@@ -150,11 +150,11 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Now seed demo data if we have the required users
+    // Now seed demo data automatically if we have the required users
     let demoDataResult = '';
     if (createdUsers > 0) {
       try {
-        console.log('Seeding demo data...');
+        console.log('Automatically seeding demo data...');
         const { data: testScenarioResult, error: scenarioError } = await supabaseClient
           .rpc('create_test_scenario');
         
@@ -162,7 +162,7 @@ Deno.serve(async (req) => {
           console.error('Error creating test scenario:', scenarioError);
           demoDataResult = `Demo data seeding failed: ${scenarioError.message}`;
         } else {
-          demoDataResult = testScenarioResult || 'Demo data seeded successfully';
+          demoDataResult = testScenarioResult || 'Demo data seeded successfully - Properties, bookings, and reviews created automatically';
           console.log('Demo data seeded successfully');
         }
       } catch (error) {
@@ -173,7 +173,7 @@ Deno.serve(async (req) => {
 
     const response = {
       success: true,
-      message: 'Complete system initialization completed',
+      message: 'Complete system initialization completed with automatic demo data seeding',
       users_created: createdUsers,
       demo_data_result: demoDataResult,
       results: results,
