@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2, Crown } from 'lucide-react';
 
 interface AuthCardProps {
   mode: 'signin' | 'signup';
@@ -24,7 +24,7 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
     password: '',
     firstName: '',
     lastName: '',
-    role: 'guest' as 'guest' | 'host' | 'admin'
+    role: 'guest' as 'guest' | 'host' | 'admin' | 'super_admin'
   });
   const navigate = useNavigate();
 
@@ -136,11 +136,12 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
     }
   };
 
-  const fillTestAccount = (type: 'guest' | 'host' | 'admin') => {
+  const fillTestAccount = (type: 'guest' | 'host' | 'admin' | 'super_admin') => {
     const accounts = {
       guest: { email: 'guest@venvl.com', password: 'Password123' },
       host: { email: 'host@venvl.com', password: 'Password123' },
-      admin: { email: 'admin@venvl.com', password: 'Password123' }
+      admin: { email: 'admin@venvl.com', password: 'Password123' },
+      super_admin: { email: 'superadmin@venvl.com', password: 'SuperSecure123' }
     };
     
     setFormData(prev => ({
@@ -234,6 +235,13 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
                       <Label htmlFor="admin" className="flex items-center space-x-2 cursor-pointer flex-1">
                         <Shield className="h-4 w-4" />
                         <span>Admin - Manage platform</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-3 border rounded-lg p-3 hover:bg-gray-50 bg-gradient-to-r from-red-50 to-orange-50 border-red-200">
+                      <RadioGroupItem value="super_admin" id="super_admin" />
+                      <Label htmlFor="super_admin" className="flex items-center space-x-2 cursor-pointer flex-1">
+                        <Crown className="h-4 w-4 text-red-600" />
+                        <span className="text-red-700 font-medium">Super Admin - Full system control</span>
                       </Label>
                     </div>
                   </RadioGroup>
@@ -357,6 +365,19 @@ const AuthCard = ({ mode, onToggleMode }: AuthCardProps) => {
                   <div className="flex justify-between">
                     <span className="font-medium">Admin Account:</span>
                     <span>admin@venvl.com / Password123</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fillTestAccount('super_admin')}
+                  className="w-full text-left text-xs text-red-700 hover:text-red-900 p-2 rounded hover:bg-red-100 transition-colors border border-red-200 bg-red-50"
+                >
+                  <div className="flex justify-between">
+                    <span className="font-medium flex items-center">
+                      <Crown className="h-3 w-3 mr-1" />
+                      Super Admin:
+                    </span>
+                    <span>superadmin@venvl.com / SuperSecure123</span>
                   </div>
                 </button>
               </div>

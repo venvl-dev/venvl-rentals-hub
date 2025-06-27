@@ -124,6 +124,7 @@ export type Database = {
           created_at: string
           first_name: string | null
           id: string
+          is_active: boolean | null
           last_name: string | null
           role: Database["public"]["Enums"]["user_role"]
           updated_at: string
@@ -132,6 +133,7 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id: string
+          is_active?: boolean | null
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -140,6 +142,7 @@ export type Database = {
           created_at?: string
           first_name?: string | null
           id?: string
+          is_active?: boolean | null
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
@@ -343,6 +346,33 @@ export type Database = {
           },
         ]
       }
+      roles_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission_name: string
+          permission_value: boolean
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission_name: string
+          permission_value?: boolean
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission_name?: string
+          permission_value?: boolean
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -367,6 +397,21 @@ export type Database = {
       seed_sample_properties_for_host: {
         Args: { host_user_id: string }
         Returns: undefined
+      }
+      toggle_user_status: {
+        Args: { target_user_id: string; disable_user: boolean }
+        Returns: boolean
+      }
+      update_user_role: {
+        Args: {
+          target_user_id: string
+          new_role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: boolean
+      }
+      user_has_permission: {
+        Args: { user_id: string; permission: string }
+        Returns: boolean
       }
     }
     Enums: {
