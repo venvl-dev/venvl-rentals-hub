@@ -390,6 +390,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      initialize_default_setup: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       seed_sample_bookings_and_reviews: {
         Args: { guest_user_id: string }
         Returns: undefined

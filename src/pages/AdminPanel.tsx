@@ -89,7 +89,8 @@ const AdminPanel = () => {
       const role = profileData?.role;
       setUserRole(role);
 
-      if (role !== 'admin' && role !== 'super_admin') {
+      // Updated to only allow super_admin
+      if (role !== 'super_admin') {
         toast({
           title: "Access Denied",
           description: "You don't have permission to access this page.",

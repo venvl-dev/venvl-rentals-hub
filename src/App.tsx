@@ -1,50 +1,50 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import GuestSignup from "./pages/GuestSignup";
-import HostSignup from "./pages/HostSignup";
 import AdminLogin from "./pages/AdminLogin";
+import HostSignup from "./pages/HostSignup";
+import GuestSignup from "./pages/GuestSignup";
 import PropertyListing from "./pages/PropertyListing";
-import GuestBookings from "./pages/GuestBookings";
 import HostDashboard from "./pages/HostDashboard";
+import GuestBookings from "./pages/GuestBookings";
 import AdminPanel from "./pages/AdminPanel";
-import DataSeeding from "./pages/DataSeeding";
-import CreateTestUsers from "./pages/CreateTestUsers";
 import NotFound from "./pages/NotFound";
+import DataSeeding from "./pages/DataSeeding";
+import SystemSetup from "./pages/SystemSetup";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <LanguageProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/signup/guest" element={<GuestSignup />} />
-            <Route path="/signup/host" element={<HostSignup />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/property/:id" element={<PropertyListing />} />
-            <Route path="/guest/bookings" element={<GuestBookings />} />
-            <Route path="/host/dashboard" element={<HostDashboard />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/seed-data" element={<DataSeeding />} />
-            <Route path="/create-test-users" element={<CreateTestUsers />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </LanguageProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
+        <TooltipProvider>
+          <Toaster />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/host/signup" element={<HostSignup />} />
+              <Route path="/guest/signup" element={<GuestSignup />} />
+              <Route path="/property/:id" element={<PropertyListing />} />
+              <Route path="/host/dashboard" element={<HostDashboard />} />
+              <Route path="/guest/bookings" element={<GuestBookings />} />
+              <Route path="/admin/panel" element={<AdminPanel />} />
+              <Route path="/data-seeding" element={<DataSeeding />} />
+              <Route path="/system-setup" element={<SystemSetup />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </LanguageProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
