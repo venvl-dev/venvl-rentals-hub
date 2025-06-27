@@ -14,7 +14,6 @@ import HostDashboard from "./pages/HostDashboard";
 import GuestBookings from "./pages/GuestBookings";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
-import DataSeeding from "./pages/DataSeeding";
 import SystemSetup from "./pages/SystemSetup";
 
 const queryClient = new QueryClient();
@@ -36,7 +35,6 @@ function App() {
               <Route path="/host/dashboard" element={<HostDashboard />} />
               <Route path="/guest/bookings" element={<GuestBookings />} />
               <Route path="/admin/panel" element={<AdminPanel />} />
-              <Route path="/data-seeding" element={<DataSeeding />} />
               <Route path="/system-setup" element={<SystemSetup />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

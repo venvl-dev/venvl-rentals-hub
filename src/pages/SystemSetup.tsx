@@ -1,197 +1,258 @@
 
 import { useState } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Settings, Users, CheckCircle, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Users, Database, Trash2, Play, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 const SystemSetup = () => {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [isInitializing, setIsInitializing] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
+  const [initializationResult, setInitializationResult] = useState<any>(null);
+
+  const clearAllData = async () => {
+    setIsClearing(true);
+    try {
+      console.log('Starting data cleanup...');
+      
+      // Delete all existing data in correct order
+      const tables = ['reviews', 'bookings', 'properties', 'notifications', 'profiles'];
+      
+      for (const table of tables) {
+        console.log(`Clearing ${table}...`);
+        const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        if (error && !error.message.includes('No rows')) {
+          console.error(`Error clearing ${table}:`, error);
+        }
+      }
+
+      // Clear auth users (this will cascade to profiles due to foreign key)
+      console.log('Clearing auth users...');
+      const { data: users } = await supabase.auth.admin.listUsers();
+      
+      if (users.users && users.users.length > 0) {
+        for (const user of users.users) {
+          await supabase.auth.admin.deleteUser(user.id);
+        }
+      }
+
+      toast.success('All existing data cleared successfully');
+      setInitializationResult(null);
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      toast.error('Error clearing data: ' + (error as Error).message);
+    } finally {
+      setIsClearing(false);
+    }
+  };
 
   const initializeSystem = async () => {
-    setLoading(true);
-    setResult(null);
-    
+    setIsInitializing(true);
+    setInitializationResult(null);
+
     try {
-      const { data, error } = await supabase.functions.invoke('initialize-system');
+      console.log('Calling initialize-system edge function...');
       
-      if (error) throw error;
-      
-      setResult(data);
-      
+      const { data, error } = await supabase.functions.invoke('initialize-system', {
+        body: {}
+      });
+
+      if (error) {
+        console.error('Edge function error:', error);
+        throw error;
+      }
+
+      console.log('Initialization result:', data);
+      setInitializationResult(data);
+
       if (data.success) {
         toast.success('System initialized successfully!');
       } else {
-        toast.error('System initialization failed');
+        toast.error('System initialization failed: ' + data.error);
       }
     } catch (error) {
       console.error('Error initializing system:', error);
-      toast.error('Failed to initialize system');
-      setResult({ 
-        success: false, 
-        error: error.message,
-        message: 'System initialization failed' 
+      toast.error('Error initializing system: ' + (error as Error).message);
+      setInitializationResult({
+        success: false,
+        error: (error as Error).message
       });
     } finally {
-      setLoading(false);
+      setIsInitializing(false);
     }
+  };
+
+  const getStatusIcon = (success: boolean | undefined) => {
+    if (success === undefined) return <AlertCircle className="h-4 w-4 text-yellow-500" />;
+    return success ? <CheckCircle className="h-4 w-4 text-green-500" /> : <AlertCircle className="h-4 w-4 text-red-500" />;
   };
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-4xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4 flex items-center justify-center gap-2">
-            <Settings className="h-8 w-8" />
-            VENVL System Setup
-          </h1>
-          <p className="text-lg text-gray-600">
-            Initialize your VENVL platform with default users and demo data
-          </p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">System Setup & Management</h1>
+          <p className="text-gray-600">Initialize VENVL with default users and demo data</p>
         </div>
 
         <div className="grid gap-6">
-          {/* Main Setup Card */}
-          <Card className="border-blue-200 bg-blue-50">
+          {/* System Actions */}
+          <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-800">
-                <Users className="h-5 w-5" />
-                System Initialization
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                System Management
               </CardTitle>
-              <CardDescription className="text-blue-700">
-                This will create default users and populate the platform with demo data.
+              <CardDescription>
+                Manage the VENVL system initialization and data cleanup
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-white p-4 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-blue-800 mb-3">What will be created:</h4>
-                <ul className="space-y-2 text-sm text-blue-700">
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <strong>Super Admin:</strong> superadmin@venvl.com (password: SuperAdmin123!)
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <strong>Host User:</strong> host@venvl.com (password: Host123!)
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <strong>Guest User:</strong> guest@venvl.com (password: Guest123!)
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <strong>Demo Data:</strong> Properties, bookings, reviews, and notifications
-                  </li>
-                </ul>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={clearAllData}
+                  disabled={isClearing || isInitializing}
+                  variant="destructive"
+                  className="flex items-center gap-2"
+                >
+                  {isClearing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                  Clear All Data
+                </Button>
+                
+                <Button
+                  onClick={initializeSystem}
+                  disabled={isInitializing || isClearing}
+                  className="flex items-center gap-2"
+                >
+                  {isInitializing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                  Initialize System
+                </Button>
               </div>
-              
-              <Button 
-                onClick={initializeSystem} 
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                size="lg"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Initializing System...
-                  </>
-                ) : (
-                  'Initialize VENVL System'
-                )}
-              </Button>
+
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Clear All Data:</strong> Removes all users, properties, bookings, and reviews from the database.
+                  <br />
+                  <strong>Initialize System:</strong> Creates default users (super admin, host, guest) and demo data.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
 
-          {/* Results */}
-          {result && (
+          {/* Default Users Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Default User Accounts
+              </CardTitle>
+              <CardDescription>
+                These accounts will be created during system initialization
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold">Super Admin</h3>
+                    <Badge variant="destructive">Admin</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">superadmin@venvl.com</p>
+                  <p className="text-sm text-gray-500">SuperAdmin123!</p>
+                </div>
+                
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold">Host</h3>
+                    <Badge variant="secondary">Host</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">host@venvl.com</p>
+                  <p className="text-sm text-gray-500">Host123!</p>
+                </div>
+                
+                <div className="p-4 border rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold">Guest</h3>
+                    <Badge variant="outline">Guest</Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-1">guest@venvl.com</p>
+                  <p className="text-sm text-gray-500">Guest123!</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Initialization Results */}
+          {initializationResult && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  {result.success ? (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                  ) : (
-                    <AlertCircle className="h-5 w-5 text-red-600" />
-                  )}
+                  {getStatusIcon(initializationResult.success)}
                   Initialization Results
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <Alert className={result.success ? "border-green-200 bg-green-50" : "border-red-200 bg-red-50"}>
-                  <AlertDescription className={result.success ? "text-green-800" : "text-red-800"}>
-                    {result.message}
-                  </AlertDescription>
-                </Alert>
-
-                {result.users_created !== undefined && (
-                  <div className="p-4 bg-gray-50 rounded-lg">
-                    <h4 className="font-semibold mb-2">Summary:</h4>
-                    <ul className="space-y-1 text-sm">
-                      <li>Users created: {result.users_created}</li>
-                      {result.demo_data_result && (
-                        <li>Demo data: {result.demo_data_result}</li>
-                      )}
-                    </ul>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span>Overall Status:</span>
+                    <Badge variant={initializationResult.success ? "default" : "destructive"}>
+                      {initializationResult.success ? "Success" : "Failed"}
+                    </Badge>
                   </div>
-                )}
-
-                {result.results && result.results.length > 0 && (
-                  <div className="space-y-2">
-                    <h4 className="font-semibold">User Creation Details:</h4>
-                    {result.results.map((userResult: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                        <span>{userResult.email} ({userResult.role})</span>
-                        {userResult.success ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <AlertCircle className="h-4 w-4 text-red-600" />
-                            <span className="text-xs text-red-600">{userResult.error}</span>
+                  
+                  {initializationResult.users_created !== undefined && (
+                    <div className="flex items-center justify-between">
+                      <span>Users Created:</span>
+                      <Badge variant="secondary">{initializationResult.users_created}</Badge>
+                    </div>
+                  )}
+                  
+                  {initializationResult.demo_data_result && (
+                    <div>
+                      <span className="font-medium">Demo Data:</span>
+                      <p className="text-sm text-gray-600 mt-1">{initializationResult.demo_data_result}</p>
+                    </div>
+                  )}
+                  
+                  {initializationResult.results && initializationResult.results.length > 0 && (
+                    <div>
+                      <span className="font-medium">User Creation Details:</span>
+                      <div className="mt-2 space-y-2">
+                        {initializationResult.results.map((result: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                            <span className="text-sm">{result.email}</span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{result.role}</Badge>
+                              {getStatusIcon(result.success)}
+                            </div>
                           </div>
-                        )}
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {result.success && (
-                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <h4 className="font-semibold text-green-800 mb-2">Next Steps:</h4>
-                    <ul className="text-sm text-green-700 space-y-1">
-                      <li>• Use the login credentials above to access different user roles</li>
-                      <li>• Explore the demo properties and bookings</li>
-                      <li>• Test the booking and review system</li>
-                      <li>• Access the admin panel with the super admin account</li>
-                    </ul>
-                  </div>
-                )}
+                    </div>
+                  )}
+                  
+                  {initializationResult.error && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{initializationResult.error}</AlertDescription>
+                    </Alert>
+                  )}
+                </div>
               </CardContent>
             </Card>
           )}
-
-          {/* Information Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Important Notes</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-gray-600">
-              <p>
-                <strong>One-time setup:</strong> This initialization can only be run once. 
-                If users already exist in the system, this will not create duplicates.
-              </p>
-              <p>
-                <strong>Default passwords:</strong> The default passwords are provided for 
-                demo purposes. Change them after first login for security.
-              </p>
-              <p>
-                <strong>Demo data:</strong> The system will create sample properties, 
-                bookings, reviews, and notifications to help you explore the platform.
-              </p>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

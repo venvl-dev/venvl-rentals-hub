@@ -16,12 +16,10 @@ import {
   Menu, 
   Search, 
   User as UserIcon, 
-  Settings, 
   LogOut, 
   Building2, 
   Calendar,
-  Shield,
-  Bell
+  Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,32 +31,41 @@ const Header = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Get initial session
-    const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        // Fetch user role from profiles
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session.user.id)
-          .single();
-        
-        setUserRole(profile?.role || null);
-      }
-    };
-
-    // Listen for auth changes
+    // Listen for auth changes first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           // Fetch user role from profiles
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role')
+              .eq('id', session.user.id)
+              .single();
+            
+            setUserRole(profile?.role || null);
+          } catch (error) {
+            console.error('Error fetching user role:', error);
+            setUserRole(null);
+          }
+        } else {
+          setUserRole(null);
+        }
+      }
+    );
+
+    // Get initial session
+    const getSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
           const { data: profile } = await supabase
             .from('profiles')
             .select('role')
@@ -66,11 +73,11 @@ const Header = () => {
             .single();
           
           setUserRole(profile?.role || null);
-        } else {
-          setUserRole(null);
         }
+      } catch (error) {
+        console.error('Error getting session:', error);
       }
-    );
+    };
 
     getSession();
 
@@ -78,12 +85,33 @@ const Header = () => {
   }, []);
 
   const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
+    try {
+      console.log('Starting sign out process...');
+      
+      // Clear local state immediately
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        toast.error('Error signing out: ' + error.message);
+      } else {
+        console.log('Successfully signed out');
+        toast.success('Signed out successfully');
+        
+        // Clear any cached data
+        localStorage.removeItem('supabase.auth.token');
+        
+        // Force redirect to home page
+        navigate('/', { replace: true });
+      }
+    } catch (error) {
+      console.error('Unexpected sign out error:', error);
       toast.error('Error signing out');
-    } else {
-      toast.success('Signed out successfully');
-      navigate('/');
     }
   };
 
@@ -103,7 +131,6 @@ const Header = () => {
 
   const getRoleIcon = () => {
     switch (userRole) {
-      case 'admin':
       case 'super_admin':
         return <Shield className="h-4 w-4" />;
       case 'host':
@@ -115,7 +142,6 @@ const Header = () => {
 
   const getRoleColor = () => {
     switch (userRole) {
-      case 'admin':
       case 'super_admin':
         return 'text-red-600';
       case 'host':
@@ -169,8 +195,8 @@ const Header = () => {
                 )}
 
                 {/* Admin Panel Link */}
-                {(userRole === 'admin' || userRole === 'super_admin') && (
-                  <Link to="/admin">
+                {userRole === 'super_admin' && (
+                  <Link to="/admin/panel">
                     <Button variant="ghost" size="sm" className="hidden sm:flex items-center space-x-2">
                       <Shield className="h-4 w-4" />
                       <span>Admin Panel</span>
@@ -218,9 +244,9 @@ const Header = () => {
                       </DropdownMenuItem>
                     )}
                     
-                    {(userRole === 'admin' || userRole === 'super_admin') && (
+                    {userRole === 'super_admin' && (
                       <DropdownMenuItem asChild>
-                        <Link to="/admin" className="flex items-center space-x-2">
+                        <Link to="/admin/panel" className="flex items-center space-x-2">
                           <Shield className="h-4 w-4" />
                           <span>Admin Panel</span>
                         </Link>

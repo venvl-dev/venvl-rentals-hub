@@ -50,31 +50,40 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Starting system initialization...');
+    console.log('Starting complete system initialization...');
 
-    // Check if users already exist
-    const { data: existingProfiles, error: profileError } = await supabaseClient
-      .from('profiles')
-      .select('id, email:id')
-      .limit(1);
-
-    if (profileError) {
-      console.error('Error checking existing profiles:', profileError);
-      throw profileError;
+    // First, clear any existing data (cleanup)
+    console.log('Clearing existing data...');
+    
+    // Clear in correct order to avoid foreign key constraints
+    const clearTables = ['reviews', 'bookings', 'properties', 'notifications', 'profiles'];
+    
+    for (const table of clearTables) {
+      try {
+        const { error } = await supabaseClient
+          .from(table)
+          .delete()
+          .neq('id', '00000000-0000-0000-0000-000000000000');
+        
+        if (error && !error.message.includes('No rows')) {
+          console.warn(`Warning clearing ${table}:`, error.message);
+        }
+      } catch (error) {
+        console.warn(`Error clearing ${table}:`, error);
+      }
     }
 
-    if (existingProfiles && existingProfiles.length > 0) {
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'System already initialized - users exist.',
-          users_created: 0
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200 
+    // Clear auth users
+    try {
+      const { data: existingUsers } = await supabaseClient.auth.admin.listUsers();
+      if (existingUsers.users && existingUsers.users.length > 0) {
+        console.log(`Clearing ${existingUsers.users.length} existing auth users...`);
+        for (const user of existingUsers.users) {
+          await supabaseClient.auth.admin.deleteUser(user.id);
         }
-      );
+      }
+    } catch (error) {
+      console.warn('Error clearing auth users:', error);
     }
 
     let createdUsers = 0;
@@ -98,13 +107,13 @@ Deno.serve(async (req) => {
 
         if (authError) {
           console.error(`Error creating auth user ${user.email}:`, authError);
-          results.push({ email: user.email, success: false, error: authError.message });
+          results.push({ email: user.email, success: false, error: authError.message, role: user.role });
           continue;
         }
 
         if (!authData.user) {
           console.error(`No user data returned for ${user.email}`);
-          results.push({ email: user.email, success: false, error: 'No user data returned' });
+          results.push({ email: user.email, success: false, error: 'No user data returned', role: user.role });
           continue;
         }
 
@@ -115,12 +124,13 @@ Deno.serve(async (req) => {
             id: authData.user.id,
             first_name: user.first_name,
             last_name: user.last_name,
-            role: user.role
+            role: user.role,
+            is_active: true
           });
 
         if (profileError) {
           console.error(`Error creating profile for ${user.email}:`, profileError);
-          results.push({ email: user.email, success: false, error: profileError.message });
+          results.push({ email: user.email, success: false, error: profileError.message, role: user.role });
           continue;
         }
 
@@ -132,11 +142,11 @@ Deno.serve(async (req) => {
           id: authData.user.id 
         });
 
-        console.log(`Successfully created user: ${user.email}`);
+        console.log(`Successfully created user: ${user.email} with role: ${user.role}`);
         
       } catch (error) {
         console.error(`Unexpected error creating user ${user.email}:`, error);
-        results.push({ email: user.email, success: false, error: error.message });
+        results.push({ email: user.email, success: false, error: (error as Error).message, role: user.role });
       }
     }
 
@@ -144,6 +154,7 @@ Deno.serve(async (req) => {
     let demoDataResult = '';
     if (createdUsers > 0) {
       try {
+        console.log('Seeding demo data...');
         const { data: testScenarioResult, error: scenarioError } = await supabaseClient
           .rpc('create_test_scenario');
         
@@ -152,19 +163,21 @@ Deno.serve(async (req) => {
           demoDataResult = `Demo data seeding failed: ${scenarioError.message}`;
         } else {
           demoDataResult = testScenarioResult || 'Demo data seeded successfully';
+          console.log('Demo data seeded successfully');
         }
       } catch (error) {
         console.error('Unexpected error seeding demo data:', error);
-        demoDataResult = `Demo data seeding failed: ${error.message}`;
+        demoDataResult = `Demo data seeding failed: ${(error as Error).message}`;
       }
     }
 
     const response = {
       success: true,
-      message: 'System initialization completed',
+      message: 'Complete system initialization completed',
       users_created: createdUsers,
       demo_data_result: demoDataResult,
-      results: results
+      results: results,
+      total_users: defaultUsers.length
     };
 
     console.log('System initialization completed:', response);
@@ -183,7 +196,7 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message,
+        error: (error as Error).message,
         message: 'System initialization failed'
       }),
       { 
