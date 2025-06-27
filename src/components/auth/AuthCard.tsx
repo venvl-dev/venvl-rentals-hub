@@ -95,6 +95,8 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     try {
       const redirectUrl = `${window.location.origin}/`;
 
+      console.log('Signing up user with role:', formData.role);
+      
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -109,6 +111,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
       });
 
       if (error) {
+        console.error('Sign up error:', error);
         if (error.message.includes('already registered')) {
           toast.error('This email is already registered. Please try signing in instead.');
         } else if (error.message.includes('weak password')) {
@@ -119,6 +122,55 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
           toast.error(`Sign up failed: ${error.message}`);
         }
         return;
+      }
+
+      console.log('User created:', data.user);
+
+      // If user is created successfully, manually create the profile to ensure role is set
+      if (data.user && data.user.id) {
+        try {
+          // Wait a moment for the trigger to complete
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Check if profile was created by trigger
+          const { data: existingProfile, error: profileCheckError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+          if (profileCheckError && profileCheckError.code === 'PGRST116') {
+            // Profile doesn't exist, create it manually
+            console.log('Creating profile manually for user:', data.user.id);
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                first_name: formData.firstName.trim(),
+                last_name: formData.lastName.trim(),
+                role: formData.role,
+              });
+
+            if (profileError) {
+              console.error('Error creating profile:', profileError);
+              toast.error('Account created but profile setup failed. Please contact support.');
+              return;
+            }
+          } else if (existingProfile && existingProfile.role !== formData.role) {
+            // Profile exists but role is wrong, update it
+            console.log('Updating profile role for user:', data.user.id);
+            const { error: updateError } = await supabase
+              .from('profiles')
+              .update({ role: formData.role })
+              .eq('id', data.user.id);
+
+            if (updateError) {
+              console.error('Error updating profile role:', updateError);
+            }
+          }
+        } catch (profileError) {
+          console.error('Profile creation/update error:', profileError);
+        }
       }
 
       if (data.user && !data.user.email_confirmed_at) {
