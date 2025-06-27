@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -131,13 +132,10 @@ const Header = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3 group">
             <img 
-              src="/lovable-uploads/3996e48e-8de1-4401-a0d2-f3a7fecf5cbb.png" 
+              src="/lovable-uploads/6b90bd6a-9b4a-4cfe-89f0-5a06cd21ab9a.png" 
               alt="VENVL Logo" 
-              className="h-8 w-8 group-hover:scale-105 transition-transform duration-200"
+              className="h-10 object-contain group-hover:scale-105 transition-transform duration-200"
             />
-            <span className="text-2xl font-bold text-gray-900 group-hover:text-gray-700 transition-colors">
-              VENVL
-            </span>
           </Link>
 
           {/* Search Bar - Hidden on small screens */}
