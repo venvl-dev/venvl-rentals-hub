@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Users, Database, Trash2, Play, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
+
+type TableName = 'reviews' | 'bookings' | 'properties' | 'notifications' | 'profiles';
 
 const SystemSetup = () => {
   const [isInitializing, setIsInitializing] = useState(false);
@@ -19,7 +20,7 @@ const SystemSetup = () => {
       console.log('Starting data cleanup...');
       
       // Delete all existing data in correct order
-      const tables = ['reviews', 'bookings', 'properties', 'notifications', 'profiles'];
+      const tables: TableName[] = ['reviews', 'bookings', 'properties', 'notifications', 'profiles'];
       
       for (const table of tables) {
         console.log(`Clearing ${table}...`);

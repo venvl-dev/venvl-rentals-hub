@@ -9,7 +9,7 @@ const AdminLogin = () => {
     setMode(mode === 'signin' ? 'signup' : 'signin');
   };
 
-  return <AuthCard mode={mode} onToggleMode={toggleMode} role="super_admin" />;
+  return <AuthCard mode={mode} onToggleMode={toggleMode} role="admin" />;
 };
 
 export default AdminLogin;
