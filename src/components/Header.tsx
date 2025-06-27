@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-export const Header = () => {
+const Header = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -258,3 +257,5 @@ export const Header = () => {
     </header>
   );
 };
+
+export default Header;
