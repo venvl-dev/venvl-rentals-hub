@@ -13,7 +13,7 @@ import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2 } from 'lucid
 interface AuthCardProps {
   mode: 'signin' | 'signup';
   onToggleMode: () => void;
-  role?: 'guest' | 'host' | 'admin';
+  role?: 'guest' | 'host' | 'admin' | 'super_admin';
 }
 
 const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
@@ -24,7 +24,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     password: '',
     firstName: '',
     lastName: '',
-    role: role || 'guest' as 'guest' | 'host' | 'admin'
+    role: role || 'guest' as 'guest' | 'host' | 'admin' | 'super_admin'
   });
   const navigate = useNavigate();
 
@@ -38,6 +38,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
         navigate('/host/dashboard');
         break;
       case 'admin':
+      case 'super_admin':
         navigate('/admin');
         break;
       default:
@@ -211,6 +212,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
           color: 'bg-green-600 hover:bg-green-700'
         };
       case 'admin':
+      case 'super_admin':
         return {
           title: 'Admin Access',
           description: 'Administrative portal access',
