@@ -233,12 +233,26 @@ const Index = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
+        // Convert SearchFilters to a plain object that can be serialized as JSON
+        const searchDataForStorage = {
+          location: filters.location,
+          checkIn: filters.checkIn?.toISOString(),
+          checkOut: filters.checkOut?.toISOString(),
+          guests: filters.guests,
+          bookingType: filters.bookingType,
+          flexibleOption: filters.flexibleOption,
+          duration: filters.duration,
+          propertyType: filters.propertyType,
+          priceRange: filters.priceRange,
+          amenities: filters.amenities,
+        };
+
         await supabase
           .from('search_preferences')
           .insert({
             user_id: user.id,
             destination: filters.location,
-            search_data: filters,
+            search_data: searchDataForStorage,
           });
       }
     } catch (error) {
