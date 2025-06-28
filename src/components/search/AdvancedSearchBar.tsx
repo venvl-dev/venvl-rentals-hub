@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { CalendarIcon, MapPin, Users } from 'lucide-react';
-import { format, addDays } from 'date-fns';
+import { format } from 'date-fns';
 
 interface SearchFilters {
   location: string;
@@ -44,6 +44,7 @@ const AdvancedSearchBar = ({ onSearch, initialFilters }: AdvancedSearchBarProps)
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSearch = () => {
+    console.log('Advanced search filters:', filters);
     onSearch(filters);
   };
 
@@ -69,6 +70,15 @@ const AdvancedSearchBar = ({ onSearch, initialFilters }: AdvancedSearchBarProps)
     'WiFi', 'Kitchen', 'Pool', 'Parking', 'Air Conditioning', 
     'TV', 'Washer', 'Dryer', 'Hot Tub', 'Gym'
   ];
+
+  const toggleAmenity = (amenity: string) => {
+    setFilters(prev => ({
+      ...prev,
+      amenities: prev.amenities?.includes(amenity)
+        ? prev.amenities.filter(a => a !== amenity)
+        : [...(prev.amenities || []), amenity]
+    }));
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-lg border p-6 mb-8">
@@ -112,7 +122,7 @@ const AdvancedSearchBar = ({ onSearch, initialFilters }: AdvancedSearchBarProps)
           
           {filters.bookingType === 'monthly' && (
             <Select 
-              value={filters.duration?.toString()} 
+              value={filters.duration?.toString() || ''} 
               onValueChange={(value) => setFilters(prev => ({ ...prev, duration: parseInt(value) }))}
             >
               <SelectTrigger>
@@ -130,7 +140,7 @@ const AdvancedSearchBar = ({ onSearch, initialFilters }: AdvancedSearchBarProps)
 
           {filters.bookingType === 'flexible' && (
             <Select 
-              value={filters.flexibleOption} 
+              value={filters.flexibleOption || ''} 
               onValueChange={(value) => setFilters(prev => ({ ...prev, flexibleOption: value }))}
             >
               <SelectTrigger>
@@ -230,13 +240,14 @@ const AdvancedSearchBar = ({ onSearch, initialFilters }: AdvancedSearchBarProps)
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Property Type</label>
             <Select 
-              value={filters.propertyType} 
-              onValueChange={(value) => setFilters(prev => ({ ...prev, propertyType: value }))}
+              value={filters.propertyType || ''} 
+              onValueChange={(value) => setFilters(prev => ({ ...prev, propertyType: value || undefined }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Any type" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="">Any type</SelectItem>
                 <SelectItem value="apartment">Apartment</SelectItem>
                 <SelectItem value="house">House</SelectItem>
                 <SelectItem value="villa">Villa</SelectItem>
@@ -287,12 +298,7 @@ const AdvancedSearchBar = ({ onSearch, initialFilters }: AdvancedSearchBarProps)
                   key={amenity}
                   variant={filters.amenities?.includes(amenity) ? "default" : "outline"}
                   className="cursor-pointer"
-                  onClick={() => {
-                    const newAmenities = filters.amenities?.includes(amenity)
-                      ? filters.amenities.filter(a => a !== amenity)
-                      : [...(filters.amenities || []), amenity];
-                    setFilters(prev => ({ ...prev, amenities: newAmenities }));
-                  }}
+                  onClick={() => toggleAmenity(amenity)}
                 >
                   {amenity}
                 </Badge>

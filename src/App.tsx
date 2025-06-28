@@ -17,8 +17,16 @@ import NotFound from "./pages/NotFound";
 import SystemSetup from "./pages/SystemSetup";
 import CreateTestUsers from "./pages/CreateTestUsers";
 import DataSeeding from "./pages/DataSeeding";
+import Calendar from "./pages/Calendar";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
@@ -36,6 +44,7 @@ function App() {
               <Route path="/property/:id" element={<PropertyListing />} />
               <Route path="/host/dashboard" element={<HostDashboard />} />
               <Route path="/guest/bookings" element={<GuestBookings />} />
+              <Route path="/calendar" element={<Calendar />} />
               <Route path="/admin/panel" element={<AdminPanel />} />
               <Route path="/system-setup" element={<SystemSetup />} />
               <Route path="/create-test-users" element={<CreateTestUsers />} />

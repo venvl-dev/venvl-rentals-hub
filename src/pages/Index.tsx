@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
@@ -83,29 +84,48 @@ const Index = () => {
 
   const fetchProperties = async () => {
     try {
+      setLoading(true);
+      console.log('Fetching properties...');
+      
       const { data, error } = await supabase
         .from('properties')
         .select('*')
         .eq('is_active', true)
         .eq('approval_status', 'approved');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching properties:', error);
+        throw error;
+      }
       
       const propertiesData = data || [];
+      console.log(`Fetched ${propertiesData.length} properties`);
+      
       setProperties(propertiesData);
       generateAvailableFilters(propertiesData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching properties:', error);
-      toast.error('Failed to load properties');
+      toast.error(`Failed to load properties: ${error.message || 'Unknown error'}`);
+      setProperties([]);
     } finally {
       setLoading(false);
     }
   };
 
   const generateAvailableFilters = (propertiesData: Property[]) => {
+    if (!propertiesData.length) {
+      setAvailableFilters({
+        propertyTypes: [],
+        amenities: [],
+        priceRange: { min: 0, max: 1000 },
+      });
+      return;
+    }
+
     // Generate property types with counts
     const propertyTypeCounts = propertiesData.reduce((acc, prop) => {
-      acc[prop.property_type] = (acc[prop.property_type] || 0) + 1;
+      const type = prop.property_type || 'unknown';
+      acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -118,7 +138,9 @@ const Index = () => {
     // Generate amenities with counts
     const amenityCounts = propertiesData.reduce((acc, prop) => {
       (prop.amenities || []).forEach(amenity => {
-        acc[amenity] = (acc[amenity] || 0) + 1;
+        if (amenity) {
+          acc[amenity] = (acc[amenity] || 0) + 1;
+        }
       });
       return acc;
     }, {} as Record<string, number>);
@@ -130,9 +152,9 @@ const Index = () => {
     }));
 
     // Calculate price range
-    const prices = propertiesData.map(prop => prop.price_per_night);
-    const minPrice = Math.min(...prices);
-    const maxPrice = Math.max(...prices);
+    const prices = propertiesData.map(prop => prop.price_per_night).filter(price => price && price > 0);
+    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+    const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000;
 
     setAvailableFilters({
       propertyTypes,
@@ -153,7 +175,7 @@ const Index = () => {
     // Search filters
     if (searchFilters.location) {
       filtered = filtered.filter(property => 
-        property.city.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
+        property.city?.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
         property.state?.toLowerCase().includes(searchFilters.location.toLowerCase())
       );
     }
@@ -217,11 +239,12 @@ const Index = () => {
       );
     }
 
+    console.log(`Applied filters: ${filtered.length} properties match criteria`);
     setFilteredProperties(filtered);
   };
 
   const handleSearch = (filters: SearchFilters) => {
-    console.log('Search filters:', filters);
+    console.log('Search filters applied:', filters);
     setSearchFilters(filters);
     
     // Save search preferences for logged-in users
@@ -257,6 +280,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error saving search preferences:', error);
+      // Don't show error to user for this non-critical feature
     }
   };
 
@@ -306,7 +330,8 @@ const Index = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            <div className="text-lg">Loading properties...</div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            <span className="ml-3 text-lg">Loading properties...</span>
           </motion.div>
         ) : (
           <>
@@ -332,7 +357,13 @@ const Index = () => {
                 transition={{ duration: 0.6, delay: 0.8 }}
               >
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No properties found</h3>
-                <p className="text-gray-600">Try adjusting your search criteria</p>
+                <p className="text-gray-600 mb-4">Try adjusting your search criteria</p>
+                {properties.length === 0 && (
+                  <p className="text-sm text-gray-500">
+                    It looks like there are no properties in the system yet. 
+                    Please check back later or contact support if this seems incorrect.
+                  </p>
+                )}
               </motion.div>
             ) : (
               <motion.div 
