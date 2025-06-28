@@ -5,6 +5,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { format, addDays, addMonths } from 'date-fns';
+import { DateRange } from 'react-day-picker';
 
 interface DatePickerProps {
   checkIn?: Date;
@@ -16,10 +17,9 @@ interface DatePickerProps {
 }
 
 const DatePicker = ({ checkIn, checkOut, bookingType, onDateChange, onBookingTypeChange, onClose }: DatePickerProps) => {
-  const [selectedDates, setSelectedDates] = useState<{ from?: Date; to?: Date }>({
-    from: checkIn,
-    to: checkOut
-  });
+  const [selectedDates, setSelectedDates] = useState<DateRange | undefined>(
+    checkIn ? { from: checkIn, to: checkOut } : undefined
+  );
   const [duration, setDuration] = useState(1);
   const [flexibleOption, setFlexibleOption] = useState('weekend');
 
@@ -36,9 +36,12 @@ const DatePicker = ({ checkIn, checkOut, bookingType, onDateChange, onBookingTyp
     { value: 'any', label: "I'm flexible", description: 'Any duration' }
   ];
 
-  const handleDateSelect = (dates: { from?: Date; to?: Date }) => {
-    setSelectedDates(dates);
-    onDateChange({ checkIn: dates.from, checkOut: dates.to });
+  const handleDateSelect = (dateRange: DateRange | undefined) => {
+    setSelectedDates(dateRange);
+    onDateChange({ 
+      checkIn: dateRange?.from, 
+      checkOut: dateRange?.to 
+    });
   };
 
   const handleMonthlyDuration = (months: number) => {
