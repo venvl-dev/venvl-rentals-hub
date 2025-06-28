@@ -48,68 +48,6 @@ const DashboardCalendar = ({ userId, userType }: DashboardCalendarProps) => {
       const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
 
-      let query = supabase
-        .from('bookings')
-        .select(`
-          *,
-          property:properties(title),
-          guest:profiles(first_name, last_name)
-        `)
-        .eq('profiles.id', supabase.from('bookings').select('guest_id'))
-        .gte('check_in', startDate)
-        .lte('check_out', endDate);
-
-      if (userType === 'host') {
-        // For hosts, we need to join with properties to filter by host_id
-        const { data: hostProperties } = await supabase
-          .from('properties')
-          .select('id')
-          .eq('host_id', userId);
-        
-        if (hostProperties && hostProperties.length > 0) {
-          const propertyIds = hostProperties.map(p => p.id);
-          query = query.in('property_id', propertyIds);
-        } else {
-          // No properties found for this host
-          setBookings([]);
-          setLoading(false);
-          return;
-        }
-      } else {
-        query = query.eq('guest_id', userId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching bookings:', error);
-        // Let's try a different approach - fetch bookings and profiles separately
-        await fetchBookingsAlternative();
-        return;
-      }
-      
-      // Type assertion with proper handling of potentially null relations
-      const typedBookings: CalendarBooking[] = (data || []).map(booking => ({
-        ...booking,
-        property: booking.property || null,
-        guest: booking.guest || null
-      }));
-      
-      setBookings(typedBookings);
-    } catch (error) {
-      console.error('Error fetching bookings:', error);
-      // Fallback to alternative fetch method
-      await fetchBookingsAlternative();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchBookingsAlternative = async () => {
-    try {
-      const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
-      const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
-
       // First, get bookings with property data
       let bookingsQuery = supabase
         .from('bookings')
@@ -131,6 +69,7 @@ const DashboardCalendar = ({ userId, userType }: DashboardCalendarProps) => {
           bookingsQuery = bookingsQuery.in('property_id', propertyIds);
         } else {
           setBookings([]);
+          setLoading(false);
           return;
         }
       } else {
@@ -142,6 +81,7 @@ const DashboardCalendar = ({ userId, userType }: DashboardCalendarProps) => {
       if (bookingsError) {
         console.error('Error fetching bookings:', bookingsError);
         setBookings([]);
+        setLoading(false);
         return;
       }
 
@@ -169,8 +109,10 @@ const DashboardCalendar = ({ userId, userType }: DashboardCalendarProps) => {
       
       setBookings(typedBookings);
     } catch (error) {
-      console.error('Error in alternative fetch:', error);
+      console.error('Error fetching bookings:', error);
       setBookings([]);
+    } finally {
+      setLoading(false);
     }
   };
 
