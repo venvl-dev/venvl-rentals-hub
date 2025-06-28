@@ -53,7 +53,7 @@ const DashboardCalendar = ({ userId, userType }: DashboardCalendarProps) => {
         .select(`
           *,
           property:properties(title),
-          guest:profiles!bookings_guest_id_fkey(first_name, last_name)
+          guest:profiles!guest_id(first_name, last_name)
         `)
         .gte('check_in', startDate)
         .lte('check_out', endDate);
