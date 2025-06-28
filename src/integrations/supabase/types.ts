@@ -35,15 +35,12 @@ export type Database = {
       }
       bookings: {
         Row: {
-          booking_type: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
           check_in: string
           check_out: string
           created_at: string | null
-          duration_months: number | null
-          flexible_option: string | null
           guest_id: string
           guests: number
           id: string
@@ -53,15 +50,12 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          booking_type?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
           check_in: string
           check_out: string
           created_at?: string | null
-          duration_months?: number | null
-          flexible_option?: string | null
           guest_id: string
           guests?: number
           id?: string
@@ -71,15 +65,12 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          booking_type?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
           check_in?: string
           check_out?: string
           created_at?: string | null
-          duration_months?: number | null
-          flexible_option?: string | null
           guest_id?: string
           guests?: number
           id?: string
@@ -165,8 +156,6 @@ export type Database = {
           approval_status: string | null
           bathrooms: number | null
           bedrooms: number | null
-          blocked_dates: string[] | null
-          booking_types: string[] | null
           city: string
           country: string
           created_at: string | null
@@ -179,8 +168,6 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           max_guests: number
-          min_months: number | null
-          min_nights: number | null
           monthly_price: number | null
           postal_code: string | null
           price_per_night: number
@@ -196,8 +183,6 @@ export type Database = {
           approval_status?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
-          blocked_dates?: string[] | null
-          booking_types?: string[] | null
           city: string
           country?: string
           created_at?: string | null
@@ -210,8 +195,6 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           max_guests?: number
-          min_months?: number | null
-          min_nights?: number | null
           monthly_price?: number | null
           postal_code?: string | null
           price_per_night: number
@@ -227,8 +210,6 @@ export type Database = {
           approval_status?: string | null
           bathrooms?: number | null
           bedrooms?: number | null
-          blocked_dates?: string[] | null
-          booking_types?: string[] | null
           city?: string
           country?: string
           created_at?: string | null
@@ -241,8 +222,6 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           max_guests?: number
-          min_months?: number | null
-          min_nights?: number | null
           monthly_price?: number | null
           postal_code?: string | null
           price_per_night?: number
@@ -280,41 +259,6 @@ export type Database = {
           },
           {
             foreignKeyName: "property_amenities_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      property_availability: {
-        Row: {
-          blocked_date: string
-          created_at: string | null
-          id: string
-          property_id: string | null
-          reason: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          blocked_date: string
-          created_at?: string | null
-          id?: string
-          property_id?: string | null
-          reason?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          blocked_date?: string
-          created_at?: string | null
-          id?: string
-          property_id?: string | null
-          reason?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "property_availability_property_id_fkey"
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
@@ -426,30 +370,6 @@ export type Database = {
           permission_value?: boolean
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
-        }
-        Relationships: []
-      }
-      search_preferences: {
-        Row: {
-          created_at: string | null
-          destination: string | null
-          id: string
-          search_data: Json | null
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          destination?: string | null
-          id?: string
-          search_data?: Json | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          destination?: string | null
-          id?: string
-          search_data?: Json | null
-          user_id?: string | null
         }
         Relationships: []
       }

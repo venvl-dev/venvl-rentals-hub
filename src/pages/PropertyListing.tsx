@@ -1,21 +1,25 @@
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { User } from '@supabase/supabase-js';
+import { useParams, useNavigate } from 'react-router-dom';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { MapPin, Bed, Bath, Users } from 'lucide-react';
+import { CalendarIcon, MapPin, Users, Home, Bed, Bath, Star } from 'lucide-react';
+import { format, differenceInDays } from 'date-fns';
 import Header from '@/components/Header';
-import BookingWidget from '@/components/booking/BookingWidget';
 
 interface Property {
   id: string;
   title: string;
   description: string;
   price_per_night: number;
-  monthly_price?: number;
   images: string[];
   city: string;
   state: string;
@@ -26,16 +30,17 @@ interface Property {
   bathrooms: number;
   max_guests: number;
   amenities: string[];
-  booking_types: string[];
-  min_nights?: number;
-  min_months?: number;
-  blocked_dates?: string[];
 }
 
 const PropertyListing = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
+  const [checkIn, setCheckIn] = useState<Date>();
+  const [checkOut, setCheckOut] = useState<Date>();
+  const [guests, setGuests] = useState(1);
+  const [bookingLoading, setBookingLoading] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
@@ -68,6 +73,48 @@ const PropertyListing = () => {
     }
   };
 
+  const handleBooking = async () => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+
+    if (!checkIn || !checkOut) {
+      toast.error('Please select check-in and check-out dates');
+      return;
+    }
+
+    if (!property) return;
+
+    setBookingLoading(true);
+    
+    const nights = differenceInDays(checkOut, checkIn);
+    const totalPrice = nights * property.price_per_night;
+
+    try {
+      const { error } = await supabase
+        .from('bookings')
+        .insert({
+          property_id: property.id,
+          guest_id: user.id,
+          check_in: format(checkIn, 'yyyy-MM-dd'),
+          check_out: format(checkOut, 'yyyy-MM-dd'),
+          guests,
+          total_price: totalPrice,
+        });
+
+      if (error) throw error;
+
+      toast.success('Booking request submitted successfully!');
+      navigate('/bookings');
+    } catch (error) {
+      console.error('Error creating booking:', error);
+      toast.error('Failed to create booking');
+    } finally {
+      setBookingLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div>
@@ -89,6 +136,9 @@ const PropertyListing = () => {
       </div>
     );
   }
+
+  const nights = checkIn && checkOut ? differenceInDays(checkOut, checkIn) : 0;
+  const totalPrice = nights * property.price_per_night;
 
   return (
     <div>
@@ -126,18 +176,9 @@ const PropertyListing = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 mb-4">
-                <Badge variant="secondary">
-                  {property.property_type}
-                </Badge>
-                {property.booking_types?.map(type => (
-                  <Badge key={type} variant="outline">
-                    {type === 'daily' ? 'Daily stays' : 
-                     type === 'monthly' ? 'Monthly stays' : 
-                     'Flexible stays'}
-                  </Badge>
-                ))}
-              </div>
+              <Badge variant="secondary" className="mb-4">
+                {property.property_type}
+              </Badge>
             </div>
 
             <Separator className="my-6" />
@@ -162,32 +203,102 @@ const PropertyListing = () => {
                 </div>
               </>
             )}
-
-            {/* Booking Requirements */}
-            {(property.min_nights || property.min_months) && (
-              <>
-                <Separator className="my-6" />
-                <div>
-                  <h2 className="text-xl font-semibold mb-3">Booking Requirements</h2>
-                  <div className="space-y-2">
-                    {property.min_nights && (
-                      <p className="text-gray-700">
-                        Minimum stay: {property.min_nights} night{property.min_nights > 1 ? 's' : ''}
-                      </p>
-                    )}
-                    {property.min_months && (
-                      <p className="text-gray-700">
-                        Minimum monthly stay: {property.min_months} month{property.min_months > 1 ? 's' : ''}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
           </div>
 
           <div className="lg:col-span-1">
-            <BookingWidget property={property} user={user} />
+            <Card className="sticky top-24">
+              <CardContent className="p-6">
+                <div className="mb-4">
+                  <div className="flex items-baseline">
+                    <span className="text-2xl font-bold">${property.price_per_night}</span>
+                    <span className="text-gray-600 ml-1">/ night</span>
+                  </div>
+                  <div className="flex items-center mt-1">
+                    <Star className="h-4 w-4 fill-current text-yellow-400" />
+                    <span className="text-sm ml-1">4.9 • 127 reviews</span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-sm font-medium">Check-in</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {checkIn ? format(checkIn, "MMM dd") : "Add date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={checkIn}
+                            onSelect={setCheckIn}
+                            disabled={(date) => date < new Date()}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium">Check-out</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {checkOut ? format(checkOut, "MMM dd") : "Add date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={checkOut}
+                            onSelect={setCheckOut}
+                            disabled={(date) => date < new Date() || (checkIn && date <= checkIn)}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium">Guests</label>
+                    <Select value={guests.toString()} onValueChange={(value) => setGuests(parseInt(value))}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: property.max_guests }, (_, i) => i + 1).map(num => (
+                          <SelectItem key={num} value={num.toString()}>{num} guest{num > 1 ? 's' : ''}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {nights > 0 && (
+                    <div className="border-t pt-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span>${property.price_per_night} x {nights} nights</span>
+                        <span>${property.price_per_night * nights}</span>
+                      </div>
+                      <div className="flex justify-between items-center font-semibold text-lg border-t pt-2">
+                        <span>Total</span>
+                        <span>${totalPrice}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <Button 
+                    className="w-full" 
+                    onClick={handleBooking}
+                    disabled={bookingLoading || !checkIn || !checkOut}
+                  >
+                    {bookingLoading ? 'Booking...' : 'Reserve'}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
