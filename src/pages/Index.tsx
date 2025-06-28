@@ -1,8 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import VenvlSearchPill from '@/components/search/VenvlSearchPill';
-import PropertyFilters from '@/components/search/PropertyFilters';
 import PropertyCard from '@/components/PropertyCard';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -39,15 +39,6 @@ interface SearchFilters {
   amenities?: string[];
 }
 
-interface FilterOptions {
-  priceRange: [number, number];
-  propertyTypes: string[];
-  amenities: string[];
-  bookingTypes: string[];
-  minRating: number;
-  instantBook: boolean;
-}
-
 const Index = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
@@ -57,21 +48,6 @@ const Index = () => {
     guests: 1,
     bookingType: 'daily',
   });
-  
-  const [propertyFilters, setPropertyFilters] = useState<FilterOptions>({
-    priceRange: [0, 1000],
-    propertyTypes: [],
-    amenities: [],
-    bookingTypes: [],
-    minRating: 0,
-    instantBook: false,
-  });
-
-  const [availableFilters, setAvailableFilters] = useState({
-    propertyTypes: [] as { value: string; label: string; count: number }[],
-    amenities: [] as { value: string; label: string; count: number }[],
-    priceRange: { min: 0, max: 1000 },
-  });
 
   useEffect(() => {
     fetchProperties();
@@ -79,29 +55,53 @@ const Index = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [properties, searchFilters, propertyFilters]);
+  }, [properties, searchFilters]);
 
   const fetchProperties = async () => {
     try {
       setLoading(true);
       console.log('Fetching properties...');
       
+      // Add timeout and better error handling
       const { data, error } = await supabase
         .from('properties')
-        .select('*')
+        .select(`
+          id,
+          title,
+          description,
+          price_per_night,
+          monthly_price,
+          images,
+          city,
+          state,
+          property_type,
+          bedrooms,
+          bathrooms,
+          max_guests,
+          amenities,
+          booking_types,
+          approval_status,
+          is_active
+        `)
         .eq('is_active', true)
         .eq('approval_status', 'approved');
 
       if (error) {
-        console.error('Error fetching properties:', error);
+        console.error('Supabase error details:', error);
         throw error;
       }
       
+      console.log('Raw data from Supabase:', data);
       const propertiesData = data || [];
-      console.log(`Fetched ${propertiesData.length} properties`);
+      console.log(`Successfully fetched ${propertiesData.length} properties`);
       
       setProperties(propertiesData);
-      generateAvailableFilters(propertiesData);
+      
+      if (propertiesData.length === 0) {
+        console.warn('No approved and active properties found in database');
+        toast.info('No properties are currently available. Please check back later.');
+      }
+      
     } catch (error: any) {
       console.error('Error fetching properties:', error);
       toast.error(`Failed to load properties: ${error.message || 'Unknown error'}`);
@@ -111,134 +111,60 @@ const Index = () => {
     }
   };
 
-  const generateAvailableFilters = (propertiesData: Property[]) => {
-    if (!propertiesData.length) {
-      setAvailableFilters({
-        propertyTypes: [],
-        amenities: [],
-        priceRange: { min: 0, max: 1000 },
-      });
-      return;
-    }
-
-    // Generate property types with counts
-    const propertyTypeCounts = propertiesData.reduce((acc, prop) => {
-      const type = prop.property_type || 'unknown';
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-
-    const propertyTypes = Object.entries(propertyTypeCounts).map(([type, count]) => ({
-      value: type,
-      label: type.charAt(0).toUpperCase() + type.slice(1),
-      count,
-    }));
-
-    // Generate amenities with counts
-    const amenityCounts = propertiesData.reduce((acc, prop) => {
-      (prop.amenities || []).forEach(amenity => {
-        if (amenity) {
-          acc[amenity] = (acc[amenity] || 0) + 1;
-        }
-      });
-      return acc;
-    }, {} as Record<string, number>);
-
-    const amenities = Object.entries(amenityCounts).map(([amenity, count]) => ({
-      value: amenity,
-      label: amenity,
-      count,
-    }));
-
-    // Calculate price range
-    const prices = propertiesData.map(prop => prop.price_per_night).filter(price => price && price > 0);
-    const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-    const maxPrice = prices.length > 0 ? Math.max(...prices) : 1000;
-
-    setAvailableFilters({
-      propertyTypes,
-      amenities,
-      priceRange: { min: minPrice, max: maxPrice },
-    });
-
-    // Update filter defaults
-    setPropertyFilters(prev => ({
-      ...prev,
-      priceRange: [minPrice, maxPrice],
-    }));
-  };
-
   const applyFilters = () => {
+    console.log('Applying filters to', properties.length, 'properties');
     let filtered = [...properties];
 
-    // Search filters
+    // Location filter
     if (searchFilters.location) {
       filtered = filtered.filter(property => 
         property.city?.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
         property.state?.toLowerCase().includes(searchFilters.location.toLowerCase())
       );
+      console.log(`After location filter: ${filtered.length} properties`);
     }
 
+    // Guest capacity filter
     if (searchFilters.guests) {
       filtered = filtered.filter(property => property.max_guests >= searchFilters.guests);
+      console.log(`After guests filter: ${filtered.length} properties`);
     }
 
+    // Booking type filter
     if (searchFilters.bookingType !== 'flexible') {
       filtered = filtered.filter(property => 
         property.booking_types?.includes(searchFilters.bookingType) || 
         (!property.booking_types && searchFilters.bookingType === 'daily')
       );
+      console.log(`After booking type filter: ${filtered.length} properties`);
     }
 
+    // Property type filter
     if (searchFilters.propertyType) {
       filtered = filtered.filter(property => property.property_type === searchFilters.propertyType);
+      console.log(`After property type filter: ${filtered.length} properties`);
     }
 
+    // Price range filter
     if (searchFilters.priceRange) {
       filtered = filtered.filter(property => 
         property.price_per_night >= searchFilters.priceRange!.min &&
         property.price_per_night <= searchFilters.priceRange!.max
       );
+      console.log(`After price range filter: ${filtered.length} properties`);
     }
 
+    // Amenities filter
     if (searchFilters.amenities && searchFilters.amenities.length > 0) {
       filtered = filtered.filter(property =>
         searchFilters.amenities!.every(amenity => 
           property.amenities?.includes(amenity)
         )
       );
+      console.log(`After amenities filter: ${filtered.length} properties`);
     }
 
-    // Property filters
-    filtered = filtered.filter(property => 
-      property.price_per_night >= propertyFilters.priceRange[0] &&
-      property.price_per_night <= propertyFilters.priceRange[1]
-    );
-
-    if (propertyFilters.propertyTypes.length > 0) {
-      filtered = filtered.filter(property => 
-        propertyFilters.propertyTypes.includes(property.property_type)
-      );
-    }
-
-    if (propertyFilters.amenities.length > 0) {
-      filtered = filtered.filter(property =>
-        propertyFilters.amenities.every(amenity => 
-          property.amenities?.includes(amenity)
-        )
-      );
-    }
-
-    if (propertyFilters.bookingTypes.length > 0) {
-      filtered = filtered.filter(property =>
-        propertyFilters.bookingTypes.some(type =>
-          property.booking_types?.includes(type) || 
-          (!property.booking_types && type === 'daily')
-        )
-      );
-    }
-
-    console.log(`Applied filters: ${filtered.length} properties match criteria`);
+    console.log(`Final filtered properties: ${filtered.length}`);
     setFilteredProperties(filtered);
   };
 
@@ -255,7 +181,6 @@ const Index = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (user) {
-        // Convert SearchFilters to a plain object that can be serialized as JSON
         const searchDataForStorage = {
           location: filters.location,
           checkIn: filters.checkIn?.toISOString(),
@@ -279,7 +204,6 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error saving search preferences:', error);
-      // Don't show error to user for this non-critical feature
     }
   };
 
@@ -323,18 +247,6 @@ const Index = () => {
           <VenvlSearchPill onSearch={handleSearch} initialFilters={searchFilters} />
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-        >
-          <PropertyFilters
-            filters={propertyFilters}
-            onFiltersChange={setPropertyFilters}
-            availableFilters={availableFilters}
-          />
-        </motion.div>
-
         {/* Results Section */}
         {loading ? (
           <motion.div 
@@ -370,12 +282,19 @@ const Index = () => {
                 transition={{ duration: 0.6, delay: 0.8 }}
               >
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">No properties found</h3>
-                <p className="text-gray-600 mb-6">Try adjusting your search criteria or filters</p>
+                <p className="text-gray-600 mb-6">Try adjusting your search criteria</p>
                 {properties.length === 0 && (
-                  <p className="text-sm text-gray-500">
-                    It looks like there are no properties in the system yet. 
-                    Please check back later or contact support if this seems incorrect.
-                  </p>
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500">
+                      It looks like there are no approved properties in the system yet.
+                    </p>
+                    <button 
+                      onClick={fetchProperties}
+                      className="bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 transition-colors"
+                    >
+                      Retry Loading
+                    </button>
+                  </div>
                 )}
               </motion.div>
             ) : (
