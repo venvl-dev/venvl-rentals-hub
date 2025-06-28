@@ -1,11 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
-import SearchPill from '@/components/search/SearchPill';
+import AdvancedSearchBar from '@/components/search/AdvancedSearchBar';
 import PropertyFilters from '@/components/search/PropertyFilters';
 import PropertyCard from '@/components/PropertyCard';
 import { toast } from 'sonner';
-import { motion } from 'framer-motion';
 
 interface Property {
   id: string;
@@ -265,95 +265,49 @@ const Index = () => {
       <Header />
       
       <main className="container mx-auto px-4 py-8">
-        <motion.div 
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Find your perfect stay
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-xl text-gray-600">
             Discover amazing properties for your next vacation
           </p>
-        </motion.div>
+        </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          <SearchPill onSearch={handleSearch} initialFilters={searchFilters} />
-        </motion.div>
+        <AdvancedSearchBar onSearch={handleSearch} initialFilters={searchFilters} />
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          <PropertyFilters
-            filters={propertyFilters}
-            onFiltersChange={setPropertyFilters}
-            availableFilters={availableFilters}
-          />
-        </motion.div>
+        <PropertyFilters
+          filters={propertyFilters}
+          onFiltersChange={setPropertyFilters}
+          availableFilters={availableFilters}
+        />
 
         {loading ? (
-          <motion.div 
-            className="flex justify-center items-center h-64"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3 }}
-          >
+          <div className="flex justify-center items-center h-64">
             <div className="text-lg">Loading properties...</div>
-          </motion.div>
+          </div>
         ) : (
           <>
-            <motion.div 
-              className="flex items-center justify-between mb-6"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-            >
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold">
                 {filteredProperties.length} propert{filteredProperties.length !== 1 ? 'ies' : 'y'} found
               </h2>
               <div className="text-sm text-gray-600">
                 {searchFilters.location && `in ${searchFilters.location}`}
               </div>
-            </motion.div>
+            </div>
 
             {filteredProperties.length === 0 ? (
-              <motion.div 
-                className="text-center py-12"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
-              >
+              <div className="text-center py-12">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No properties found</h3>
                 <p className="text-gray-600">Try adjusting your search criteria</p>
-              </motion.div>
+              </div>
             ) : (
-              <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
-              >
-                {filteredProperties.map((property, index) => (
-                  <motion.div
-                    key={property.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="transition-transform duration-200"
-                  >
-                    <PropertyCard property={property} />
-                  </motion.div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {filteredProperties.map((property) => (
+                  <PropertyCard key={property.id} property={property} />
                 ))}
-              </motion.div>
+              </div>
             )}
           </>
         )}
