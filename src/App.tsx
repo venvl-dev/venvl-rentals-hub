@@ -15,6 +15,8 @@ import GuestBookings from "./pages/GuestBookings";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import SystemSetup from "./pages/SystemSetup";
+import CreateTestUsers from "./pages/CreateTestUsers";
+import DataSeeding from "./pages/DataSeeding";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,8 @@ function App() {
               <Route path="/guest/bookings" element={<GuestBookings />} />
               <Route path="/admin/panel" element={<AdminPanel />} />
               <Route path="/system-setup" element={<SystemSetup />} />
+              <Route path="/create-test-users" element={<CreateTestUsers />} />
+              <Route path="/data-seeding" element={<DataSeeding />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

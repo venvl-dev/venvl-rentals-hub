@@ -35,12 +35,13 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
   };
 
   const redirectByRole = (userRole: string) => {
+    console.log('Redirecting user with role:', userRole);
     switch (userRole) {
       case 'host':
         navigate('/host/dashboard');
         break;
       case 'super_admin':
-        navigate('/admin');
+        navigate('/admin/panel');
         break;
       default:
         navigate('/guest/bookings');
