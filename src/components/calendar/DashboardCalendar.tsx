@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +8,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addM
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 
-interface Booking {
+interface CalendarBooking {
   id: string;
   property_id: string;
   check_in: string;
@@ -20,11 +19,11 @@ interface Booking {
   total_price: number;
   property?: {
     title: string;
-  };
+  } | null;
   guest?: {
     first_name: string;
     last_name: string;
-  };
+  } | null;
 }
 
 interface DashboardCalendarProps {
@@ -34,8 +33,8 @@ interface DashboardCalendarProps {
 
 const DashboardCalendar = ({ userId, userType }: DashboardCalendarProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [bookings, setBookings] = useState<CalendarBooking[]>([]);
+  const [selectedBooking, setSelectedBooking] = useState<CalendarBooking | null>(null);
   const [filterType, setFilterType] = useState<'all' | 'daily' | 'monthly'>('all');
   const [loading, setLoading] = useState(true);
 
@@ -60,17 +59,43 @@ const DashboardCalendar = ({ userId, userType }: DashboardCalendarProps) => {
         .lte('check_out', endDate);
 
       if (userType === 'host') {
-        query = query.eq('properties.host_id', userId);
+        // For hosts, we need to join with properties to filter by host_id
+        const { data: hostProperties } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('host_id', userId);
+        
+        if (hostProperties && hostProperties.length > 0) {
+          const propertyIds = hostProperties.map(p => p.id);
+          query = query.in('property_id', propertyIds);
+        } else {
+          // No properties found for this host
+          setBookings([]);
+          setLoading(false);
+          return;
+        }
       } else {
         query = query.eq('guest_id', userId);
       }
 
       const { data, error } = await query;
 
-      if (error) throw error;
-      setBookings(data || []);
+      if (error) {
+        console.error('Error fetching bookings:', error);
+        throw error;
+      }
+      
+      // Type assertion with proper handling of potentially null relations
+      const typedBookings: CalendarBooking[] = (data || []).map(booking => ({
+        ...booking,
+        property: booking.property || null,
+        guest: booking.guest || null
+      }));
+      
+      setBookings(typedBookings);
     } catch (error) {
       console.error('Error fetching bookings:', error);
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -148,8 +173,10 @@ const DashboardCalendar = ({ userId, userType }: DashboardCalendarProps) => {
                 >
                   <div className="truncate font-medium">
                     {userType === 'host' 
-                      ? `${booking.guest?.first_name} ${booking.guest?.last_name}`
-                      : booking.property?.title
+                      ? booking.guest 
+                        ? `${booking.guest.first_name} ${booking.guest.last_name}`
+                        : 'Guest'
+                      : booking.property?.title || 'Property'
                     }
                   </div>
                   <div className="flex items-center justify-between">
@@ -167,8 +194,10 @@ const DashboardCalendar = ({ userId, userType }: DashboardCalendarProps) => {
                   <div className="flex items-center justify-between">
                     <h4 className="font-semibold text-lg">
                       {userType === 'host' 
-                        ? `${booking.guest?.first_name} ${booking.guest?.last_name}`
-                        : booking.property?.title
+                        ? booking.guest 
+                          ? `${booking.guest.first_name} ${booking.guest.last_name}`
+                          : 'Guest'
+                        : booking.property?.title || 'Property'
                       }
                     </h4>
                     <Badge className={getStatusColor(booking.status)}>
