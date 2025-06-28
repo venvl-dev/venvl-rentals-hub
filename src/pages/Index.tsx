@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
-import SearchPill from '@/components/search/SearchPill';
+import VenvlSearchPill from '@/components/search/VenvlSearchPill';
 import PropertyFilters from '@/components/search/PropertyFilters';
 import PropertyCard from '@/components/PropertyCard';
 import { toast } from 'sonner';
@@ -290,31 +289,44 @@ const Index = () => {
       
       <main className="container mx-auto px-4 py-8">
         <motion.div 
-          className="text-center mb-8"
+          className="text-center mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-4">
-            Find your perfect stay
-          </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover amazing properties for your next vacation
-          </p>
+          <motion.h1 
+            className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            Discover your perfect
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600">
+              VENVL experience
+            </span>
+          </motion.h1>
+          <motion.p 
+            className="text-xl text-gray-600 max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            Exceptional stays, curated experiences, unforgettable moments
+          </motion.p>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <SearchPill onSearch={handleSearch} initialFilters={searchFilters} />
+          <VenvlSearchPill onSearch={handleSearch} initialFilters={searchFilters} />
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
+          transition={{ duration: 0.6, delay: 0.5 }}
         >
           <PropertyFilters
             filters={propertyFilters}
@@ -323,6 +335,7 @@ const Index = () => {
           />
         </motion.div>
 
+        {/* Results Section */}
         {loading ? (
           <motion.div 
             className="flex justify-center items-center h-64"
@@ -336,12 +349,12 @@ const Index = () => {
         ) : (
           <>
             <motion.div 
-              className="flex items-center justify-between mb-6"
+              className="flex items-center justify-between mb-8"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
             >
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-2xl font-bold text-gray-900">
                 {filteredProperties.length} propert{filteredProperties.length !== 1 ? 'ies' : 'y'} found
               </h2>
               <div className="text-sm text-gray-600">
@@ -351,13 +364,13 @@ const Index = () => {
 
             {filteredProperties.length === 0 ? (
               <motion.div 
-                className="text-center py-12"
+                className="text-center py-16"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: 0.8 }}
               >
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No properties found</h3>
-                <p className="text-gray-600 mb-4">Try adjusting your search criteria</p>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">No properties found</h3>
+                <p className="text-gray-600 mb-6">Try adjusting your search criteria or filters</p>
                 {properties.length === 0 && (
                   <p className="text-sm text-gray-500">
                     It looks like there are no properties in the system yet. 
@@ -375,11 +388,11 @@ const Index = () => {
                 {filteredProperties.map((property, index) => (
                   <motion.div
                     key={property.id}
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                    whileHover={{ scale: 1.02 }}
-                    className="transition-transform duration-200"
+                    whileHover={{ y: -8, scale: 1.02 }}
+                    className="transition-transform duration-300"
                   >
                     <PropertyCard property={property} />
                   </motion.div>
