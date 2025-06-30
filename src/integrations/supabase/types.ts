@@ -33,58 +33,114 @@ export type Database = {
         }
         Relationships: []
       }
+      booking_notifications: {
+        Row: {
+          booking_id: string | null
+          created_at: string | null
+          email_sent: boolean | null
+          id: string
+          notification_type: string
+          recipient_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          booking_id?: string | null
+          created_at?: string | null
+          email_sent?: boolean | null
+          id?: string
+          notification_type: string
+          recipient_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          booking_id?: string | null
+          created_at?: string | null
+          email_sent?: boolean | null
+          id?: string
+          notification_type?: string
+          recipient_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_notifications_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
+          booking_reference: string | null
           booking_type: string | null
           cancellation_reason: string | null
           cancelled_at: string | null
           cancelled_by: string | null
           check_in: string
           check_out: string
+          confirmation_sent_at: string | null
           created_at: string | null
+          currency: string | null
           duration_months: number | null
           flexible_option: string | null
           guest_id: string
           guests: number
           id: string
+          payment_amount: number | null
+          payment_status: string | null
           property_id: string
           status: Database["public"]["Enums"]["booking_status"] | null
+          stripe_session_id: string | null
           total_price: number
           updated_at: string | null
         }
         Insert: {
+          booking_reference?: string | null
           booking_type?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
           check_in: string
           check_out: string
+          confirmation_sent_at?: string | null
           created_at?: string | null
+          currency?: string | null
           duration_months?: number | null
           flexible_option?: string | null
           guest_id: string
           guests?: number
           id?: string
+          payment_amount?: number | null
+          payment_status?: string | null
           property_id: string
           status?: Database["public"]["Enums"]["booking_status"] | null
+          stripe_session_id?: string | null
           total_price: number
           updated_at?: string | null
         }
         Update: {
+          booking_reference?: string | null
           booking_type?: string | null
           cancellation_reason?: string | null
           cancelled_at?: string | null
           cancelled_by?: string | null
           check_in?: string
           check_out?: string
+          confirmation_sent_at?: string | null
           created_at?: string | null
+          currency?: string | null
           duration_months?: number | null
           flexible_option?: string | null
           guest_id?: string
           guests?: number
           id?: string
+          payment_amount?: number | null
+          payment_status?: string | null
           property_id?: string
           status?: Database["public"]["Enums"]["booking_status"] | null
+          stripe_session_id?: string | null
           total_price?: number
           updated_at?: string | null
         }
@@ -462,7 +518,20 @@ export type Database = {
         Args: { booking_id: string }
         Returns: boolean
       }
+      check_booking_conflicts: {
+        Args: {
+          p_property_id: string
+          p_check_in: string
+          p_check_out: string
+          p_exclude_booking_id?: string
+        }
+        Returns: boolean
+      }
       create_test_scenario: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_booking_reference: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '@supabase/supabase-js';
@@ -47,6 +46,7 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
   const [guests, setGuests] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [unavailableDates, setUnavailableDates] = useState<Date[]>([]);
 
   const getRentalType = () => {
     if (property.rental_type) return property.rental_type;
@@ -56,6 +56,60 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
   };
 
   const rentalType = getRentalType();
+
+  // Fetch unavailable dates
+  useEffect(() => {
+    fetchUnavailableDates();
+  }, [property.id]);
+
+  const fetchUnavailableDates = async () => {
+    try {
+      // Fetch booked dates
+      const { data: bookings, error: bookingsError } = await supabase
+        .from('bookings')
+        .select('check_in, check_out')
+        .eq('property_id', property.id)
+        .in('status', ['pending', 'confirmed', 'checked_in']);
+
+      if (bookingsError) throw bookingsError;
+
+      // Fetch blocked dates
+      const { data: availability, error: availabilityError } = await supabase
+        .from('property_availability')
+        .select('blocked_date')
+        .eq('property_id', property.id);
+
+      if (availabilityError) throw availabilityError;
+
+      const blocked: Date[] = [];
+      
+      // Add booked date ranges
+      bookings?.forEach(booking => {
+        const start = new Date(booking.check_in);
+        const end = new Date(booking.check_out);
+        const current = new Date(start);
+        
+        while (current < end) {
+          blocked.push(new Date(current));
+          current.setDate(current.getDate() + 1);
+        }
+      });
+
+      // Add manually blocked dates
+      availability?.forEach(item => {
+        blocked.push(new Date(item.blocked_date));
+      });
+
+      // Add property blocked dates
+      property.blocked_dates?.forEach(dateStr => {
+        blocked.push(new Date(dateStr));
+      });
+
+      setUnavailableDates(blocked);
+    } catch (error) {
+      console.error('Error fetching unavailable dates:', error);
+    }
+  };
 
   // Set initial booking mode
   useEffect(() => {
@@ -116,14 +170,37 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
       }
     }
 
+    // Check availability before proceeding
+    const checkInDate = bookingMode === 'daily' ? checkIn! : monthlyStartDate!;
+    const checkOutDate = bookingMode === 'daily' ? checkOut! : addMonths(monthlyStartDate!, monthlyDuration);
+    
+    try {
+      const { data: conflicts, error } = await supabase.rpc('check_booking_conflicts', {
+        p_property_id: property.id,
+        p_check_in: checkInDate.toISOString().split('T')[0],
+        p_check_out: checkOutDate.toISOString().split('T')[0],
+      });
+
+      if (error) throw error;
+      
+      if (conflicts) {
+        toast.error('Selected dates are no longer available. Please choose different dates.');
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking availability:', error);
+      toast.error('Failed to check availability. Please try again.');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
 
       const bookingData = {
         property_id: property.id,
         guest_id: user.id,
-        check_in: bookingMode === 'daily' ? checkIn?.toISOString().split('T')[0] : monthlyStartDate?.toISOString().split('T')[0],
-        check_out: bookingMode === 'daily' ? checkOut?.toISOString().split('T')[0] : addMonths(monthlyStartDate!, monthlyDuration).toISOString().split('T')[0],
+        check_in: checkInDate.toISOString().split('T')[0],
+        check_out: checkOutDate.toISOString().split('T')[0],
         guests,
         total_price: totalPrice,
         booking_type: bookingMode,
@@ -131,11 +208,37 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
         status: 'pending' as BookingStatus,
       };
 
-      const { error } = await supabase
+      const { data: booking, error } = await supabase
         .from('bookings')
-        .insert(bookingData);
+        .insert(bookingData)
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // Create notifications
+      const { data: propertyData } = await supabase
+        .from('properties')
+        .select('host_id, title')
+        .eq('id', property.id)
+        .single();
+
+      if (propertyData) {
+        // Notify host
+        await supabase.from('notifications').insert({
+          user_id: propertyData.host_id,
+          title: 'New Booking Request',
+          message: `You have a new booking request for ${propertyData.title}`,
+          type: 'booking',
+        });
+
+        // Track booking notification
+        await supabase.from('booking_notifications').insert({
+          booking_id: booking.id,
+          recipient_id: propertyData.host_id,
+          notification_type: 'new_booking',
+        });
+      }
 
       toast.success('Booking request submitted successfully!');
       
@@ -145,6 +248,9 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
       setMonthlyStartDate(undefined);
       setMonthlyDuration(1);
       setGuests(1);
+      
+      // Refresh unavailable dates
+      fetchUnavailableDates();
       
     } catch (error: any) {
       console.error('Error creating booking:', error);
@@ -160,8 +266,9 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
   };
 
   const isDateBlocked = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return property.blocked_dates?.includes(dateStr) || date < new Date();
+    return unavailableDates.some(blockedDate => 
+      format(blockedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
+    ) || date < new Date();
   };
 
   return (
