@@ -1,12 +1,9 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Calendar as CalendarIcon } from 'lucide-react';
-import { format, addMonths } from 'date-fns';
-import { DateRange } from 'react-day-picker';
+import { Calendar, X, Clock } from 'lucide-react';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 interface VenvlDatePickerProps {
   checkIn?: Date;
@@ -14,11 +11,11 @@ interface VenvlDatePickerProps {
   bookingType: 'daily' | 'monthly' | 'flexible';
   duration?: number;
   flexibleOption?: string;
-  onDateChange: (dates: { 
-    checkIn?: Date; 
-    checkOut?: Date; 
-    duration?: number; 
-    flexibleOption?: string 
+  onDateChange: (dates: {
+    checkIn?: Date;
+    checkOut?: Date;
+    duration?: number;
+    flexibleOption?: string;
   }) => void;
   onClose: () => void;
 }
@@ -27,135 +24,147 @@ const VenvlDatePicker = ({
   checkIn, 
   checkOut, 
   bookingType, 
-  duration,
-  flexibleOption,
+  duration, 
+  flexibleOption, 
   onDateChange, 
   onClose 
 }: VenvlDatePickerProps) => {
-  const [selectedDates, setSelectedDates] = useState<DateRange | undefined>(
-    checkIn ? { from: checkIn, to: checkOut } : undefined
-  );
+  const [selectedCheckIn, setSelectedCheckIn] = useState<Date | undefined>(checkIn);
+  const [selectedCheckOut, setSelectedCheckOut] = useState<Date | undefined>(checkOut);
+  const [selectedDuration, setSelectedDuration] = useState<number>(duration || 1);
+  const [selectedFlexibleOption, setSelectedFlexibleOption] = useState<string>(flexibleOption || 'weekend');
+
+  const handleApply = () => {
+    if (bookingType === 'daily') {
+      onDateChange({
+        checkIn: selectedCheckIn,
+        checkOut: selectedCheckOut
+      });
+    } else if (bookingType === 'monthly') {
+      onDateChange({
+        checkIn: selectedCheckIn,
+        duration: selectedDuration
+      });
+    } else if (bookingType === 'flexible') {
+      onDateChange({
+        flexibleOption: selectedFlexibleOption
+      });
+    }
+    onClose();
+  };
 
   const flexibleOptions = [
-    { value: 'weekend', label: 'Weekend Getaway', description: '2-3 nights' },
-    { value: 'week', label: 'Week Stay', description: '7 nights' },
-    { value: 'month', label: 'Month Stay', description: '30 nights' },
-    { value: 'any', label: 'Flexible Dates', description: 'Any duration' }
+    { id: 'weekend', label: 'Weekend stay', description: '2-3 days' },
+    { id: 'week', label: 'Week stay', description: '7 days' },
+    { id: 'month', label: 'Month stay', description: '28+ days' },
+    { id: 'any', label: 'Flexible dates', description: 'Any length' }
   ];
-
-  const handleDateSelect = (dateRange: DateRange | undefined) => {
-    setSelectedDates(dateRange);
-    onDateChange({ 
-      checkIn: dateRange?.from, 
-      checkOut: dateRange?.to 
-    });
-  };
-
-  const handleMonthlyDuration = (months: number) => {
-    const startDate = new Date();
-    const endDate = addMonths(startDate, months);
-    onDateChange({ checkIn: startDate, checkOut: endDate, duration: months });
-  };
-
-  const handleFlexibleSelect = (option: string) => {
-    onDateChange({ flexibleOption: option });
-  };
 
   return (
     <motion.div
-      className="absolute top-full left-0 right-0 mt-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
-      initial={{ opacity: 0, y: -20, scale: 0.95 }}
+      className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden"
+      initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
     >
-      <div className="p-6">
+      <div className="p-4 w-80">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-gray-900">
-            {bookingType === 'daily' && 'Select dates'}
-            {bookingType === 'monthly' && 'Choose duration'}
-            {bookingType === 'flexible' && 'How long?'}
-          </h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center w-8 h-8 bg-black rounded-lg">
+              <Calendar className="h-4 w-4 text-white" />
+            </div>
+            <h3 className="text-base font-semibold text-gray-900">
+              {bookingType === 'daily' ? 'Select dates' : 
+               bookingType === 'monthly' ? 'Monthly stay' : 'Flexible dates'}
+            </h3>
+          </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
+            className="h-6 w-6 p-0 rounded-full hover:bg-gray-100"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </Button>
         </div>
 
-        {/* Daily Booking */}
+        {/* Content based on booking type */}
         {bookingType === 'daily' && (
-          <div>
-            <Calendar
+          <div className="space-y-4">
+            <CalendarComponent
               mode="range"
-              selected={selectedDates}
-              onSelect={handleDateSelect}
-              disabled={(date) => date < new Date()}
-              className="rounded-xl border-2 border-gray-100 p-4"
-              classNames={{
-                day_selected: "bg-black text-white hover:bg-gray-800",
-                day_range_middle: "bg-gray-100",
-                day_today: "bg-gray-100 text-gray-900 font-bold"
+              selected={{ from: selectedCheckIn, to: selectedCheckOut }}
+              onSelect={(range) => {
+                setSelectedCheckIn(range?.from);
+                setSelectedCheckOut(range?.to);
               }}
+              numberOfMonths={1}
+              className="rounded-md border-0"
             />
           </div>
         )}
 
-        {/* Monthly Booking */}
         {bookingType === 'monthly' && (
-          <div className="space-y-6">
-            <div className="text-sm text-gray-600 mb-4">
-              Choose how many months you'd like to stay
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-900 mb-2 block">Start date</label>
+              <CalendarComponent
+                mode="single"
+                selected={selectedCheckIn}
+                onSelect={setSelectedCheckIn}
+                numberOfMonths={1}
+                className="rounded-md border-0"
+              />
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-              {[1, 2, 3, 6, 12].map((months) => (
-                <motion.div
-                  key={months}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+            <div>
+              <label className="text-sm font-medium text-gray-900 mb-2 block">Duration</label>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedDuration(Math.max(1, selectedDuration - 1))}
+                  className="w-8 h-8 rounded-full"
                 >
-                  <Button
-                    variant={duration === months ? "default" : "outline"}
-                    onClick={() => handleMonthlyDuration(months)}
-                    className={`w-full h-20 flex flex-col items-center justify-center rounded-xl font-semibold ${
-                      duration === months 
-                        ? 'bg-black text-white hover:bg-gray-800' 
-                        : 'border-2 border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <span className="text-lg font-bold">{months}</span>
-                    <span className="text-xs">month{months > 1 ? 's' : ''}</span>
-                  </Button>
-                </motion.div>
-              ))}
+                  -
+                </Button>
+                <span className="w-16 text-center font-medium">
+                  {selectedDuration} month{selectedDuration > 1 ? 's' : ''}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedDuration(selectedDuration + 1)}
+                  className="w-8 h-8 rounded-full"
+                >
+                  +
+                </Button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Flexible Booking */}
         {bookingType === 'flexible' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
             {flexibleOptions.map((option) => (
               <motion.div
-                key={option.value}
-                className={`p-6 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                  flexibleOption === option.value
-                    ? 'border-black bg-black text-white'
-                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                key={option.id}
+                className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                  selectedFlexibleOption === option.id
+                    ? 'border-black bg-gray-50'
+                    : 'border-gray-200 hover:border-gray-300'
                 }`}
-                onClick={() => handleFlexibleSelect(option.value)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedFlexibleOption(option.id)}
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
               >
-                <div className="font-semibold text-lg mb-1">{option.label}</div>
-                <div className={`text-sm ${
-                  flexibleOption === option.value ? 'text-gray-200' : 'text-gray-500'
-                }`}>
-                  {option.description}
+                <div className="flex items-center gap-3">
+                  <Clock className="h-4 w-4 text-gray-600" />
+                  <div>
+                    <div className="font-medium text-sm text-gray-900">{option.label}</div>
+                    <div className="text-xs text-gray-500">{option.description}</div>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -163,11 +172,11 @@ const VenvlDatePicker = ({
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
-          <Button variant="ghost" onClick={onClose} className="text-gray-600">
+        <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
+          <Button variant="ghost" onClick={onClose} className="text-gray-600 text-sm">
             Cancel
           </Button>
-          <Button onClick={onClose} className="bg-black text-white hover:bg-gray-800 px-8">
+          <Button onClick={handleApply} className="bg-black text-white hover:bg-gray-800 px-6 text-sm">
             Apply
           </Button>
         </div>

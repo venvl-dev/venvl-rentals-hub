@@ -21,11 +21,7 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
     'Chicago, IL',
     'Miami, FL',
     'San Francisco, CA',
-    'Boston, MA',
-    'Seattle, WA',
-    'Las Vegas, NV',
-    'Austin, TX',
-    'Denver, CO'
+    'Boston, MA'
   ];
 
   useEffect(() => {
@@ -33,9 +29,9 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
       const filtered = popularDestinations.filter(location =>
         location.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setSuggestions(filtered.slice(0, 6));
+      setSuggestions(filtered.slice(0, 4));
     } else {
-      setSuggestions(popularDestinations.slice(0, 6));
+      setSuggestions(popularDestinations.slice(0, 4));
     }
   }, [searchTerm]);
 
@@ -46,62 +42,56 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
 
   return (
     <motion.div
-      className="absolute top-full left-0 right-0 mt-4 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
-      initial={{ opacity: 0, y: -20, scale: 0.95 }}
+      className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden max-w-sm mx-auto"
+      initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -20, scale: 0.95 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
+      exit={{ opacity: 0, y: -10, scale: 0.95 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
     >
-      <div className="p-6">
+      <div className="p-4">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-gray-900">Where to?</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold text-gray-900">Where to?</h3>
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
+            className="h-6 w-6 p-0 rounded-full hover:bg-gray-100"
           >
-            <X className="h-4 w-4" />
+            <X className="h-3 w-3" />
           </Button>
         </div>
 
         {/* Search Input */}
-        <div className="relative mb-6">
-          <MapPin className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <div className="relative mb-4">
+          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
             placeholder="Search destinations"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl text-base focus:border-black focus:ring-0 transition-colors"
+            className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-black focus:ring-0 transition-colors"
             autoFocus
           />
         </div>
 
-        {/* Suggestions */}
-        <div className="space-y-2">
-          <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            {searchTerm ? 'Suggestions' : 'Popular Destinations'}
-          </div>
+        {/* Compact Suggestions */}
+        <div className="space-y-1">
           {suggestions.map((location, index) => (
             <motion.div
               key={location}
-              className="flex items-center p-4 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group"
+              className="flex items-center p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors group"
               onClick={() => handleSelect(location)}
-              initial={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.2, delay: index * 0.05 }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15, delay: index * 0.03 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
             >
-              <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-lg mr-4 group-hover:bg-black group-hover:text-white transition-colors">
-                <MapPin className="h-4 w-4" />
+              <div className="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg mr-3 group-hover:bg-gray-200 transition-colors">
+                <MapPin className="h-3 w-3 text-gray-600" />
               </div>
-              <div>
-                <div className="font-medium text-gray-900">{location}</div>
-                <div className="text-sm text-gray-500">Destination</div>
-              </div>
+              <div className="text-sm font-medium text-gray-900">{location}</div>
             </motion.div>
           ))}
         </div>

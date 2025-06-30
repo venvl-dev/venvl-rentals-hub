@@ -60,21 +60,26 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
     }
     if (filters.bookingType === 'flexible' && filters.flexibleOption) {
       const flexOptions = {
-        weekend: 'Weekend stay',
+        weekend: 'Weekend',
         week: 'Week stay',
         month: 'Month stay',
-        any: 'Flexible dates'
+        any: 'Flexible'
       };
       return flexOptions[filters.flexibleOption as keyof typeof flexOptions] || 'Flexible';
     }
     if (filters.checkIn) {
-      return `${filters.checkIn.toLocaleDateString()} ${filters.checkOut ? '- ' + filters.checkOut.toLocaleDateString() : ''}`;
+      const checkInStr = filters.checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (filters.checkOut) {
+        const checkOutStr = filters.checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return `${checkInStr} - ${checkOutStr}`;
+      }
+      return checkInStr;
     }
-    return 'Select dates';
+    return 'Add dates';
   };
 
   return (
-    <div className="relative w-full max-w-5xl mx-auto">
+    <div className="relative w-full max-w-4xl mx-auto">
       {/* Booking Type Selector */}
       <motion.div
         className="mb-4"
@@ -88,92 +93,86 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
         />
       </motion.div>
 
-      {/* Main Search Pill */}
+      {/* Main Search Pill - Compact Design */}
       <motion.div
-        className="bg-white rounded-2xl border-2 border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+        className="bg-white rounded-full border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
         initial={{ scale: 0.98, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.4 }}
         whileHover={{ scale: 1.01 }}
       >
-        <div className="grid grid-cols-1 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-gray-100">
+        <div className="grid grid-cols-1 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100">
           {/* Where Section */}
           <motion.div
-            className={`p-6 cursor-pointer transition-all duration-300 ${
+            className={`p-4 md:p-6 cursor-pointer transition-all duration-300 ${
               activeSection === 'where' 
-                ? 'bg-black text-white' 
+                ? 'bg-gray-50' 
                 : 'hover:bg-gray-50'
             }`}
             onClick={() => handleSectionClick('where')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="text-xs font-bold uppercase tracking-wide mb-1 opacity-60">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               Where
             </div>
-            <div className={`text-sm font-medium truncate ${
-              activeSection === 'where' ? 'text-white' : 'text-gray-900'
-            }`}>
+            <div className="text-sm font-medium text-gray-900 truncate">
               {filters.location || 'Search destinations'}
             </div>
           </motion.div>
 
           {/* When Section */}
           <motion.div
-            className={`p-6 cursor-pointer transition-all duration-300 ${
+            className={`p-4 md:p-6 cursor-pointer transition-all duration-300 ${
               activeSection === 'when' 
-                ? 'bg-black text-white' 
+                ? 'bg-gray-50' 
                 : 'hover:bg-gray-50'
             }`}
             onClick={() => handleSectionClick('when')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="text-xs font-bold uppercase tracking-wide mb-1 opacity-60">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               When
             </div>
-            <div className={`text-sm font-medium truncate ${
-              activeSection === 'when' ? 'text-white' : 'text-gray-900'
-            }`}>
+            <div className="text-sm font-medium text-gray-900 truncate">
               {getDateDisplayText()}
             </div>
           </motion.div>
 
           {/* Who Section */}
           <motion.div
-            className={`p-6 cursor-pointer transition-all duration-300 ${
+            className={`p-4 md:p-6 cursor-pointer transition-all duration-300 ${
               activeSection === 'who' 
-                ? 'bg-black text-white' 
+                ? 'bg-gray-50' 
                 : 'hover:bg-gray-50'
             }`}
             onClick={() => handleSectionClick('who')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
-            <div className="text-xs font-bold uppercase tracking-wide mb-1 opacity-60">
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               Who
             </div>
-            <div className={`text-sm font-medium truncate ${
-              activeSection === 'who' ? 'text-white' : 'text-gray-900'
-            }`}>
+            <div className="text-sm font-medium text-gray-900 truncate">
               {filters.guests} guest{filters.guests > 1 ? 's' : ''}
             </div>
           </motion.div>
 
           {/* Search Button */}
-          <div className="p-4 flex items-center justify-center lg:justify-end">
+          <div className="p-3 md:p-4 flex items-center justify-center">
             <Button
               onClick={handleSearch}
-              className="bg-black hover:bg-gray-800 text-white rounded-xl px-8 py-3 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2"
+              className="bg-black hover:bg-gray-800 text-white rounded-full px-6 py-3 font-medium shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2"
             >
               <Search className="h-4 w-4" />
-              Search
+              <span className="hidden sm:inline">Search</span>
             </Button>
           </div>
         </div>
       </motion.div>
 
-      {/* Dropdown Overlays */}
+      {/* Compact Dropdown Overlays */}
       <AnimatePresence>
         {activeSection === 'where' && (
           <VenvlDestinationPicker

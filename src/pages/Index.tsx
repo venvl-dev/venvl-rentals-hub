@@ -2,8 +2,8 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
-import AdvancedSearchBar from '@/components/search/AdvancedSearchBar';
 import PropertyCard from '@/components/PropertyCard';
+import VenvlSearchPill from '@/components/search/VenvlSearchPill';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
@@ -241,12 +241,12 @@ const Index = () => {
 
             {/* Search Bar Container */}
             <motion.div
-              className="w-full max-w-6xl mx-auto px-2 sm:px-4"
+              className="w-full max-w-4xl mx-auto px-2 sm:px-4"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <AdvancedSearchBar onSearch={handleSearch} initialFilters={searchFilters} />
+              <VenvlSearchPill onSearch={handleSearch} initialFilters={searchFilters} />
             </motion.div>
           </div>
         </section>
