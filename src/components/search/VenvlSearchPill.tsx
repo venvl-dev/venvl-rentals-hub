@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Search } from 'lucide-react';
+import { Search, MapPin, Calendar, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import VenvlDestinationPicker from './VenvlDestinationPicker';
 import VenvlDatePicker from './VenvlDatePicker';
@@ -82,13 +82,13 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
   if (isMobile) {
     return (
-      <div className="w-full max-w-md mx-auto px-4">
+      <div className="w-full px-4">
         {/* Mobile Booking Type Selector */}
         <motion.div
-          className="mb-6"
-          initial={{ opacity: 0, y: -20 }}
+          className="mb-4"
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: 0.3 }}
         >
           <VenvlBookingTypeSelector
             selectedType={filters.bookingType}
@@ -96,87 +96,120 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           />
         </motion.div>
 
-        {/* Mobile Search Card */}
+        {/* Mobile Compact Search Bar */}
         <motion.div
-          className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden"
-          initial={{ opacity: 0, scale: 0.95 }}
+          className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+          initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
+          transition={{ duration: 0.3, delay: 0.1 }}
         >
           {/* Where Section */}
           <motion.div
-            className={`p-6 border-b border-gray-100 cursor-pointer transition-all duration-300 ${
+            className={`p-4 cursor-pointer transition-colors duration-200 ${
               activeSection === 'where' ? 'bg-gray-50' : 'hover:bg-gray-50'
             }`}
             onClick={() => handleSectionClick('where')}
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.99 }}
           >
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-              أين تريد الذهاب؟
-            </div>
-            <div className="text-base font-medium text-gray-900">
-              {filters.location || 'البحث عن الوجهات'}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <MapPin className="h-4 w-4 text-gray-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-gray-500 mb-1">أين تريد الذهاب؟</div>
+                <div className="text-sm text-gray-900 truncate">
+                  {filters.location || 'البحث عن الوجهات'}
+                </div>
+              </div>
             </div>
           </motion.div>
+
+          <div className="border-t border-gray-100" />
 
           {/* When Section */}
           <motion.div
-            className={`p-6 border-b border-gray-100 cursor-pointer transition-all duration-300 ${
+            className={`p-4 cursor-pointer transition-colors duration-200 ${
               activeSection === 'when' ? 'bg-gray-50' : 'hover:bg-gray-50'
             }`}
             onClick={() => handleSectionClick('when')}
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.99 }}
           >
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-              متى؟
-            </div>
-            <div className="text-base font-medium text-gray-900">
-              {getDateDisplayText()}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Calendar className="h-4 w-4 text-gray-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-gray-500 mb-1">متى؟</div>
+                <div className="text-sm text-gray-900 truncate">
+                  {getDateDisplayText()}
+                </div>
+              </div>
             </div>
           </motion.div>
+
+          <div className="border-t border-gray-100" />
 
           {/* Who Section */}
           <motion.div
-            className={`p-6 cursor-pointer transition-all duration-300 ${
+            className={`p-4 cursor-pointer transition-colors duration-200 ${
               activeSection === 'who' ? 'bg-gray-50' : 'hover:bg-gray-50'
             }`}
             onClick={() => handleSectionClick('who')}
-            whileTap={{ scale: 0.98 }}
+            whileTap={{ scale: 0.99 }}
           >
-            <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-              من؟
-            </div>
-            <div className="text-base font-medium text-gray-900">
-              {filters.guests} {filters.guests === 1 ? 'ضيف' : filters.guests === 2 ? 'ضيفان' : 'ضيوف'}
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <Users className="h-4 w-4 text-gray-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-gray-500 mb-1">من؟</div>
+                <div className="text-sm text-gray-900 truncate">
+                  {filters.guests} {filters.guests === 1 ? 'ضيف' : filters.guests === 2 ? 'ضيفان' : 'ضيوف'}
+                </div>
+              </div>
             </div>
           </motion.div>
 
+          <div className="border-t border-gray-100" />
+
           {/* Search Button */}
-          <div className="p-6 bg-gray-50">
+          <div className="p-4">
             <Button
               onClick={handleSearch}
-              className="w-full bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-2xl py-4 text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3"
+              className="w-full bg-black hover:bg-gray-800 text-white rounded-xl py-3 font-medium transition-colors duration-200 flex items-center justify-center gap-2"
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-4 w-4" />
               بحث
             </Button>
           </div>
         </motion.div>
 
-        {/* Mobile Overlays */}
+        {/* Mobile Full-Screen Overlays */}
         <AnimatePresence>
           {activeSection === 'where' && (
-            <div className="fixed inset-0 bg-white z-50 pt-16">
+            <motion.div
+              className="fixed inset-0 bg-white z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
               <VenvlDestinationPicker
                 value={filters.location}
                 onChange={(location) => updateFilters({ location })}
                 onClose={() => setActiveSection(null)}
               />
-            </div>
+            </motion.div>
           )}
 
           {activeSection === 'when' && (
-            <div className="fixed inset-0 bg-white z-50 pt-16">
+            <motion.div
+              className="fixed inset-0 bg-white z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
               <VenvlDatePicker
                 checkIn={filters.checkIn}
                 checkOut={filters.checkOut}
@@ -186,17 +219,23 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                 onDateChange={(dates) => updateFilters(dates)}
                 onClose={() => setActiveSection(null)}
               />
-            </div>
+            </motion.div>
           )}
 
           {activeSection === 'who' && (
-            <div className="fixed inset-0 bg-white z-50 pt-16">
+            <motion.div
+              className="fixed inset-0 bg-white z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
               <VenvlGuestPicker
                 guests={filters.guests}
                 onChange={(guests) => updateFilters({ guests })}
                 onClose={() => setActiveSection(null)}
               />
-            </div>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>
@@ -204,13 +243,13 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
       {/* Desktop Booking Type Selector */}
       <motion.div
-        className="mb-8"
-        initial={{ opacity: 0, y: -20 }}
+        className="mb-6"
+        initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.3 }}
       >
         <VenvlBookingTypeSelector
           selectedType={filters.bookingType}
@@ -220,28 +259,38 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
       {/* Desktop Search Bar */}
       <motion.div
-        className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden"
-        initial={{ opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4, delay: 0.1 }}
-        whileHover={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
+        transition={{ duration: 0.3, delay: 0.1 }}
+        whileHover={{ 
+          boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.15)",
+          transition: { duration: 0.2 }
+        }}
       >
-        <div className="flex">
+        <div className="flex items-stretch">
           {/* Where Section */}
           <div className="flex-1 relative">
             <motion.div
-              className={`p-8 cursor-pointer transition-all duration-300 border-r border-gray-100 ${
+              className={`p-6 cursor-pointer transition-all duration-200 ${
                 activeSection === 'where' ? 'bg-gray-50' : 'hover:bg-gray-50'
               }`}
               onClick={() => handleSectionClick('where')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
             >
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                أين تريد الذهاب؟
-              </div>
-              <div className="text-base font-medium text-gray-900">
-                {filters.location || 'البحث عن الوجهات'}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <MapPin className="h-5 w-5 text-gray-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                    أين تريد الذهاب؟
+                  </div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {filters.location || 'البحث عن الوجهات'}
+                  </div>
+                </div>
               </div>
             </motion.div>
             
@@ -258,21 +307,30 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
             </AnimatePresence>
           </div>
 
+          <div className="w-px bg-gray-200" />
+
           {/* When Section */}
           <div className="flex-1 relative">
             <motion.div
-              className={`p-8 cursor-pointer transition-all duration-300 border-r border-gray-100 ${
+              className={`p-6 cursor-pointer transition-all duration-200 ${
                 activeSection === 'when' ? 'bg-gray-50' : 'hover:bg-gray-50'
               }`}
               onClick={() => handleSectionClick('when')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
             >
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                متى؟
-              </div>
-              <div className="text-base font-medium text-gray-900">
-                {getDateDisplayText()}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-gray-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                    متى؟
+                  </div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {getDateDisplayText()}
+                  </div>
+                </div>
               </div>
             </motion.div>
             
@@ -293,21 +351,30 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
             </AnimatePresence>
           </div>
 
+          <div className="w-px bg-gray-200" />
+
           {/* Who Section */}
           <div className="flex-1 relative">
             <motion.div
-              className={`p-8 cursor-pointer transition-all duration-300 border-r border-gray-100 ${
+              className={`p-6 cursor-pointer transition-all duration-200 ${
                 activeSection === 'who' ? 'bg-gray-50' : 'hover:bg-gray-50'
               }`}
               onClick={() => handleSectionClick('who')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
             >
-              <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-                من؟
-              </div>
-              <div className="text-base font-medium text-gray-900">
-                {filters.guests} {filters.guests === 1 ? 'ضيف' : filters.guests === 2 ? 'ضيفان' : 'ضيوف'}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <Users className="h-5 w-5 text-gray-600" />
+                </div>
+                <div className="flex-1">
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                    من؟
+                  </div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {filters.guests} {filters.guests === 1 ? 'ضيف' : filters.guests === 2 ? 'ضيفان' : 'ضيوف'}
+                  </div>
+                </div>
               </div>
             </motion.div>
             
@@ -325,12 +392,12 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           </div>
 
           {/* Search Button */}
-          <div className="flex items-center p-8">
+          <div className="flex items-center p-4">
             <Button
               onClick={handleSearch}
-              className="bg-gradient-to-r from-black to-gray-800 hover:from-gray-800 hover:to-black text-white rounded-2xl px-8 py-4 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3"
+              className="bg-black hover:bg-gray-800 text-white rounded-xl px-6 py-3 font-medium transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
             >
-              <Search className="h-5 w-5" />
+              <Search className="h-4 w-4" />
               بحث
             </Button>
           </div>
