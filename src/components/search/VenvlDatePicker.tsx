@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Calendar, X, Clock } from 'lucide-react';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Slider } from '@/components/ui/slider';
 
 interface VenvlDatePickerProps {
   checkIn?: Date;
@@ -68,7 +69,7 @@ const VenvlDatePicker = ({
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
     >
-      <div className="p-4 w-80">
+      <div className="p-4 w-96">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -107,41 +108,87 @@ const VenvlDatePicker = ({
         )}
 
         {bookingType === 'monthly' && (
-          <div className="space-y-4">
+          <div className="space-y-6">
+            {/* Start Date Section */}
             <div>
-              <label className="text-sm font-medium text-gray-900 mb-2 block">Start date</label>
+              <label className="text-sm font-semibold text-gray-900 mb-3 block">When do you want to start?</label>
               <CalendarComponent
                 mode="single"
                 selected={selectedCheckIn}
                 onSelect={setSelectedCheckIn}
                 numberOfMonths={1}
-                className="rounded-md border-0"
+                className="rounded-md border border-gray-200 p-3"
+                disabled={(date) => date < new Date()}
               />
             </div>
+
+            {/* Duration Section with Interactive Roller */}
             <div>
-              <label className="text-sm font-medium text-gray-900 mb-2 block">Duration</label>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedDuration(Math.max(1, selectedDuration - 1))}
-                  className="w-8 h-8 rounded-full"
+              <label className="text-sm font-semibold text-gray-900 mb-4 block">How many months?</label>
+              
+              {/* Month Display */}
+              <div className="text-center mb-6">
+                <motion.div 
+                  className="inline-flex items-center justify-center w-20 h-20 bg-black text-white rounded-full"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  -
-                </Button>
-                <span className="w-16 text-center font-medium">
-                  {selectedDuration} month{selectedDuration > 1 ? 's' : ''}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedDuration(selectedDuration + 1)}
-                  className="w-8 h-8 rounded-full"
-                >
-                  +
-                </Button>
+                  <span className="text-2xl font-bold">{selectedDuration}</span>
+                </motion.div>
+                <div className="mt-2 text-sm text-gray-600">
+                  {selectedDuration === 1 ? 'month' : 'months'}
+                </div>
+              </div>
+
+              {/* Interactive Slider */}
+              <div className="px-4">
+                <Slider
+                  value={[selectedDuration]}
+                  onValueChange={(value) => setSelectedDuration(value[0])}
+                  max={12}
+                  min={1}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                  <span>1 month</span>
+                  <span>12 months</span>
+                </div>
+              </div>
+
+              {/* Month Options Grid */}
+              <div className="grid grid-cols-4 gap-2 mt-4">
+                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                  <motion.button
+                    key={month}
+                    onClick={() => setSelectedDuration(month)}
+                    className={`p-2 rounded-lg text-sm font-medium transition-all ${
+                      selectedDuration === month
+                        ? 'bg-black text-white shadow-md'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {month}
+                  </motion.button>
+                ))}
               </div>
             </div>
+
+            {/* Summary */}
+            {selectedCheckIn && (
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-600">
+                  <strong>Summary:</strong> {selectedDuration} month{selectedDuration > 1 ? 's' : ''} starting from{' '}
+                  {selectedCheckIn.toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
