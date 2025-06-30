@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
 
 interface VenvlDestinationPickerProps {
   value: string;
@@ -14,27 +16,50 @@ interface VenvlDestinationPickerProps {
 const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPickerProps) => {
   const [searchTerm, setSearchTerm] = useState(value);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const isMobile = useIsMobile();
 
-  const popularDestinations = [
-    'New York, NY',
-    'Los Angeles, CA',
-    'Chicago, IL',
-    'Miami, FL',
-    'San Francisco, CA',
-    'Boston, MA'
-  ];
+  // Fetch available locations from properties
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('city, state')
+          .eq('is_active', true)
+          .eq('approval_status', 'approved');
+
+        if (error) {
+          console.error('Error fetching locations:', error);
+          return;
+        }
+
+        const locations = data
+          .filter(property => property.city && property.state)
+          .map(property => `${property.city}, ${property.state}`)
+          .filter((location, index, array) => array.indexOf(location) === index) // Remove duplicates
+          .sort();
+
+        console.log('Available locations:', locations);
+        setAvailableLocations(locations);
+      } catch (error) {
+        console.error('Error fetching locations:', error);
+      }
+    };
+
+    fetchLocations();
+  }, []);
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = popularDestinations.filter(location =>
+      const filtered = availableLocations.filter(location =>
         location.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setSuggestions(filtered.slice(0, 4));
+      setSuggestions(filtered.slice(0, 6));
     } else {
-      setSuggestions(popularDestinations.slice(0, 4));
+      setSuggestions(availableLocations.slice(0, 6));
     }
-  }, [searchTerm]);
+  }, [searchTerm, availableLocations]);
 
   const handleSelect = (location: string) => {
     onChange(location);
@@ -88,6 +113,12 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
               <div className="text-base font-medium text-gray-900">{location}</div>
             </motion.div>
           ))}
+          {suggestions.length === 0 && searchTerm && (
+            <div className="text-center py-8 text-gray-500">
+              <p>No locations found matching "{searchTerm}"</p>
+              <p className="text-sm mt-2">Try searching for a city or state</p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -129,7 +160,7 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
         </div>
 
         {/* Compact Suggestions */}
-        <div className="space-y-1">
+        <div className="space-y-1 max-h-64 overflow-y-auto">
           {suggestions.map((location, index) => (
             <motion.div
               key={location}
@@ -147,6 +178,11 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
               <div className="text-sm font-medium text-gray-900">{location}</div>
             </motion.div>
           ))}
+          {suggestions.length === 0 && searchTerm && (
+            <div className="text-center py-4 text-gray-500">
+              <p className="text-sm">No locations found</p>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>

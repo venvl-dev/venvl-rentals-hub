@@ -111,55 +111,86 @@ const Index = () => {
   };
 
   const applyFilters = () => {
-    console.log('Applying filters to', properties.length, 'properties');
+    console.log('Applying filters:', searchFilters);
+    console.log('Total properties to filter:', properties.length);
+    
     let filtered = [...properties];
 
-    // Location filter
-    if (searchFilters.location) {
-      filtered = filtered.filter(property => 
-        property.city?.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
-        property.state?.toLowerCase().includes(searchFilters.location.toLowerCase())
-      );
-      console.log(`After location filter: ${filtered.length} properties`);
+    // Location filter - improved matching
+    if (searchFilters.location.trim()) {
+      const searchLocation = searchFilters.location.toLowerCase().trim();
+      filtered = filtered.filter(property => {
+        const cityMatch = property.city?.toLowerCase().includes(searchLocation);
+        const stateMatch = property.state?.toLowerCase().includes(searchLocation);
+        const fullLocationMatch = `${property.city}, ${property.state}`.toLowerCase().includes(searchLocation);
+        
+        console.log(`Property: ${property.city}, ${property.state} - Match: ${cityMatch || stateMatch || fullLocationMatch}`);
+        
+        return cityMatch || stateMatch || fullLocationMatch;
+      });
+      console.log(`After location filter "${searchFilters.location}": ${filtered.length} properties`);
     }
 
     // Guest capacity filter
-    if (searchFilters.guests) {
-      filtered = filtered.filter(property => property.max_guests >= searchFilters.guests);
-      console.log(`After guests filter: ${filtered.length} properties`);
+    if (searchFilters.guests > 0) {
+      filtered = filtered.filter(property => {
+        const matches = property.max_guests >= searchFilters.guests;
+        console.log(`Property ${property.title} - Max guests: ${property.max_guests}, Required: ${searchFilters.guests}, Match: ${matches}`);
+        return matches;
+      });
+      console.log(`After guests filter (${searchFilters.guests}): ${filtered.length} properties`);
     }
 
-    // Booking type filter
+    // Booking type filter - improved logic
     if (searchFilters.bookingType !== 'flexible') {
-      filtered = filtered.filter(property => 
-        property.booking_types?.includes(searchFilters.bookingType) || 
-        (!property.booking_types && searchFilters.bookingType === 'daily')
-      );
-      console.log(`After booking type filter: ${filtered.length} properties`);
+      filtered = filtered.filter(property => {
+        // Check if property supports the booking type
+        const supportsBookingType = property.booking_types?.includes(searchFilters.bookingType);
+        // If no booking_types array, assume it supports daily
+        const defaultSupport = !property.booking_types && searchFilters.bookingType === 'daily';
+        // Monthly booking should also check if monthly_price exists
+        const monthlySupport = searchFilters.bookingType === 'monthly' && property.monthly_price;
+        
+        const matches = supportsBookingType || defaultSupport || monthlySupport;
+        console.log(`Property ${property.title} - Booking types: ${property.booking_types}, Required: ${searchFilters.bookingType}, Match: ${matches}`);
+        return matches;
+      });
+      console.log(`After booking type filter (${searchFilters.bookingType}): ${filtered.length} properties`);
     }
 
     // Property type filter
     if (searchFilters.propertyType) {
-      filtered = filtered.filter(property => property.property_type === searchFilters.propertyType);
-      console.log(`After property type filter: ${filtered.length} properties`);
+      filtered = filtered.filter(property => {
+        const matches = property.property_type === searchFilters.propertyType;
+        console.log(`Property ${property.title} - Type: ${property.property_type}, Required: ${searchFilters.propertyType}, Match: ${matches}`);
+        return matches;
+      });
+      console.log(`After property type filter (${searchFilters.propertyType}): ${filtered.length} properties`);
     }
 
     // Price range filter
     if (searchFilters.priceRange) {
-      filtered = filtered.filter(property => 
-        property.price_per_night >= searchFilters.priceRange!.min &&
-        property.price_per_night <= searchFilters.priceRange!.max
-      );
+      filtered = filtered.filter(property => {
+        const price = searchFilters.bookingType === 'monthly' && property.monthly_price 
+          ? property.monthly_price 
+          : property.price_per_night;
+        
+        const matches = price >= searchFilters.priceRange!.min && price <= searchFilters.priceRange!.max;
+        console.log(`Property ${property.title} - Price: ${price}, Range: ${searchFilters.priceRange!.min}-${searchFilters.priceRange!.max}, Match: ${matches}`);
+        return matches;
+      });
       console.log(`After price range filter: ${filtered.length} properties`);
     }
 
     // Amenities filter
     if (searchFilters.amenities && searchFilters.amenities.length > 0) {
-      filtered = filtered.filter(property =>
-        searchFilters.amenities!.every(amenity => 
+      filtered = filtered.filter(property => {
+        const matches = searchFilters.amenities!.every(amenity => 
           property.amenities?.includes(amenity)
-        )
-      );
+        );
+        console.log(`Property ${property.title} - Amenities: ${property.amenities}, Required: ${searchFilters.amenities}, Match: ${matches}`);
+        return matches;
+      });
       console.log(`After amenities filter: ${filtered.length} properties`);
     }
 
@@ -168,7 +199,7 @@ const Index = () => {
   };
 
   const handleSearch = (filters: SearchFilters) => {
-    console.log('Search filters applied:', filters);
+    console.log('Search triggered with filters:', filters);
     setSearchFilters(filters);
     saveSearchPreferences(filters);
   };

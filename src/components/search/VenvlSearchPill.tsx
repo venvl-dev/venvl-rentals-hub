@@ -48,11 +48,13 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
   };
 
   const handleSearch = () => {
+    console.log('VenvlSearchPill - handleSearch called with filters:', filters);
     onSearch(filters);
     setActiveSection(null);
   };
 
   const updateFilters = (newFilters: Partial<SearchFilters>) => {
+    console.log('VenvlSearchPill - updateFilters called with:', newFilters);
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
@@ -100,7 +102,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                 <motion.button
                   key={type.id}
                   onClick={() => updateFilters({ bookingType: type.id as any })}
-                  className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
+                  className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-colors duration-300 ${
                     filters.bookingType === type.id
                       ? 'bg-black text-white shadow-md'
                       : 'text-gray-600'

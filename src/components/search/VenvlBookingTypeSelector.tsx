@@ -41,10 +41,10 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
             <Button
               variant="ghost"
               onClick={() => onTypeChange(type.id as any)}
-              className={`relative px-8 py-4 rounded-xl font-medium transition-all duration-300 ${
+              className={`relative px-8 py-4 rounded-xl font-medium transition-colors duration-300 ${
                 selectedType === type.id
                   ? 'bg-black text-white shadow-lg'
-                  : 'text-gray-600'
+                  : 'text-gray-600 hover:bg-gray-200'
               }`}
             >
               <div className="text-center">
