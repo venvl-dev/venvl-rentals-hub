@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Plus, X, Users } from 'lucide-react';
 
 interface VenvlGuestDropdownProps {
   guests: number;
@@ -50,7 +50,7 @@ const VenvlGuestDropdown = ({ guests, onChange, onClose }: VenvlGuestDropdownPro
     {
       key: 'pets' as keyof GuestCounts,
       label: 'Pets',
-      description: 'Bringing a service animal?',
+      description: 'Service animals welcome',
       min: 0,
       max: 5
     }
@@ -63,45 +63,74 @@ const VenvlGuestDropdown = ({ guests, onChange, onClose }: VenvlGuestDropdownPro
     const newCounts = { ...guestCounts, [type]: newValue };
     setGuestCounts(newCounts);
     
+    // Update total guests (adults + children count toward occupancy)
     const totalGuests = newCounts.adults + newCounts.children;
     onChange(totalGuests);
   };
 
+  const getTotalGuests = () => {
+    return guestCounts.adults + guestCounts.children;
+  };
+
   return (
     <motion.div
-      className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden w-80"
+      className="absolute top-full right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden w-80 md:w-96"
       initial={{ opacity: 0, y: -20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -20, scale: 0.95 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
     >
-      <div className="p-6">
+      <div className="p-4 md:p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-pink-500 to-red-500 rounded-lg">
+              <Users className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900">Who's coming?</h3>
+              <div className="text-sm text-gray-500">
+                {getTotalGuests()} guest{getTotalGuests() !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Guest Counters */}
         <div className="space-y-6">
           {guestTypes.map((guestType, index) => (
             <motion.div
               key={guestType.key}
-              className="flex items-center justify-between"
+              className="flex items-center justify-between py-2"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.2, delay: index * 0.1 }}
             >
               <div className="flex-1">
-                <div className="font-semibold text-gray-900">{guestType.label}</div>
+                <div className="font-semibold text-gray-900 text-base">{guestType.label}</div>
                 <div className="text-sm text-gray-500">{guestType.description}</div>
               </div>
               
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-3 md:space-x-4">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => updateGuestCount(guestType.key, -1)}
                   disabled={guestCounts[guestType.key] <= guestType.min}
-                  className="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-pink-500 disabled:opacity-30 p-0"
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-gray-300 hover:border-pink-500 hover:bg-pink-50 disabled:opacity-30 disabled:hover:border-gray-300 disabled:hover:bg-transparent transition-all p-0"
                 >
-                  <Minus className="h-3 w-3" />
+                  <Minus className="h-3 w-3 md:h-4 md:w-4" />
                 </Button>
                 
-                <span className="w-8 text-center font-semibold text-lg">
+                <span className="w-8 text-center font-bold text-lg">
                   {guestCounts[guestType.key]}
                 </span>
                 
@@ -110,22 +139,35 @@ const VenvlGuestDropdown = ({ guests, onChange, onClose }: VenvlGuestDropdownPro
                   size="sm"
                   onClick={() => updateGuestCount(guestType.key, 1)}
                   disabled={guestCounts[guestType.key] >= guestType.max}
-                  className="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-pink-500 disabled:opacity-30 p-0"
+                  className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-gray-300 hover:border-pink-500 hover:bg-pink-50 disabled:opacity-30 disabled:hover:border-gray-300 disabled:hover:bg-transparent transition-all p-0"
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className="h-3 w-3 md:h-4 md:w-4" />
                 </Button>
               </div>
             </motion.div>
           ))}
         </div>
 
-        <div className="mt-6 flex justify-end">
-          <Button 
-            onClick={onClose} 
-            className="bg-gray-900 text-white hover:bg-gray-800 px-8"
-          >
-            Done
-          </Button>
+        {/* Summary and Actions */}
+        <div className="mt-6 pt-6 border-t border-gray-100">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-600">
+              Total: {getTotalGuests()} guest{getTotalGuests() !== 1 ? 's' : ''}
+              {(guestCounts.infants > 0 || guestCounts.pets > 0) && (
+                <div className="text-xs text-gray-500 mt-1">
+                  {guestCounts.infants > 0 && `${guestCounts.infants} infant${guestCounts.infants > 1 ? 's' : ''}`}
+                  {guestCounts.infants > 0 && guestCounts.pets > 0 && ', '}
+                  {guestCounts.pets > 0 && `${guestCounts.pets} pet${guestCounts.pets > 1 ? 's' : ''}`}
+                </div>
+              )}
+            </div>
+            <Button 
+              onClick={onClose} 
+              className="bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white px-8 shadow-lg hover:shadow-xl transition-all"
+            >
+              Done
+            </Button>
+          </div>
         </div>
       </div>
     </motion.div>

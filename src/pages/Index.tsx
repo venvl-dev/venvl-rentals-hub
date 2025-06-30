@@ -48,14 +48,19 @@ const Index = () => {
     guests: 1,
     bookingType: 'daily',
   });
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     fetchProperties();
   }, []);
 
   useEffect(() => {
-    applyFilters();
-  }, [properties, searchFilters]);
+    if (hasSearched) {
+      applyFilters();
+    } else {
+      setFilteredProperties(properties);
+    }
+  }, [properties, searchFilters, hasSearched]);
 
   const fetchProperties = async () => {
     try {
@@ -111,46 +116,62 @@ const Index = () => {
   };
 
   const applyFilters = () => {
-    console.log('Applying filters to', properties.length, 'properties');
+    console.log('Applying filters to', properties.length, 'properties with filters:', searchFilters);
     let filtered = [...properties];
 
-    // Location filter
-    if (searchFilters.location) {
-      filtered = filtered.filter(property => 
-        property.city?.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
-        property.state?.toLowerCase().includes(searchFilters.location.toLowerCase())
-      );
-      console.log(`After location filter: ${filtered.length} properties`);
+    // Location filter - improved to handle various location formats
+    if (searchFilters.location && searchFilters.location !== 'Nearby') {
+      const searchLocation = searchFilters.location.toLowerCase();
+      filtered = filtered.filter(property => {
+        const cityMatch = property.city?.toLowerCase().includes(searchLocation);
+        const stateMatch = property.state?.toLowerCase().includes(searchLocation);
+        const fullLocationMatch = `${property.city}, ${property.state}`.toLowerCase().includes(searchLocation);
+        return cityMatch || stateMatch || fullLocationMatch;
+      });
+      console.log(`After location filter (${searchFilters.location}): ${filtered.length} properties`);
     }
 
     // Guest capacity filter
-    if (searchFilters.guests) {
+    if (searchFilters.guests > 0) {
       filtered = filtered.filter(property => property.max_guests >= searchFilters.guests);
-      console.log(`After guests filter: ${filtered.length} properties`);
+      console.log(`After guests filter (${searchFilters.guests}): ${filtered.length} properties`);
     }
 
-    // Booking type filter
-    if (searchFilters.bookingType !== 'flexible') {
-      filtered = filtered.filter(property => 
-        property.booking_types?.includes(searchFilters.bookingType) || 
-        (!property.booking_types && searchFilters.bookingType === 'daily')
-      );
-      console.log(`After booking type filter: ${filtered.length} properties`);
+    // Booking type filter - improved logic
+    if (searchFilters.bookingType && searchFilters.bookingType !== 'flexible') {
+      filtered = filtered.filter(property => {
+        // If property has booking_types array, check if it includes the search type
+        if (property.booking_types && Array.isArray(property.booking_types)) {
+          return property.booking_types.includes(searchFilters.bookingType);
+        }
+        // Fallback: if no booking_types specified, assume daily is available
+        return searchFilters.bookingType === 'daily';
+      });
+      console.log(`After booking type filter (${searchFilters.bookingType}): ${filtered.length} properties`);
     }
 
     // Property type filter
     if (searchFilters.propertyType) {
-      filtered = filtered.filter(property => property.property_type === searchFilters.propertyType);
-      console.log(`After property type filter: ${filtered.length} properties`);
+      filtered = filtered.filter(property => 
+        property.property_type?.toLowerCase() === searchFilters.propertyType?.toLowerCase()
+      );
+      console.log(`After property type filter (${searchFilters.propertyType}): ${filtered.length} properties`);
     }
 
-    // Price range filter
+    // Price range filter - use appropriate price based on booking type
     if (searchFilters.priceRange) {
-      filtered = filtered.filter(property => 
-        property.price_per_night >= searchFilters.priceRange!.min &&
-        property.price_per_night <= searchFilters.priceRange!.max
-      );
-      console.log(`After price range filter: ${filtered.length} properties`);
+      filtered = filtered.filter(property => {
+        let price = property.price_per_night;
+        
+        // Use monthly price if available and booking type is monthly
+        if (searchFilters.bookingType === 'monthly' && property.monthly_price) {
+          price = property.monthly_price;
+        }
+        
+        return price >= searchFilters.priceRange!.min && 
+               price <= searchFilters.priceRange!.max;
+      });
+      console.log(`After price range filter ($${searchFilters.priceRange.min}-$${searchFilters.priceRange.max}): ${filtered.length} properties`);
     }
 
     // Amenities filter
@@ -160,7 +181,7 @@ const Index = () => {
           property.amenities?.includes(amenity)
         )
       );
-      console.log(`After amenities filter: ${filtered.length} properties`);
+      console.log(`After amenities filter (${searchFilters.amenities.join(', ')}): ${filtered.length} properties`);
     }
 
     console.log(`Final filtered properties: ${filtered.length}`);
@@ -168,9 +189,15 @@ const Index = () => {
   };
 
   const handleSearch = (filters: SearchFilters) => {
-    console.log('Search filters applied:', filters);
+    console.log('Search initiated with filters:', filters);
     setSearchFilters(filters);
+    setHasSearched(true);
     saveSearchPreferences(filters);
+    
+    // Show search feedback
+    if (filters.location || filters.guests > 1 || filters.bookingType !== 'daily') {
+      toast.success('Search filters applied successfully!');
+    }
   };
 
   const saveSearchPreferences = async (filters: SearchFilters) => {
@@ -203,6 +230,23 @@ const Index = () => {
       console.error('Error saving search preferences:', error);
     }
   };
+
+  const getResultsText = () => {
+    if (!hasSearched) {
+      return `${properties.length} propert${properties.length !== 1 ? 'ies' : 'y'} available`;
+    }
+    
+    const count = filteredProperties.length;
+    let text = `${count} propert${count !== 1 ? 'ies' : 'y'} found`;
+    
+    if (searchFilters.location && searchFilters.location !== 'Nearby') {
+      text += ` in ${searchFilters.location}`;
+    }
+    
+    return text;
+  };
+
+  const displayProperties = hasSearched ? filteredProperties : properties;
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
@@ -273,24 +317,34 @@ const Index = () => {
                   transition={{ duration: 0.6, delay: 0.7 }}
                 >
                   <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                    {filteredProperties.length} propert{filteredProperties.length !== 1 ? 'ies' : 'y'} found
+                    {getResultsText()}
                   </h2>
-                  {searchFilters.location && (
-                    <div className="text-sm sm:text-base text-gray-600">
-                      in {searchFilters.location}
-                    </div>
+                  {hasSearched && displayProperties.length > 0 && (
+                    <button
+                      onClick={() => {
+                        setHasSearched(false);
+                        setSearchFilters({ location: '', guests: 1, bookingType: 'daily' });
+                      }}
+                      className="text-sm text-pink-600 hover:text-pink-800 font-medium underline"
+                    >
+                      Clear filters
+                    </button>
                   )}
                 </motion.div>
 
-                {filteredProperties.length === 0 ? (
+                {displayProperties.length === 0 ? (
                   <motion.div 
                     className="text-center py-16 sm:py-24"
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.6, delay: 0.8 }}
                   >
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">No properties found</h3>
-                    <p className="text-gray-600 mb-6 px-4">Try adjusting your search criteria</p>
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">
+                      {hasSearched ? 'No properties match your search' : 'No properties available'}
+                    </h3>
+                    <p className="text-gray-600 mb-6 px-4">
+                      {hasSearched ? 'Try adjusting your search criteria' : 'Please check back later for new listings'}
+                    </p>
                     {properties.length === 0 && (
                       <div className="space-y-4">
                         <p className="text-sm text-gray-500 px-4">
@@ -312,7 +366,7 @@ const Index = () => {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.8 }}
                   >
-                    {filteredProperties.map((property, index) => (
+                    {displayProperties.map((property, index) => (
                       <motion.div
                         key={property.id}
                         initial={{ opacity: 0, y: 30 }}
