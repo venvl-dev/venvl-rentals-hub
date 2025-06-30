@@ -11,44 +11,54 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
   const bookingTypes = [
     { 
       id: 'daily', 
-      label: 'Daily Stays', 
-      description: 'Perfect for short trips' 
+      label: 'إقامة يومية', 
+      description: 'مثالي للرحلات القصيرة' 
     },
     { 
       id: 'monthly', 
-      label: 'Monthly Stays', 
-      description: 'Long-term comfort' 
+      label: 'إقامة شهرية', 
+      description: 'راحة طويلة المدى' 
     },
     { 
       id: 'flexible', 
-      label: 'Flexible', 
-      description: 'Best deals available' 
+      label: 'مرن', 
+      description: 'أفضل العروض المتاحة' 
     }
   ];
 
   return (
     <div className="flex justify-center">
-      <div className="inline-flex p-1 bg-gray-100 rounded-xl">
-        {bookingTypes.map((type) => (
+      <div className="inline-flex p-2 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">
+        {bookingTypes.map((type, index) => (
           <motion.div
             key={type.id}
             className="relative"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: index * 0.1 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             <Button
               variant="ghost"
               onClick={() => onTypeChange(type.id as any)}
-              className={`relative px-6 py-3 rounded-lg font-medium transition-all duration-300 ${
+              className={`relative px-8 py-4 rounded-xl font-medium transition-all duration-300 ${
                 selectedType === type.id
-                  ? 'bg-black text-white shadow-lg'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+                  ? 'bg-black text-white shadow-lg transform scale-105'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white hover:shadow-md'
               }`}
             >
               <div className="text-center">
                 <div className="text-sm font-semibold">{type.label}</div>
-                <div className="text-xs opacity-70">{type.description}</div>
+                <div className="text-xs opacity-80 mt-1">{type.description}</div>
               </div>
+              {selectedType === type.id && (
+                <motion.div
+                  className="absolute inset-0 bg-black rounded-xl -z-10"
+                  layoutId="activeBackground"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
             </Button>
           </motion.div>
         ))}
