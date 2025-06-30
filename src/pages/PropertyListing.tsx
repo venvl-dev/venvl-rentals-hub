@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
@@ -9,6 +8,7 @@ import { toast } from 'sonner';
 import { MapPin, Bed, Bath, Users } from 'lucide-react';
 import Header from '@/components/Header';
 import BookingWidget from '@/components/booking/BookingWidget';
+import DynamicBookingWidget from '@/components/booking/DynamicBookingWidget';
 
 interface Property {
   id: string;
@@ -42,7 +42,18 @@ const PropertyListing = () => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
     });
-  }, []);
+
+    // Check for pending booking data after auth
+    const pendingBooking = localStorage.getItem('pendingBooking');
+    if (pendingBooking && user) {
+      const bookingData = JSON.parse(pendingBooking);
+      if (bookingData.propertyId === id) {
+        // Restore booking state
+        localStorage.removeItem('pendingBooking');
+        // You could set state here to restore the booking form
+      }
+    }
+  }, [id, user]);
 
   useEffect(() => {
     if (id) {
@@ -100,7 +111,7 @@ const PropertyListing = () => {
               <img
                 src={property.images[0] || '/placeholder.svg'}
                 alt={property.title}
-                className="w-full h-96 object-cover rounded-lg"
+                className="w-full h-96 object-cover rounded-2xl shadow-lg"
               />
             </div>
 
@@ -127,11 +138,11 @@ const PropertyListing = () => {
               </div>
 
               <div className="flex items-center gap-2 mb-4">
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="rounded-full">
                   {property.property_type}
                 </Badge>
                 {property.booking_types?.map(type => (
-                  <Badge key={type} variant="outline">
+                  <Badge key={type} variant="outline" className="rounded-full">
                     {type === 'daily' ? 'Daily stays' : 
                      type === 'monthly' ? 'Monthly stays' : 
                      'Flexible stays'}
@@ -187,7 +198,7 @@ const PropertyListing = () => {
           </div>
 
           <div className="lg:col-span-1">
-            <BookingWidget property={property} user={user} />
+            <DynamicBookingWidget property={property} user={user} />
           </div>
         </div>
       </div>
