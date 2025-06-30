@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { MapPin, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface VenvlDestinationPickerProps {
   value: string;
@@ -14,6 +14,7 @@ interface VenvlDestinationPickerProps {
 const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPickerProps) => {
   const [searchTerm, setSearchTerm] = useState(value);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const isMobile = useIsMobile();
 
   const popularDestinations = [
     'New York, NY',
@@ -40,9 +41,61 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
     onClose();
   };
 
+  if (isMobile) {
+    return (
+      <div className="p-4 h-full overflow-auto">
+        {/* Mobile Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Where to?</h3>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0 rounded-full hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Mobile Search Input */}
+        <div className="relative mb-6">
+          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search destinations"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:border-black focus:ring-0 transition-colors"
+            autoFocus
+          />
+        </div>
+
+        {/* Mobile Suggestions */}
+        <div className="space-y-3">
+          {suggestions.map((location, index) => (
+            <motion.div
+              key={location}
+              className="flex items-center p-4 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors group"
+              onClick={() => handleSelect(location)}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.15, delay: index * 0.05 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-xl mr-4 group-hover:bg-gray-200 transition-colors">
+                <MapPin className="h-4 w-4 text-gray-600" />
+              </div>
+              <div className="text-base font-medium text-gray-900">{location}</div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <motion.div
-      className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden max-w-sm mx-auto"
+      className="bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden max-w-sm mx-auto mt-2"
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}

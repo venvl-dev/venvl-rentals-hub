@@ -2,9 +2,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Calendar, X, Clock } from 'lucide-react';
+import { Calendar, X, Clock, Minus, Plus } from 'lucide-react';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { Slider } from '@/components/ui/slider';
 
 interface VenvlDatePickerProps {
   checkIn?: Date;
@@ -61,6 +60,11 @@ const VenvlDatePicker = ({
     { id: 'any', label: 'Flexible dates', description: 'Any length' }
   ];
 
+  const updateDuration = (change: number) => {
+    const newDuration = Math.max(1, Math.min(12, selectedDuration + change));
+    setSelectedDuration(newDuration);
+  };
+
   return (
     <motion.div
       className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden"
@@ -69,7 +73,7 @@ const VenvlDatePicker = ({
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
     >
-      <div className="p-4 w-96">
+      <div className="p-4 w-80 sm:w-96">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -108,92 +112,82 @@ const VenvlDatePicker = ({
         )}
 
         {bookingType === 'monthly' && (
-          <div className="space-y-6">
-            {/* Start Date Section */}
+          <div className="space-y-4">
+            {/* Compact Date Section */}
             <div>
-              <label className="text-sm font-semibold text-gray-900 mb-3 block">When do you want to start?</label>
+              <label className="text-sm font-medium text-gray-900 mb-2 block">Start date</label>
               <CalendarComponent
                 mode="single"
                 selected={selectedCheckIn}
                 onSelect={setSelectedCheckIn}
                 numberOfMonths={1}
-                className="rounded-md border border-gray-200 p-3"
+                className="rounded-md border border-gray-200 p-2 scale-90 origin-top"
                 disabled={(date) => date < new Date()}
               />
             </div>
 
-            {/* Duration Section with Interactive Roller */}
+            {/* Compact Duration Section */}
             <div>
-              <label className="text-sm font-semibold text-gray-900 mb-4 block">How many months?</label>
+              <label className="text-sm font-medium text-gray-900 mb-3 block">Duration</label>
               
-              {/* Month Display */}
-              <div className="text-center mb-6">
-                <motion.div 
-                  className="inline-flex items-center justify-center w-20 h-20 bg-black text-white rounded-full"
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 300 }}
+              {/* Duration Selector */}
+              <div className="flex items-center justify-center gap-4 py-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateDuration(-1)}
+                  disabled={selectedDuration <= 1}
+                  className="w-8 h-8 rounded-full p-0"
                 >
-                  <span className="text-2xl font-bold">{selectedDuration}</span>
-                </motion.div>
-                <div className="mt-2 text-sm text-gray-600">
-                  {selectedDuration === 1 ? 'month' : 'months'}
+                  <Minus className="h-3 w-3" />
+                </Button>
+                
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-black">{selectedDuration}</div>
+                  <div className="text-xs text-gray-500">
+                    {selectedDuration === 1 ? 'month' : 'months'}
+                  </div>
                 </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => updateDuration(1)}
+                  disabled={selectedDuration >= 12}
+                  className="w-8 h-8 rounded-full p-0"
+                >
+                  <Plus className="h-3 w-3" />
+                </Button>
               </div>
 
-              {/* Interactive Slider */}
-              <div className="px-4">
-                <Slider
-                  value={[selectedDuration]}
-                  onValueChange={(value) => setSelectedDuration(value[0])}
-                  max={12}
-                  min={1}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-xs text-gray-500 mt-2">
-                  <span>1 month</span>
-                  <span>12 months</span>
-                </div>
-              </div>
-
-              {/* Month Options Grid */}
-              <div className="grid grid-cols-4 gap-2 mt-4">
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                  <motion.button
+              {/* Quick Duration Options */}
+              <div className="grid grid-cols-4 gap-2 mt-3">
+                {[1, 3, 6, 12].map((month) => (
+                  <Button
                     key={month}
+                    variant={selectedDuration === month ? "default" : "outline"}
+                    size="sm"
                     onClick={() => setSelectedDuration(month)}
-                    className={`p-2 rounded-lg text-sm font-medium transition-all ${
-                      selectedDuration === month
-                        ? 'bg-black text-white shadow-md'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    className="text-xs h-8"
                   >
-                    {month}
-                  </motion.button>
+                    {month}m
+                  </Button>
                 ))}
               </div>
             </div>
 
-            {/* Summary */}
+            {/* Compact Summary */}
             {selectedCheckIn && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-600">
-                  <strong>Summary:</strong> {selectedDuration} month{selectedDuration > 1 ? 's' : ''} starting from{' '}
-                  {selectedCheckIn.toLocaleDateString('en-US', { 
-                    month: 'long', 
-                    day: 'numeric', 
-                    year: 'numeric' 
-                  })}
-                </div>
+              <div className="bg-gray-50 rounded-lg p-2 text-xs text-gray-600">
+                <strong>{selectedDuration}</strong> month{selectedDuration > 1 ? 's' : ''} from{' '}
+                <strong>{selectedCheckIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</strong>
               </div>
             )}
           </div>
         )}
 
         {bookingType === 'flexible' && (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {flexibleOptions.map((option) => (
               <motion.div
                 key={option.id}
@@ -219,7 +213,7 @@ const VenvlDatePicker = ({
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
+        <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
           <Button variant="ghost" onClick={onClose} className="text-gray-600 text-sm">
             Cancel
           </Button>
