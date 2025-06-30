@@ -224,7 +224,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.1 }}
-        whileHover={{ shadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
+        whileHover={{ boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)" }}
       >
         <div className="flex">
           {/* Where Section */}
