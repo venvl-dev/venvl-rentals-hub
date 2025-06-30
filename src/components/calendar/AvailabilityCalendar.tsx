@@ -24,7 +24,7 @@ interface Booking {
 interface AvailabilityCalendarProps {
   propertyId: string;
   isHost?: boolean;
-  onDateSelect?: (date: Date) => void;
+  onDateSelect?: (date: Date | DateRange | undefined) => void;
   selectedDates?: { from?: Date; to?: Date };
 }
 
@@ -131,6 +131,12 @@ const AvailabilityCalendar = ({
     }
   };
 
+  const handleRangeSelect = (range: DateRange | undefined) => {
+    if (onDateSelect) {
+      onDateSelect(range);
+    }
+  };
+
   const isDateDisabled = (date: Date) => {
     if (!isHost) {
       // For guests, disable booked and blocked dates
@@ -166,8 +172,9 @@ const AvailabilityCalendar = ({
     );
   }
 
-  // Create a proper DateRange object for the calendar
-  const calendarSelected = selectedDates && selectedDates.from ? 
+  // Create proper props for the calendar based on mode
+  const isRangeMode = selectedDates && selectedDates.from !== undefined;
+  const calendarSelected = isRangeMode ? 
     { from: selectedDates.from, to: selectedDates.to } as DateRange : 
     undefined;
 
@@ -203,28 +210,51 @@ const AvailabilityCalendar = ({
             </div>
           </div>
 
-          {/* Calendar */}
-          <Calendar
-            mode={selectedDates ? "range" : "single"}
-            selected={calendarSelected}
-            onSelect={onDateSelect}
-            disabled={isDateDisabled}
-            numberOfMonths={2}
-            className="rounded-xl border border-gray-200 p-4"
-            modifiers={{
-              available: (date) => getDateStatus(date) === 'available',
-              booked: (date) => getDateStatus(date) === 'booked',
-              pending: (date) => getDateStatus(date) === 'pending',
-              blocked: (date) => getDateStatus(date) === 'blocked',
-            }}
-            modifiersStyles={{
-              available: { backgroundColor: '#f0fdf4', color: '#15803d' },
-              booked: { backgroundColor: '#fef2f2', color: '#dc2626', fontWeight: 'bold' },
-              pending: { backgroundColor: '#fefce8', color: '#d97706', fontWeight: 'bold' },
-              blocked: { backgroundColor: '#f3f4f6', color: '#6b7280', textDecoration: 'line-through' },
-            }}
-            onDayClick={handleDateClick}
-          />
+          {/* Calendar - Conditional rendering based on mode */}
+          {isRangeMode ? (
+            <Calendar
+              mode="range"
+              selected={calendarSelected}
+              onSelect={handleRangeSelect}
+              disabled={isDateDisabled}
+              numberOfMonths={2}
+              className="rounded-xl border border-gray-200 p-4"
+              modifiers={{
+                available: (date) => getDateStatus(date) === 'available',
+                booked: (date) => getDateStatus(date) === 'booked',
+                pending: (date) => getDateStatus(date) === 'pending',
+                blocked: (date) => getDateStatus(date) === 'blocked',
+              }}
+              modifiersStyles={{
+                available: { backgroundColor: '#f0fdf4', color: '#15803d' },
+                booked: { backgroundColor: '#fef2f2', color: '#dc2626', fontWeight: 'bold' },
+                pending: { backgroundColor: '#fefce8', color: '#d97706', fontWeight: 'bold' },
+                blocked: { backgroundColor: '#f3f4f6', color: '#6b7280', textDecoration: 'line-through' },
+              }}
+            />
+          ) : (
+            <Calendar
+              mode="single"
+              selected={undefined}
+              onSelect={onDateSelect as (date: Date | undefined) => void}
+              disabled={isDateDisabled}
+              numberOfMonths={2}
+              className="rounded-xl border border-gray-200 p-4"
+              modifiers={{
+                available: (date) => getDateStatus(date) === 'available',
+                booked: (date) => getDateStatus(date) === 'booked',
+                pending: (date) => getDateStatus(date) === 'pending',
+                blocked: (date) => getDateStatus(date) === 'blocked',
+              }}
+              modifiersStyles={{
+                available: { backgroundColor: '#f0fdf4', color: '#15803d' },
+                booked: { backgroundColor: '#fef2f2', color: '#dc2626', fontWeight: 'bold' },
+                pending: { backgroundColor: '#fefce8', color: '#d97706', fontWeight: 'bold' },
+                blocked: { backgroundColor: '#f3f4f6', color: '#6b7280', textDecoration: 'line-through' },
+              }}
+              onDayClick={handleDateClick}
+            />
+          )}
 
           {/* Current Month Bookings Summary */}
           {isHost && bookings.length > 0 && (
