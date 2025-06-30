@@ -127,9 +127,17 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
                   city: property.city,
                   state: property.state,
                   address: property.address,
+                  price_per_night: property.price_per_night,
+                  monthly_price: property.monthly_price,
                 },
+                checkIn: new Date(flowBookingData.check_in),
+                checkOut: new Date(flowBookingData.check_out),
+                guests: flowBookingData.guests,
+                bookingType: flowBookingData.booking_type as 'daily' | 'monthly',
+                totalPrice: Number(flowBookingData.total_price),
+                duration: flowBookingData.duration_months || undefined,
               }}
-              onConfirm={handleConfirmBooking}
+              onConfirmPayment={handleConfirmBooking}
               onCancel={handleCancel}
               isProcessing={isProcessing}
             />
