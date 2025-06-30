@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
-import AdvancedSearchBar from '@/components/search/AdvancedSearchBar';
+import VenvlSearchBar from '@/components/search/VenvlSearchBar';
 import PropertyCard from '@/components/PropertyCard';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -225,7 +225,7 @@ const Index = () => {
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 Discover your perfect
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 mt-2">
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-red-500 mt-2">
                   VENVL experience
                 </span>
               </motion.h1>
@@ -241,12 +241,12 @@ const Index = () => {
 
             {/* Search Bar Container */}
             <motion.div
-              className="w-full max-w-6xl mx-auto px-2 sm:px-4"
+              className="w-full max-w-5xl mx-auto px-2 sm:px-4"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <AdvancedSearchBar onSearch={handleSearch} initialFilters={searchFilters} />
+              <VenvlSearchBar onSearch={handleSearch} initialFilters={searchFilters} />
             </motion.div>
           </div>
         </section>
@@ -261,7 +261,7 @@ const Index = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mb-4"></div>
                 <span className="text-lg text-gray-600">Loading properties...</span>
               </motion.div>
             ) : (
@@ -298,7 +298,7 @@ const Index = () => {
                         </p>
                         <button 
                           onClick={fetchProperties}
-                          className="bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors font-medium"
+                          className="bg-gradient-to-r from-pink-500 to-red-500 text-white px-6 py-3 rounded-xl hover:from-pink-600 hover:to-red-600 transition-all font-medium shadow-lg"
                         >
                           Retry Loading
                         </button>
