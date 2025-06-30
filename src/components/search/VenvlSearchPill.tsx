@@ -83,7 +83,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
   if (isMobile) {
     return (
       <div className="w-full px-4">
-        {/* Mobile Booking Type Selector - Optimized */}
+        {/* Mobile Optimized Booking Type Selector */}
         <motion.div
           className="mb-6"
           initial={{ opacity: 0, y: -10 }}
@@ -91,27 +91,24 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           transition={{ duration: 0.3 }}
         >
           <div className="flex justify-center">
-            <div className="inline-flex p-1 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm w-full max-w-sm">
+            <div className="flex w-full max-w-sm bg-gray-100 rounded-2xl p-1 shadow-sm">
               {[
-                { id: 'daily', label: 'يومي', icon: '📅' },
-                { id: 'monthly', label: 'شهري', icon: '🏠' },
-                { id: 'flexible', label: 'مرن', icon: '✨' }
+                { id: 'daily', label: 'يومي' },
+                { id: 'monthly', label: 'شهري' },
+                { id: 'flexible', label: 'مرن' }
               ].map((type) => (
                 <motion.button
                   key={type.id}
                   onClick={() => updateFilters({ bookingType: type.id as any })}
-                  className={`flex-1 px-4 py-3 rounded-xl font-medium transition-all duration-300 text-sm ${
+                  className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
                     filters.bookingType === type.id
-                      ? 'bg-black text-white shadow-lg'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+                      ? 'bg-white text-black shadow-md scale-[1.02]'
+                      : 'text-gray-600 hover:text-gray-900'
                   }`}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: filters.bookingType === type.id ? 1.02 : 1.01 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="flex flex-col items-center">
-                    <span className="text-lg mb-1">{type.icon}</span>
-                    <span className="font-semibold">{type.label}</span>
-                  </div>
+                  {type.label}
                 </motion.button>
               ))}
             </div>
@@ -206,17 +203,17 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           </div>
         </motion.div>
 
-        {/* Mobile Optimized Full-Screen Overlays */}
+        {/* Mobile Responsive Full-Screen Overlays */}
         <AnimatePresence>
           {activeSection === 'where' && (
             <motion.div
-              className="fixed inset-0 bg-white z-[9999] flex flex-col"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-white z-[9999] safe-area-inset"
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <div className="flex-1 overflow-hidden">
+              <div className="flex flex-col h-full">
                 <VenvlDestinationPicker
                   value={filters.location}
                   onChange={(location) => updateFilters({ location })}
@@ -228,13 +225,13 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
           {activeSection === 'when' && (
             <motion.div
-              className="fixed inset-0 bg-white z-[9999] flex flex-col"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-white z-[9999] safe-area-inset"
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <div className="flex-1 overflow-auto">
+              <div className="flex flex-col h-full overflow-auto">
                 <VenvlDatePicker
                   checkIn={filters.checkIn}
                   checkOut={filters.checkOut}
@@ -250,13 +247,13 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
           {activeSection === 'who' && (
             <motion.div
-              className="fixed inset-0 bg-white z-[9999] flex flex-col"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-white z-[9999] safe-area-inset"
+              initial={{ opacity: 0, y: '100%' }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: '100%' }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <div className="flex-1 overflow-hidden">
+              <div className="flex flex-col h-full">
                 <VenvlGuestPicker
                   guests={filters.guests}
                   onChange={(guests) => updateFilters({ guests })}

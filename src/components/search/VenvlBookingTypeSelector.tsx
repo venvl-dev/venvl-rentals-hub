@@ -28,7 +28,7 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
 
   return (
     <div className="flex justify-center">
-      <div className="inline-flex p-2 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="inline-flex p-2 bg-gray-100 rounded-2xl border border-gray-100 shadow-sm">
         {bookingTypes.map((type, index) => (
           <motion.div
             key={type.id}
@@ -44,21 +44,14 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
               onClick={() => onTypeChange(type.id as any)}
               className={`relative px-8 py-4 rounded-xl font-medium transition-all duration-300 ${
                 selectedType === type.id
-                  ? 'bg-black text-white shadow-lg transform scale-105'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white hover:shadow-md'
+                  ? 'bg-white text-black shadow-lg scale-[1.02]'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
               }`}
             >
               <div className="text-center">
                 <div className="text-sm font-semibold">{type.label}</div>
                 <div className="text-xs opacity-80 mt-1">{type.description}</div>
               </div>
-              {selectedType === type.id && (
-                <motion.div
-                  className="absolute inset-0 bg-black rounded-xl -z-10"
-                  layoutId="activeBackground"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
             </Button>
           </motion.div>
         ))}
