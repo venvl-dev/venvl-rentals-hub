@@ -54,10 +54,10 @@ const VenvlDatePicker = ({
   };
 
   const flexibleOptions = [
-    { id: 'weekend', label: 'عطلة نهاية الأسبوع', description: '2-3 أيام' },
-    { id: 'week', label: 'إقامة أسبوع', description: '7 أيام' },
-    { id: 'month', label: 'إقامة شهر', description: '28+ يوم' },
-    { id: 'any', label: 'تواريخ مرنة', description: 'أي مدة' }
+    { id: 'weekend', label: 'Weekend stay', description: '2-3 days' },
+    { id: 'week', label: 'Week stay', description: '7 days' },
+    { id: 'month', label: 'Month stay', description: '28+ days' },
+    { id: 'any', label: 'Flexible dates', description: 'Any duration' }
   ];
 
   const updateDuration = (change: number) => {
@@ -81,8 +81,8 @@ const VenvlDatePicker = ({
               <Calendar className="h-5 w-5 text-white" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900">
-              {bookingType === 'daily' ? 'اختر التواريخ' : 
-               bookingType === 'monthly' ? 'إقامة شهرية' : 'تواريخ مرنة'}
+              {bookingType === 'daily' ? 'Select dates' : 
+               bookingType === 'monthly' ? 'Monthly stay' : 'Flexible dates'}
             </h3>
           </div>
           <Button
@@ -115,7 +115,7 @@ const VenvlDatePicker = ({
           <div className="space-y-6">
             {/* Start Date Section */}
             <div>
-              <label className="text-sm font-semibold text-gray-900 mb-3 block">تاريخ البداية</label>
+              <label className="text-sm font-semibold text-gray-900 mb-3 block">Start date</label>
               <CalendarComponent
                 mode="single"
                 selected={selectedCheckIn}
@@ -128,7 +128,7 @@ const VenvlDatePicker = ({
 
             {/* Duration Section */}
             <div>
-              <label className="text-sm font-semibold text-gray-900 mb-4 block">المدة</label>
+              <label className="text-sm font-semibold text-gray-900 mb-4 block">Duration</label>
               
               {/* Duration Selector */}
               <div className="flex items-center justify-center gap-6 py-4 bg-gray-50 rounded-xl">
@@ -145,7 +145,7 @@ const VenvlDatePicker = ({
                 <div className="text-center">
                   <div className="text-3xl font-bold text-black mb-1">{selectedDuration}</div>
                   <div className="text-sm text-gray-500">
-                    {selectedDuration === 1 ? 'شهر' : selectedDuration === 2 ? 'شهران' : 'أشهر'}
+                    {selectedDuration === 1 ? 'month' : 'months'}
                   </div>
                 </div>
                 
@@ -174,7 +174,7 @@ const VenvlDatePicker = ({
                         : 'border-gray-300 hover:border-black'
                     }`}
                   >
-                    {month} {month === 1 ? 'شهر' : month === 2 ? 'شهران' : 'أشهر'}
+                    {month} {month === 1 ? 'month' : 'months'}
                   </Button>
                 ))}
               </div>
@@ -183,8 +183,8 @@ const VenvlDatePicker = ({
             {/* Summary */}
             {selectedCheckIn && (
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-                <strong>{selectedDuration}</strong> {selectedDuration === 1 ? 'شهر' : selectedDuration === 2 ? 'شهران' : 'أشهر'} ابتداءً من{' '}
-                <strong>{selectedCheckIn.toLocaleDateString('ar-SA', { month: 'long', day: 'numeric' })}</strong>
+                <strong>{selectedDuration}</strong> {selectedDuration === 1 ? 'month' : 'months'} starting from{' '}
+                <strong>{selectedCheckIn.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}</strong>
               </div>
             )}
           </div>
@@ -232,13 +232,13 @@ const VenvlDatePicker = ({
             onClick={onClose} 
             className="text-gray-600 hover:text-gray-900 font-medium"
           >
-            إلغاء
+            Cancel
           </Button>
           <Button 
             onClick={handleApply} 
             className="bg-black text-white hover:bg-gray-800 px-8 py-2 rounded-xl font-semibold shadow-lg"
           >
-            تطبيق
+            Apply
           </Button>
         </div>
       </div>

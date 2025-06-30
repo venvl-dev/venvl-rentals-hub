@@ -36,7 +36,6 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.1 }}
-            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             <Button
@@ -44,8 +43,8 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
               onClick={() => onTypeChange(type.id as any)}
               className={`relative px-8 py-4 rounded-xl font-medium transition-all duration-300 ${
                 selectedType === type.id
-                  ? 'bg-black text-white shadow-lg scale-[1.02]'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+                  ? 'bg-black text-white shadow-lg'
+                  : 'text-gray-600'
               }`}
             >
               <div className="text-center">

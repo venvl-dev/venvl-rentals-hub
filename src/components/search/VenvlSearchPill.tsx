@@ -102,10 +102,9 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                   onClick={() => updateFilters({ bookingType: type.id as any })}
                   className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
                     filters.bookingType === type.id
-                      ? 'bg-black text-white shadow-md scale-[1.02]'
-                      : 'text-gray-600 hover:text-gray-900'
+                      ? 'bg-black text-white shadow-md'
+                      : 'text-gray-600'
                   }`}
-                  whileHover={{ scale: filters.bookingType === type.id ? 1.02 : 1.01 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   {type.label}
@@ -125,7 +124,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           {/* Where Section */}
           <motion.div
             className={`p-4 cursor-pointer transition-colors duration-200 ${
-              activeSection === 'where' ? 'bg-gray-50' : 'hover:bg-gray-50'
+              activeSection === 'where' ? 'bg-gray-50' : ''
             }`}
             onClick={() => handleSectionClick('where')}
             whileTap={{ scale: 0.99 }}
@@ -148,7 +147,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           {/* When Section */}
           <motion.div
             className={`p-4 cursor-pointer transition-colors duration-200 ${
-              activeSection === 'when' ? 'bg-gray-50' : 'hover:bg-gray-50'
+              activeSection === 'when' ? 'bg-gray-50' : ''
             }`}
             onClick={() => handleSectionClick('when')}
             whileTap={{ scale: 0.99 }}
@@ -171,7 +170,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           {/* Who Section */}
           <motion.div
             className={`p-4 cursor-pointer transition-colors duration-200 ${
-              activeSection === 'who' ? 'bg-gray-50' : 'hover:bg-gray-50'
+              activeSection === 'who' ? 'bg-gray-50' : ''
             }`}
             onClick={() => handleSectionClick('who')}
             whileTap={{ scale: 0.99 }}
@@ -195,7 +194,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           <div className="p-4">
             <Button
               onClick={handleSearch}
-              className="w-full bg-black hover:bg-gray-800 text-white rounded-xl py-3 font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+              className="w-full bg-black text-white rounded-xl py-3 font-medium transition-colors duration-200 flex items-center justify-center gap-2"
             >
               <Search className="h-4 w-4" />
               Search
@@ -288,20 +287,15 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        whileHover={{ 
-          boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.15)",
-          transition: { duration: 0.2 }
-        }}
       >
         <div className="flex items-stretch">
           {/* Where Section */}
           <div className="flex-1 relative">
             <motion.div
               className={`p-6 cursor-pointer transition-all duration-200 ${
-                activeSection === 'where' ? 'bg-gray-50' : 'hover:bg-gray-50'
+                activeSection === 'where' ? 'bg-gray-50' : ''
               }`}
               onClick={() => handleSectionClick('where')}
-              whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
             >
               <div className="flex items-center gap-3">
@@ -338,10 +332,9 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           <div className="flex-1 relative">
             <motion.div
               className={`p-6 cursor-pointer transition-all duration-200 ${
-                activeSection === 'when' ? 'bg-gray-50' : 'hover:bg-gray-50'
+                activeSection === 'when' ? 'bg-gray-50' : ''
               }`}
               onClick={() => handleSectionClick('when')}
-              whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
             >
               <div className="flex items-center gap-3">
@@ -382,10 +375,9 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           <div className="flex-1 relative">
             <motion.div
               className={`p-6 cursor-pointer transition-all duration-200 ${
-                activeSection === 'who' ? 'bg-gray-50' : 'hover:bg-gray-50'
+                activeSection === 'who' ? 'bg-gray-50' : ''
               }`}
               onClick={() => handleSectionClick('who')}
-              whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
             >
               <div className="flex items-center gap-3">
@@ -412,7 +404,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                     onClose={() => setActiveSection(null)}
                   />
                 </div>
-              )}
+                )}
             </AnimatePresence>
           </div>
 
@@ -420,7 +412,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           <div className="flex items-center p-4">
             <Button
               onClick={handleSearch}
-              className="bg-black hover:bg-gray-800 text-white rounded-xl px-6 py-3 font-medium transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
+              className="bg-black text-white rounded-xl px-6 py-3 font-medium transition-all duration-200 flex items-center gap-2 shadow-lg"
             >
               <Search className="h-4 w-4" />
               Search
