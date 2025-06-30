@@ -64,12 +64,12 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
 
   const fetchUnavailableDates = async () => {
     try {
-      // Fetch booked dates
+      // Fetch booked dates - using only valid booking statuses
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
         .select('check_in, check_out')
         .eq('property_id', property.id)
-        .in('status', ['pending', 'confirmed', 'checked_in']);
+        .in('status', ['pending', 'confirmed', 'completed']);
 
       if (bookingsError) throw bookingsError;
 

@@ -9,6 +9,7 @@ import { CalendarIcon, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { format, isSameDay, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { DateRange } from 'react-day-picker';
 
 interface Booking {
   id: string;
@@ -46,12 +47,12 @@ const AvailabilityCalendar = ({
     try {
       setLoading(true);
       
-      // Fetch bookings
+      // Fetch bookings - using only valid booking statuses
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
         .select('*')
         .eq('property_id', propertyId)
-        .in('status', ['pending', 'confirmed', 'checked_in'])
+        .in('status', ['pending', 'confirmed', 'completed'])
         .order('check_in', { ascending: true });
 
       if (bookingsError) throw bookingsError;
@@ -165,6 +166,11 @@ const AvailabilityCalendar = ({
     );
   }
 
+  // Create a proper DateRange object for the calendar
+  const calendarSelected = selectedDates && selectedDates.from ? 
+    { from: selectedDates.from, to: selectedDates.to } as DateRange : 
+    undefined;
+
   return (
     <div className="space-y-6">
       <Card className="rounded-3xl shadow-lg">
@@ -200,7 +206,7 @@ const AvailabilityCalendar = ({
           {/* Calendar */}
           <Calendar
             mode={selectedDates ? "range" : "single"}
-            selected={selectedDates}
+            selected={calendarSelected}
             onSelect={onDateSelect}
             disabled={isDateDisabled}
             numberOfMonths={2}
