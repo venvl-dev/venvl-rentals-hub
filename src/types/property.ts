@@ -11,6 +11,7 @@ export interface Property {
   city: string;
   state: string | null;
   country: string;
+  postal_code: string | null;
   property_type: PropertyType;
   rental_type: string | null;
   bedrooms: number | null;
@@ -19,10 +20,14 @@ export interface Property {
   price_per_night: number;
   daily_price: number | null;
   monthly_price: number | null;
+  min_nights: number | null;
+  min_months: number | null;
   images: string[];
   amenities: string[];
   is_active: boolean | null;
   approval_status: string | null;
+  blocked_dates: string[] | null;
+  booking_types: string[] | null;
   created_at: string | null;
   updated_at: string | null;
   host_id: string;

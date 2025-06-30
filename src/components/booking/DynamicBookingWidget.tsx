@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '@supabase/supabase-js';
@@ -13,6 +14,9 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Calendar as CalendarIcon, Clock, Users, CreditCard, MapPin, Star, Minus, Plus } from 'lucide-react';
 import { addDays, differenceInDays, addMonths, format } from 'date-fns';
+import { Database } from '@/integrations/supabase/types';
+
+type BookingStatus = Database['public']['Enums']['booking_status'];
 
 interface Property {
   id: string;
@@ -124,7 +128,7 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
         total_price: totalPrice,
         booking_type: bookingMode,
         duration_months: bookingMode === 'monthly' ? monthlyDuration : null,
-        status: 'pending',
+        status: 'pending' as BookingStatus,
       };
 
       const { error } = await supabase
