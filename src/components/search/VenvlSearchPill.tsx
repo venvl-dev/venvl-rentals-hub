@@ -427,7 +427,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
             </Button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
