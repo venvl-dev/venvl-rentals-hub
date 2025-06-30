@@ -4,8 +4,11 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import PropertyCard from '@/components/PropertyCard';
 import VenvlSearchPill from '@/components/search/VenvlSearchPill';
+import VenvlAdvancedFilters from '@/components/search/VenvlAdvancedFilters';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { SlidersHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Property {
   id: string;
@@ -37,17 +40,21 @@ interface SearchFilters {
   propertyType?: string;
   priceRange?: { min: number; max: number };
   amenities?: string[];
+  bedrooms?: number;
+  bathrooms?: number;
 }
 
 const Index = () => {
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     location: '',
     guests: 1,
     bookingType: 'daily',
   });
+  const [advancedFilters, setAdvancedFilters] = useState<any>({});
 
   useEffect(() => {
     fetchProperties();
@@ -55,7 +62,7 @@ const Index = () => {
 
   useEffect(() => {
     applyFilters();
-  }, [properties, searchFilters]);
+  }, [properties, searchFilters, advancedFilters]);
 
   const fetchProperties = async () => {
     try {
@@ -111,21 +118,18 @@ const Index = () => {
   };
 
   const applyFilters = () => {
-    console.log('Applying filters:', searchFilters);
+    console.log('Applying filters:', searchFilters, advancedFilters);
     console.log('Total properties to filter:', properties.length);
     
     let filtered = [...properties];
 
-    // Location filter - improved matching
+    // Location filter
     if (searchFilters.location.trim()) {
       const searchLocation = searchFilters.location.toLowerCase().trim();
       filtered = filtered.filter(property => {
         const cityMatch = property.city?.toLowerCase().includes(searchLocation);
         const stateMatch = property.state?.toLowerCase().includes(searchLocation);
         const fullLocationMatch = `${property.city}, ${property.state}`.toLowerCase().includes(searchLocation);
-        
-        console.log(`Property: ${property.city}, ${property.state} - Match: ${cityMatch || stateMatch || fullLocationMatch}`);
-        
         return cityMatch || stateMatch || fullLocationMatch;
       });
       console.log(`After location filter "${searchFilters.location}": ${filtered.length} properties`);
@@ -133,65 +137,51 @@ const Index = () => {
 
     // Guest capacity filter
     if (searchFilters.guests > 0) {
-      filtered = filtered.filter(property => {
-        const matches = property.max_guests >= searchFilters.guests;
-        console.log(`Property ${property.title} - Max guests: ${property.max_guests}, Required: ${searchFilters.guests}, Match: ${matches}`);
-        return matches;
-      });
+      filtered = filtered.filter(property => property.max_guests >= searchFilters.guests);
       console.log(`After guests filter (${searchFilters.guests}): ${filtered.length} properties`);
     }
 
-    // Booking type filter - improved logic
+    // Booking type filter
     if (searchFilters.bookingType !== 'flexible') {
       filtered = filtered.filter(property => {
-        // Check if property supports the booking type
         const supportsBookingType = property.booking_types?.includes(searchFilters.bookingType);
-        // If no booking_types array, assume it supports daily
         const defaultSupport = !property.booking_types && searchFilters.bookingType === 'daily';
-        // Monthly booking should also check if monthly_price exists
         const monthlySupport = searchFilters.bookingType === 'monthly' && property.monthly_price;
-        
-        const matches = supportsBookingType || defaultSupport || monthlySupport;
-        console.log(`Property ${property.title} - Booking types: ${property.booking_types}, Required: ${searchFilters.bookingType}, Match: ${matches}`);
-        return matches;
+        return supportsBookingType || defaultSupport || monthlySupport;
       });
       console.log(`After booking type filter (${searchFilters.bookingType}): ${filtered.length} properties`);
     }
 
-    // Property type filter
-    if (searchFilters.propertyType) {
-      filtered = filtered.filter(property => {
-        const matches = property.property_type === searchFilters.propertyType;
-        console.log(`Property ${property.title} - Type: ${property.property_type}, Required: ${searchFilters.propertyType}, Match: ${matches}`);
-        return matches;
-      });
-      console.log(`After property type filter (${searchFilters.propertyType}): ${filtered.length} properties`);
-    }
-
-    // Price range filter
-    if (searchFilters.priceRange) {
+    // Advanced filters
+    if (advancedFilters.priceRange) {
       filtered = filtered.filter(property => {
         const price = searchFilters.bookingType === 'monthly' && property.monthly_price 
           ? property.monthly_price 
           : property.price_per_night;
-        
-        const matches = price >= searchFilters.priceRange!.min && price <= searchFilters.priceRange!.max;
-        console.log(`Property ${property.title} - Price: ${price}, Range: ${searchFilters.priceRange!.min}-${searchFilters.priceRange!.max}, Match: ${matches}`);
-        return matches;
+        return price >= advancedFilters.priceRange[0] && price <= advancedFilters.priceRange[1];
       });
-      console.log(`After price range filter: ${filtered.length} properties`);
     }
 
-    // Amenities filter
-    if (searchFilters.amenities && searchFilters.amenities.length > 0) {
-      filtered = filtered.filter(property => {
-        const matches = searchFilters.amenities!.every(amenity => 
+    if (advancedFilters.propertyTypes?.length > 0) {
+      filtered = filtered.filter(property => 
+        advancedFilters.propertyTypes.includes(property.property_type)
+      );
+    }
+
+    if (advancedFilters.amenities?.length > 0) {
+      filtered = filtered.filter(property => 
+        advancedFilters.amenities.every((amenity: string) => 
           property.amenities?.includes(amenity)
-        );
-        console.log(`Property ${property.title} - Amenities: ${property.amenities}, Required: ${searchFilters.amenities}, Match: ${matches}`);
-        return matches;
-      });
-      console.log(`After amenities filter: ${filtered.length} properties`);
+        )
+      );
+    }
+
+    if (advancedFilters.bedrooms) {
+      filtered = filtered.filter(property => property.bedrooms >= advancedFilters.bedrooms);
+    }
+
+    if (advancedFilters.bathrooms) {
+      filtered = filtered.filter(property => property.bathrooms >= advancedFilters.bathrooms);
     }
 
     console.log(`Final filtered properties: ${filtered.length}`);
@@ -202,6 +192,11 @@ const Index = () => {
     console.log('Search triggered with filters:', filters);
     setSearchFilters(filters);
     saveSearchPreferences(filters);
+  };
+
+  const handleAdvancedFilters = (filters: any) => {
+    setAdvancedFilters(filters);
+    setShowAdvancedFilters(false);
   };
 
   const saveSearchPreferences = async (filters: SearchFilters) => {
@@ -272,12 +267,24 @@ const Index = () => {
 
             {/* Search Bar Container */}
             <motion.div
-              className="w-full max-w-4xl mx-auto px-2 sm:px-4"
+              className="w-full max-w-4xl mx-auto px-2 sm:px-4 space-y-4"
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
               <VenvlSearchPill onSearch={handleSearch} initialFilters={searchFilters} />
+              
+              {/* Advanced Filters Button */}
+              <div className="flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAdvancedFilters(true)}
+                  className="flex items-center gap-2 rounded-full border-gray-300 hover:border-gray-400 bg-white shadow-sm"
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Advanced filters
+                </Button>
+              </div>
             </motion.div>
           </div>
         </section>
@@ -321,7 +328,7 @@ const Index = () => {
                     transition={{ duration: 0.6, delay: 0.8 }}
                   >
                     <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">No properties found</h3>
-                    <p className="text-gray-600 mb-6 px-4">Try adjusting your search criteria</p>
+                    <p className="text-gray-600 mb-6 px-4">Try adjusting your search criteria or filters</p>
                     {properties.length === 0 && (
                       <div className="space-y-4">
                         <p className="text-sm text-gray-500 px-4">
@@ -362,6 +369,15 @@ const Index = () => {
           </div>
         </section>
       </main>
+
+      {/* Advanced Filters Modal */}
+      {showAdvancedFilters && (
+        <VenvlAdvancedFilters
+          onFiltersChange={handleAdvancedFilters}
+          onClose={() => setShowAdvancedFilters(false)}
+          initialFilters={advancedFilters}
+        />
+      )}
     </div>
   );
 };

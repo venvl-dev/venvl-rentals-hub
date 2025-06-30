@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
@@ -7,8 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { MapPin, Bed, Bath, Users } from 'lucide-react';
 import Header from '@/components/Header';
-import BookingWidget from '@/components/booking/BookingWidget';
-import DynamicBookingWidget from '@/components/booking/DynamicBookingWidget';
+import EnhancedDynamicBookingWidget from '@/components/booking/EnhancedDynamicBookingWidget';
 
 interface Property {
   id: string;
@@ -42,18 +42,7 @@ const PropertyListing = () => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
     });
-
-    // Check for pending booking data after auth
-    const pendingBooking = localStorage.getItem('pendingBooking');
-    if (pendingBooking && user) {
-      const bookingData = JSON.parse(pendingBooking);
-      if (bookingData.propertyId === id) {
-        // Restore booking state
-        localStorage.removeItem('pendingBooking');
-        // You could set state here to restore the booking form
-      }
-    }
-  }, [id, user]);
+  }, []);
 
   useEffect(() => {
     if (id) {
@@ -84,7 +73,10 @@ const PropertyListing = () => {
       <div>
         <Header />
         <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">Loading...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <div className="text-gray-600">Loading property...</div>
+          </div>
         </div>
       </div>
     );
@@ -95,7 +87,10 @@ const PropertyListing = () => {
       <div>
         <Header />
         <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">Property not found</div>
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl font-bold text-gray-900">Property not found</h2>
+            <p className="text-gray-600">The property you're looking for doesn't exist or has been removed.</p>
+          </div>
         </div>
       </div>
     );
@@ -107,6 +102,7 @@ const PropertyListing = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
+            {/* Hero Image */}
             <div className="mb-6">
               <img
                 src={property.images[0] || '/placeholder.svg'}
@@ -115,6 +111,7 @@ const PropertyListing = () => {
               />
             </div>
 
+            {/* Property Details */}
             <div className="mb-6">
               <h1 className="text-3xl font-bold mb-2">{property.title}</h1>
               <div className="flex items-center text-gray-600 mb-4">
@@ -138,11 +135,11 @@ const PropertyListing = () => {
               </div>
 
               <div className="flex items-center gap-2 mb-4">
-                <Badge variant="secondary" className="rounded-full">
+                <Badge variant="secondary" className="rounded-full bg-black text-white">
                   {property.property_type}
                 </Badge>
                 {property.booking_types?.map(type => (
-                  <Badge key={type} variant="outline" className="rounded-full">
+                  <Badge key={type} variant="outline" className="rounded-full border-gray-300">
                     {type === 'daily' ? 'Daily stays' : 
                      type === 'monthly' ? 'Monthly stays' : 
                      'Flexible stays'}
@@ -153,11 +150,13 @@ const PropertyListing = () => {
 
             <Separator className="my-6" />
 
+            {/* Description */}
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-3">About this property</h2>
               <p className="text-gray-700 leading-relaxed">{property.description}</p>
             </div>
 
+            {/* Amenities */}
             {property.amenities && property.amenities.length > 0 && (
               <>
                 <Separator className="my-6" />
@@ -197,8 +196,9 @@ const PropertyListing = () => {
             )}
           </div>
 
+          {/* Enhanced Booking Widget */}
           <div className="lg:col-span-1">
-            <DynamicBookingWidget property={property} user={user} />
+            <EnhancedDynamicBookingWidget property={property} user={user} />
           </div>
         </div>
       </div>
