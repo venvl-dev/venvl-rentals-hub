@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,10 +19,11 @@ import { Property } from '@/types/property';
 const propertySchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().min(10, 'Description must be at least 10 characters'),
-  property_type: z.enum(['apartment', 'house', 'villa', 'studio', 'condo']),
+  property_type: z.enum(['apartment', 'house', 'villa', 'studio', 'cabin', 'loft']),
   address: z.string().min(1, 'Address is required'),
   city: z.string().min(1, 'City is required'),
   state: z.string().optional(),
+  country: z.string().default('US'),
   postal_code: z.string().optional(),
   rental_type: z.enum(['daily', 'monthly', 'both']),
   bedrooms: z.number().min(0),
@@ -62,10 +62,11 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     defaultValues: {
       title: property?.title || '',
       description: property?.description || '',
-      property_type: property?.property_type || 'apartment',
+      property_type: (property?.property_type as any) || 'apartment',
       address: property?.address || '',
       city: property?.city || '',
       state: property?.state || '',
+      country: property?.country || 'US',
       postal_code: property?.postal_code || '',
       rental_type: property?.rental_type as 'daily' | 'monthly' | 'both' || 'daily',
       bedrooms: property?.bedrooms || 1,
@@ -127,12 +128,27 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       if (!user) throw new Error('User not authenticated');
 
       const propertyData = {
-        ...data,
+        title: data.title,
+        description: data.description,
+        property_type: data.property_type,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        country: data.country || 'US',
+        postal_code: data.postal_code,
+        rental_type: data.rental_type,
+        bedrooms: data.bedrooms,
+        bathrooms: data.bathrooms,
+        max_guests: data.max_guests,
+        price_per_night: data.price_per_night,
+        daily_price: data.price_per_night,
+        monthly_price: data.monthly_price,
+        min_nights: data.min_nights,
+        min_months: data.min_months,
         host_id: user.id,
         amenities: selectedAmenities,
         images: imageUrls,
         booking_types: data.rental_type === 'both' ? ['daily', 'monthly'] : [data.rental_type],
-        daily_price: data.price_per_night,
       };
 
       if (property) {
@@ -260,7 +276,8 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                             <SelectItem value="house">House</SelectItem>
                             <SelectItem value="villa">Villa</SelectItem>
                             <SelectItem value="studio">Studio</SelectItem>
-                            <SelectItem value="condo">Condo</SelectItem>
+                            <SelectItem value="cabin">Cabin</SelectItem>
+                            <SelectItem value="loft">Loft</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

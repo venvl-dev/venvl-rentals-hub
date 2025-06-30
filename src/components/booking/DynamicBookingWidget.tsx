@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '@supabase/supabase-js';
@@ -119,8 +118,8 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
       const bookingData = {
         property_id: property.id,
         guest_id: user.id,
-        check_in: bookingMode === 'daily' ? checkIn : monthlyStartDate,
-        check_out: bookingMode === 'daily' ? checkOut : addMonths(monthlyStartDate!, monthlyDuration),
+        check_in: bookingMode === 'daily' ? checkIn?.toISOString().split('T')[0] : monthlyStartDate?.toISOString().split('T')[0],
+        check_out: bookingMode === 'daily' ? checkOut?.toISOString().split('T')[0] : addMonths(monthlyStartDate!, monthlyDuration).toISOString().split('T')[0],
         guests,
         total_price: totalPrice,
         booking_type: bookingMode,
