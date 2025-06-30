@@ -58,26 +58,26 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
   const getDateDisplayText = () => {
     if (filters.bookingType === 'monthly' && filters.duration) {
-      return `${filters.duration} ${filters.duration === 1 ? 'شهر' : 'أشهر'}`;
+      return `${filters.duration} ${filters.duration === 1 ? 'month' : 'months'}`;
     }
     if (filters.bookingType === 'flexible' && filters.flexibleOption) {
       const flexOptions = {
-        weekend: 'عطلة نهاية الأسبوع',
-        week: 'أسبوع',
-        month: 'شهر',
-        any: 'مرن'
+        weekend: 'Weekend',
+        week: 'Week',
+        month: 'Month',
+        any: 'Flexible'
       };
-      return flexOptions[filters.flexibleOption as keyof typeof flexOptions] || 'مرن';
+      return flexOptions[filters.flexibleOption as keyof typeof flexOptions] || 'Flexible';
     }
     if (filters.checkIn) {
-      const checkInStr = filters.checkIn.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+      const checkInStr = filters.checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       if (filters.checkOut) {
-        const checkOutStr = filters.checkOut.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
+        const checkOutStr = filters.checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         return `${checkInStr} - ${checkOutStr}`;
       }
       return checkInStr;
     }
-    return 'اختر التواريخ';
+    return 'Add dates';
   };
 
   if (isMobile) {
@@ -93,16 +93,16 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           <div className="flex justify-center">
             <div className="flex w-full max-w-sm bg-gray-100 rounded-2xl p-1 shadow-sm">
               {[
-                { id: 'daily', label: 'يومي' },
-                { id: 'monthly', label: 'شهري' },
-                { id: 'flexible', label: 'مرن' }
+                { id: 'daily', label: 'Daily' },
+                { id: 'monthly', label: 'Monthly' },
+                { id: 'flexible', label: 'Flexible' }
               ].map((type) => (
                 <motion.button
                   key={type.id}
                   onClick={() => updateFilters({ bookingType: type.id as any })}
                   className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-all duration-300 ${
                     filters.bookingType === type.id
-                      ? 'bg-white text-black shadow-md scale-[1.02]'
+                      ? 'bg-black text-white shadow-md scale-[1.02]'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                   whileHover={{ scale: filters.bookingType === type.id ? 1.02 : 1.01 }}
@@ -135,9 +135,9 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                 <MapPin className="h-4 w-4 text-gray-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-gray-500 mb-1">أين تريد الذهاب؟</div>
+                <div className="text-xs font-medium text-gray-500 mb-1">Where</div>
                 <div className="text-sm text-gray-900 truncate">
-                  {filters.location || 'البحث عن الوجهات'}
+                  {filters.location || 'Search destinations'}
                 </div>
               </div>
             </div>
@@ -158,7 +158,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                 <Calendar className="h-4 w-4 text-gray-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-gray-500 mb-1">متى؟</div>
+                <div className="text-xs font-medium text-gray-500 mb-1">When</div>
                 <div className="text-sm text-gray-900 truncate">
                   {getDateDisplayText()}
                 </div>
@@ -181,9 +181,9 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                 <Users className="h-4 w-4 text-gray-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-gray-500 mb-1">من؟</div>
+                <div className="text-xs font-medium text-gray-500 mb-1">Who</div>
                 <div className="text-sm text-gray-900 truncate">
-                  {filters.guests} {filters.guests === 1 ? 'ضيف' : filters.guests === 2 ? 'ضيفان' : 'ضيوف'}
+                  {filters.guests} {filters.guests === 1 ? 'guest' : 'guests'}
                 </div>
               </div>
             </div>
@@ -198,7 +198,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
               className="w-full bg-black hover:bg-gray-800 text-white rounded-xl py-3 font-medium transition-colors duration-200 flex items-center justify-center gap-2"
             >
               <Search className="h-4 w-4" />
-              بحث
+              Search
             </Button>
           </div>
         </motion.div>
@@ -310,10 +310,10 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                 </div>
                 <div className="flex-1">
                   <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                    أين تريد الذهاب؟
+                    Where
                   </div>
                   <div className="text-sm font-medium text-gray-900">
-                    {filters.location || 'البحث عن الوجهات'}
+                    {filters.location || 'Search destinations'}
                   </div>
                 </div>
               </div>
@@ -350,7 +350,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                 </div>
                 <div className="flex-1">
                   <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                    متى؟
+                    When
                   </div>
                   <div className="text-sm font-medium text-gray-900">
                     {getDateDisplayText()}
@@ -394,10 +394,10 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
                 </div>
                 <div className="flex-1">
                   <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                    من؟
+                    Who
                   </div>
                   <div className="text-sm font-medium text-gray-900">
-                    {filters.guests} {filters.guests === 1 ? 'ضيف' : filters.guests === 2 ? 'ضيفان' : 'ضيوف'}
+                    {filters.guests} {filters.guests === 1 ? 'guest' : 'guests'}
                   </div>
                 </div>
               </div>
@@ -423,11 +423,11 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
               className="bg-black hover:bg-gray-800 text-white rounded-xl px-6 py-3 font-medium transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
             >
               <Search className="h-4 w-4" />
-              بحث
+              Search
             </Button>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 };

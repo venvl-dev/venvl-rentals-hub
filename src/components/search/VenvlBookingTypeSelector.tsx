@@ -11,18 +11,18 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
   const bookingTypes = [
     { 
       id: 'daily', 
-      label: 'إقامة يومية', 
-      description: 'مثالي للرحلات القصيرة' 
+      label: 'Daily Stay', 
+      description: 'Perfect for short trips' 
     },
     { 
       id: 'monthly', 
-      label: 'إقامة شهرية', 
-      description: 'راحة طويلة المدى' 
+      label: 'Monthly Stay', 
+      description: 'Long-term comfort' 
     },
     { 
       id: 'flexible', 
-      label: 'مرن', 
-      description: 'أفضل العروض المتاحة' 
+      label: 'Flexible', 
+      description: 'Best available deals' 
     }
   ];
 
@@ -44,7 +44,7 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
               onClick={() => onTypeChange(type.id as any)}
               className={`relative px-8 py-4 rounded-xl font-medium transition-all duration-300 ${
                 selectedType === type.id
-                  ? 'bg-white text-black shadow-lg scale-[1.02]'
+                  ? 'bg-black text-white shadow-lg scale-[1.02]'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
               }`}
             >
