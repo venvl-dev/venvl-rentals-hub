@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
@@ -8,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { MapPin, Bed, Bath, Users } from 'lucide-react';
 import Header from '@/components/Header';
-import EnhancedDynamicBookingWidget from '@/components/booking/EnhancedDynamicBookingWidget';
+import RefactoredBookingWidget from '@/components/booking/RefactoredBookingWidget';
 
 interface Property {
   id: string;
@@ -68,34 +67,6 @@ const PropertyListing = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div>
-        <Header />
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-            <div className="text-gray-600">Loading property...</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!property) {
-    return (
-      <div>
-        <Header />
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <h2 className="text-2xl font-bold text-gray-900">Property not found</h2>
-            <p className="text-gray-600">The property you're looking for doesn't exist or has been removed.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div>
       <Header />
@@ -105,40 +76,40 @@ const PropertyListing = () => {
             {/* Hero Image */}
             <div className="mb-6">
               <img
-                src={property.images[0] || '/placeholder.svg'}
-                alt={property.title}
+                src={property?.images[0] || '/placeholder.svg'}
+                alt={property?.title}
                 className="w-full h-96 object-cover rounded-2xl shadow-lg"
               />
             </div>
 
             {/* Property Details */}
             <div className="mb-6">
-              <h1 className="text-3xl font-bold mb-2">{property.title}</h1>
+              <h1 className="text-3xl font-bold mb-2">{property?.title}</h1>
               <div className="flex items-center text-gray-600 mb-4">
                 <MapPin className="h-4 w-4 mr-1" />
-                <span>{property.address}, {property.city}, {property.state}, {property.country}</span>
+                <span>{property?.address}, {property?.city}, {property?.state}, {property?.country}</span>
               </div>
               
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex items-center">
                   <Bed className="h-4 w-4 mr-1" />
-                  <span>{property.bedrooms} bedrooms</span>
+                  <span>{property?.bedrooms} bedrooms</span>
                 </div>
                 <div className="flex items-center">
                   <Bath className="h-4 w-4 mr-1" />
-                  <span>{property.bathrooms} bathrooms</span>
+                  <span>{property?.bathrooms} bathrooms</span>
                 </div>
                 <div className="flex items-center">
                   <Users className="h-4 w-4 mr-1" />
-                  <span>Up to {property.max_guests} guests</span>
+                  <span>Up to {property?.max_guests} guests</span>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 mb-4">
                 <Badge variant="secondary" className="rounded-full bg-black text-white">
-                  {property.property_type}
+                  {property?.property_type}
                 </Badge>
-                {property.booking_types?.map(type => (
+                {property?.booking_types?.map(type => (
                   <Badge key={type} variant="outline" className="rounded-full border-gray-300">
                     {type === 'daily' ? 'Daily stays' : 
                      type === 'monthly' ? 'Monthly stays' : 
@@ -153,17 +124,17 @@ const PropertyListing = () => {
             {/* Description */}
             <div className="mb-6">
               <h2 className="text-xl font-semibold mb-3">About this property</h2>
-              <p className="text-gray-700 leading-relaxed">{property.description}</p>
+              <p className="text-gray-700 leading-relaxed">{property?.description}</p>
             </div>
 
             {/* Amenities */}
-            {property.amenities && property.amenities.length > 0 && (
+            {property?.amenities && property.amenities.length > 0 && (
               <>
                 <Separator className="my-6" />
                 <div>
                   <h2 className="text-xl font-semibold mb-3">Amenities</h2>
                   <div className="grid grid-cols-2 gap-2">
-                    {property.amenities.map((amenity, index) => (
+                    {property?.amenities.map((amenity, index) => (
                       <div key={index} className="flex items-center">
                         <span className="text-gray-700">{amenity}</span>
                       </div>
@@ -174,20 +145,20 @@ const PropertyListing = () => {
             )}
 
             {/* Booking Requirements */}
-            {(property.min_nights || property.min_months) && (
+            {(property?.min_nights || property?.min_months) && (
               <>
                 <Separator className="my-6" />
                 <div>
                   <h2 className="text-xl font-semibold mb-3">Booking Requirements</h2>
                   <div className="space-y-2">
-                    {property.min_nights && (
+                    {property?.min_nights && (
                       <p className="text-gray-700">
-                        Minimum stay: {property.min_nights} night{property.min_nights > 1 ? 's' : ''}
+                        Minimum stay: {property?.min_nights} night{property?.min_nights > 1 ? 's' : ''}
                       </p>
                     )}
-                    {property.min_months && (
+                    {property?.min_months && (
                       <p className="text-gray-700">
-                        Minimum monthly stay: {property.min_months} month{property.min_months > 1 ? 's' : ''}
+                        Minimum monthly stay: {property?.min_months} month{property?.min_months > 1 ? 's' : ''}
                       </p>
                     )}
                   </div>
@@ -196,9 +167,16 @@ const PropertyListing = () => {
             )}
           </div>
 
-          {/* Enhanced Booking Widget */}
+          {/* Refactored Booking Widget */}
           <div className="lg:col-span-1">
-            <EnhancedDynamicBookingWidget property={property} user={user} />
+            {property && <RefactoredBookingWidget 
+              property={property} 
+              user={user}
+              onBookingInitiated={(bookingData) => {
+                // Handle booking initiation - you can integrate with BookingFlow here
+                console.log('Booking initiated:', bookingData);
+              }}
+            />}
           </div>
         </div>
       </div>
