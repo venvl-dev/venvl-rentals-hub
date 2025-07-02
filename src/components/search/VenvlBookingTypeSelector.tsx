@@ -1,5 +1,4 @@
 
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
 interface BookingTypeSelectorProps {
@@ -27,32 +26,25 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
   ];
 
   return (
-    <div className="flex justify-center">
-      <div className="inline-flex p-2 bg-gray-100 rounded-2xl border border-gray-100 shadow-sm">
-        {bookingTypes.map((type, index) => (
-          <motion.div
-            key={type.id}
-            className="relative"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            whileTap={{ scale: 0.98 }}
-          >
+    <div className="flex justify-center w-full">
+      <div className="flex flex-col sm:flex-row w-full max-w-lg bg-muted rounded-2xl p-1 gap-1 sm:gap-0">
+        {bookingTypes.map((type) => (
+          <div key={type.id} className="flex-1">
             <Button
               variant="ghost"
               onClick={() => onTypeChange(type.id as any)}
-              className={`relative px-8 py-4 rounded-xl font-medium transition-colors duration-300 ${
+              className={`w-full px-4 py-3 sm:px-6 sm:py-4 rounded-xl font-medium transition-colors duration-200 ${
                 selectedType === type.id
-                  ? 'bg-black text-white shadow-lg'
-                  : 'text-gray-600 hover:bg-gray-200'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground'
               }`}
             >
               <div className="text-center">
                 <div className="text-sm font-semibold">{type.label}</div>
-                <div className="text-xs opacity-80 mt-1">{type.description}</div>
+                <div className="text-xs opacity-75 mt-0.5 hidden sm:block">{type.description}</div>
               </div>
             </Button>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>
