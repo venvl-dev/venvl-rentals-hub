@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 
 interface VenvlBookingTypeSelectorProps {
@@ -20,42 +19,46 @@ const VenvlBookingTypeSelector = ({
 
   if (isMobile) {
     return (
-      <div className="flex w-full max-w-sm bg-gray-100 rounded-2xl p-1 shadow-sm">
-        {bookingTypes.map((type) => (
-          <button
-            key={type.id}
-            onClick={() => onTypeChange(type.id)}
-            className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-colors duration-300 ${
-              selectedType === type.id
-                ? 'bg-black text-white shadow-md'
-                : 'text-gray-600'
-            }`}
-          >
-            {type.label}
-          </button>
-        ))}
+      <div className="w-full max-w-sm mx-auto">
+        <div className="flex p-1 bg-muted rounded-lg">
+          {bookingTypes.map((type) => (
+            <Button
+              key={type.id}
+              variant="ghost"
+              onClick={() => onTypeChange(type.id)}
+              className={`
+                flex-1 h-8 px-2 text-xs font-medium rounded-md transition-all duration-200
+                ${selectedType === type.id 
+                  ? 'bg-black text-white shadow-sm' 
+                  : 'text-muted-foreground'
+                }
+              `}
+            >
+              {type.label}
+            </Button>
+          ))}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex justify-center">
-      <div className="inline-flex p-2 bg-gray-100 rounded-2xl border border-gray-100 shadow-sm">
+    <div className="w-full max-w-md mx-auto">
+      <div className="inline-flex p-1 bg-muted rounded-lg w-full">
         {bookingTypes.map((type) => (
           <Button
             key={type.id}
             variant="ghost"
             onClick={() => onTypeChange(type.id)}
-            className={`relative px-8 py-4 rounded-xl font-medium transition-colors duration-300 ${
-              selectedType === type.id
-                ? 'bg-black text-white shadow-lg'
-                : 'text-gray-600'
-            }`}
+            className={`
+              flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-200
+              ${selectedType === type.id 
+                ? 'bg-black text-white shadow-sm' 
+                : 'text-muted-foreground'
+              }
+            `}
           >
-            <div className="text-center">
-              <div className="text-sm font-semibold">{type.label}</div>
-              <div className="text-xs opacity-80 mt-1">{type.description}</div>
-            </div>
+            {type.label}
           </Button>
         ))}
       </div>

@@ -8,10 +8,18 @@ import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { X, SlidersHorizontal, Home, Wifi, Car, Utensils, Waves, Dumbbell, Tv, Snowflake } from 'lucide-react';
 
+interface AdvancedFilters {
+  priceRange?: [number, number] | null;
+  propertyTypes?: string[] | null;
+  amenities?: string[] | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+}
+
 interface FilterProps {
-  onFiltersChange: (filters: any) => void;
+  onFiltersChange: (filters: AdvancedFilters) => void;
   onClose: () => void;
-  initialFilters?: any;
+  initialFilters?: Partial<AdvancedFilters>;
 }
 
 const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }: FilterProps) => {

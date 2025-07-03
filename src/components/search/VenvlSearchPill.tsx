@@ -92,8 +92,8 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="flex justify-center">
-            <div className="flex w-full max-w-sm bg-gray-100 rounded-2xl p-1 shadow-sm">
+          <div className="w-full max-w-sm mx-auto">
+            <div className="flex p-1 bg-muted rounded-lg">
               {[
                 { id: 'daily', label: 'Daily' },
                 { id: 'monthly', label: 'Monthly' },
@@ -101,12 +101,14 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
               ].map((type) => (
                 <motion.button
                   key={type.id}
-                  onClick={() => updateFilters({ bookingType: type.id as any })}
-                  className={`flex-1 py-3 px-4 rounded-xl font-semibold text-sm transition-colors duration-300 ${
-                    filters.bookingType === type.id
-                      ? 'bg-black text-white shadow-md'
-                      : 'text-gray-600'
-                  }`}
+                  onClick={() => updateFilters({ bookingType: type.id as 'daily' | 'monthly' | 'flexible' })}
+                  className={`
+                    flex-1 h-8 px-2 text-xs font-medium rounded-md transition-all duration-200
+                    ${filters.bookingType === type.id 
+                      ? 'bg-black text-white shadow-sm' 
+                      : 'text-muted-foreground'
+                    }
+                  `}
                   whileTap={{ scale: 0.98 }}
                 >
                   {type.label}

@@ -1,34 +1,35 @@
-
 import { Badge } from '@/components/ui/badge';
+import { 
+  getRentalType, 
+  getDailyPrice, 
+  getMonthlyPrice, 
+  type PropertyRentalData 
+} from '@/lib/rentalTypeUtils';
 
 interface Property {
   price_per_night: number;
   monthly_price?: number;
+  daily_price?: number;
   rental_type?: string;
   booking_types?: string[];
 }
 
 interface PropertyPriceDisplayProps {
-  property: Property;
+  property: Property & PropertyRentalData;
   className?: string;
 }
 
 const PropertyPriceDisplay = ({ property, className = "" }: PropertyPriceDisplayProps) => {
-  const getRentalType = () => {
-    if (property.rental_type) return property.rental_type;
-    if (property.booking_types?.length === 1) return property.booking_types[0];
-    if (property.booking_types?.includes('daily') && property.booking_types?.includes('monthly')) return 'both';
-    return 'daily';
-  };
-
-  const rentalType = getRentalType();
+  const rentalType = getRentalType(property);
+  const dailyPrice = getDailyPrice(property);
+  const monthlyPrice = getMonthlyPrice(property);
 
   return (
     <div className={`space-y-2 ${className}`}>
       {(rentalType === 'daily' || rentalType === 'both') && (
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-gray-900">
-            EGP {property.price_per_night}
+            EGP {dailyPrice}
           </span>
           <span className="text-gray-600">/ night</span>
           {rentalType === 'daily' && (
@@ -39,24 +40,18 @@ const PropertyPriceDisplay = ({ property, className = "" }: PropertyPriceDisplay
         </div>
       )}
       
-      {(rentalType === 'monthly' || rentalType === 'both') && property.monthly_price && (
+      {(rentalType === 'monthly' || rentalType === 'both') && monthlyPrice && (
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-gray-900">
-            EGP {property.monthly_price}
+            EGP {monthlyPrice}
           </span>
           <span className="text-gray-600">/ month</span>
           {rentalType === 'monthly' && (
-            <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+            <Badge variant="secondary" className="bg-green-100 text-green-800">
               Monthly stays
             </Badge>
           )}
         </div>
-      )}
-      
-      {rentalType === 'both' && (
-        <Badge variant="secondary" className="bg-gradient-to-r from-blue-100 to-purple-100 text-gray-800">
-          Flexible booking
-        </Badge>
       )}
     </div>
   );

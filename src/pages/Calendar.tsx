@@ -10,8 +10,13 @@ import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
+interface User {
+  id: string;
+  email?: string;
+}
+
 const Calendar = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [userType, setUserType] = useState<'host' | 'guest'>('guest');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();

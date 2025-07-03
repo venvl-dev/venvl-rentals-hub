@@ -1,64 +1,72 @@
-
-import { useState, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '@/components/Header';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Calendar, DollarSign, Users, Home, TrendingUp, Eye, Star, Edit, Trash2, BarChart3, Settings } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { Home, Plus, Calendar, BarChart3, Settings, Eye, Edit, Trash2 } from 'lucide-react';
-import EnhancedPropertyForm from '@/components/host/EnhancedPropertyForm';
 import BookingsList from '@/components/host/BookingsList';
+import EnhancedPropertyForm from '@/components/host/EnhancedPropertyForm';
+import Header from '@/components/Header';
 import HostStats from '@/components/host/HostStats';
+import HostCalendar from '@/components/calendar/HostCalendar';
+import SimplePropertyTest from '@/components/host/SimplePropertyTest';
 import { Property } from '@/types/property';
+import { 
+  getRentalType, 
+  getDailyPrice, 
+  getMonthlyPrice, 
+  getRentalTypeBadge,
+  type PropertyRentalData 
+} from '@/lib/rentalTypeUtils';
 
 const HostDashboard = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showPropertyForm, setShowPropertyForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    checkAuth();
     fetchProperties();
   }, []);
 
-  const checkAuth = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      navigate('/auth');
-      return;
-    }
-
-    // Check if user has host role
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (profile?.role !== 'host' && profile?.role !== 'admin') {
-      toast.error('Access denied. Host privileges required.');
-      navigate('/');
-      return;
-    }
-
-    setUser(user);
-  };
-
-  const fetchProperties = async () => {
+  const fetchProperties = useCallback(async () => {
     try {
+      setLoading(true);
+      const { data: user } = await supabase.auth.getUser();
+      
+      if (!user.user) {
+        navigate('/auth');
+        return;
+      }
+
+      // Optimized query - only fetch required fields
       const { data, error } = await supabase
         .from('properties')
-        .select('*')
-        .eq('host_id', (await supabase.auth.getUser()).data.user?.id)
-        .order('created_at', { ascending: false });
+        .select(`
+          id,
+          title,
+          description,
+          city,
+          state,
+          bedrooms,
+          bathrooms,
+          price_per_night,
+          daily_price,
+          monthly_price,
+          rental_type,
+          booking_types,
+          images,
+          is_active,
+          approval_status,
+          created_at
+        `)
+        .eq('host_id', user.user.id)
+        .order('created_at', { ascending: false })
+        .limit(20); // Pagination - load first 20 properties
 
       if (error) throw error;
       setProperties(data || []);
@@ -68,20 +76,18 @@ const HostDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
-  const handlePropertySave = () => {
-    setShowPropertyForm(false);
+  const handlePropertySave = useCallback(() => {
     setEditingProperty(null);
     fetchProperties();
-  };
+  }, [fetchProperties]);
 
-  const handleEdit = (property: Property) => {
+  const handleEdit = useCallback((property: Property) => {
     setEditingProperty(property);
-    setShowPropertyForm(true);
-  };
+  }, []);
 
-  const handleDelete = async (propertyId: string) => {
+  const handleDelete = useCallback(async (propertyId: string) => {
     if (!confirm('Are you sure you want to delete this property?')) return;
 
     try {
@@ -98,9 +104,9 @@ const HostDashboard = () => {
       console.error('Error deleting property:', error);
       toast.error('Failed to delete property');
     }
-  };
+  }, [fetchProperties]);
 
-  const togglePropertyStatus = async (propertyId: string, currentStatus: boolean) => {
+  const togglePropertyStatus = useCallback(async (propertyId: string, currentStatus: boolean) => {
     try {
       const { error } = await supabase
         .from('properties')
@@ -115,48 +121,69 @@ const HostDashboard = () => {
       console.error('Error updating property status:', error);
       toast.error('Failed to update property status');
     }
-  };
+  }, [fetchProperties]);
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = useMemo(() => (status: string) => {
     switch (status) {
       case 'approved': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
-  };
+  }, []);
 
-  const getRentalTypeColor = (rentalType: string) => {
-    switch (rentalType) {
-      case 'daily': return 'bg-blue-100 text-blue-800';
-      case 'monthly': return 'bg-green-100 text-green-800';
-      case 'both': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+  // Memoized PropertyPriceDisplay component to prevent unnecessary re-renders
+  const PropertyPriceDisplay = useMemo(() => ({ property }: { property: Property & PropertyRentalData }) => {
+    const rentalType = getRentalType(property);
+    const dailyPrice = getDailyPrice(property);
+    const monthlyPrice = getMonthlyPrice(property);
+    const badge = getRentalTypeBadge(rentalType);
+
+    return (
+      <div className="space-y-1">
+        {rentalType === 'daily' && (
+          <div className="font-medium">EGP {dailyPrice}/night</div>
+        )}
+        {rentalType === 'monthly' && (
+          <div className="font-medium">EGP {monthlyPrice}/month</div>
+        )}
+        {rentalType === 'both' && (
+          <>
+            <div className="font-medium">EGP {dailyPrice}/night</div>
+            <div className="text-sm text-gray-600">EGP {monthlyPrice}/month</div>
+          </>
+        )}
+        <div className="mt-1">
+          <Badge className={`text-xs ${badge.color}`}>
+            {badge.label}
+          </Badge>
+        </div>
+      </div>
+    );
+  }, []);
 
   if (loading) {
     return (
       <div>
         <Header />
         <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">Loading dashboard...</div>
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            <div className="text-gray-600">Loading dashboard...</div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (showPropertyForm) {
+  if (editingProperty) {
     return (
       <div>
         <Header />
         <EnhancedPropertyForm
           property={editingProperty}
           onSave={handlePropertySave}
-          onCancel={() => {
-            setShowPropertyForm(false);
-            setEditingProperty(null);
-          }}
+          onCancel={() => setEditingProperty(null)}
         />
       </div>
     );
@@ -175,7 +202,7 @@ const HostDashboard = () => {
             <p className="text-gray-600 mt-2">Manage your properties and bookings</p>
           </div>
           <Button 
-            onClick={() => setShowPropertyForm(true)} 
+            onClick={() => setEditingProperty({} as Property)} 
             className="flex items-center gap-2 bg-black text-white hover:bg-gray-800 rounded-2xl px-6 py-3"
           >
             <Plus className="h-4 w-4" />
@@ -184,14 +211,18 @@ const HostDashboard = () => {
         </div>
 
         <Tabs defaultValue="properties" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 rounded-2xl bg-gray-100 p-2">
+          <TabsList className="grid w-full grid-cols-5 rounded-2xl bg-gray-100 p-2">
             <TabsTrigger value="properties" className="flex items-center gap-2 rounded-xl">
               <Home className="h-4 w-4" />
               Properties
             </TabsTrigger>
             <TabsTrigger value="bookings" className="flex items-center gap-2 rounded-xl">
-              <Calendar className="h-4 w-4" />
+              <Users className="h-4 w-4" />
               Bookings
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2 rounded-xl">
+              <Calendar className="h-4 w-4" />
+              Calendar
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2 rounded-xl">
               <BarChart3 className="h-4 w-4" />
@@ -203,7 +234,7 @@ const HostDashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="properties" className="space-y-6">
+          <TabsContent value="properties">
             {properties.length === 0 ? (
               <Card className="rounded-3xl shadow-lg">
                 <CardContent className="flex flex-col items-center justify-center py-12">
@@ -211,7 +242,7 @@ const HostDashboard = () => {
                   <h3 className="text-xl font-semibold mb-2">No properties yet</h3>
                   <p className="text-gray-600 mb-4">Start by adding your first property to begin hosting</p>
                   <Button 
-                    onClick={() => setShowPropertyForm(true)}
+                    onClick={() => setEditingProperty({} as Property)}
                     className="bg-black text-white hover:bg-gray-800 rounded-2xl"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -225,37 +256,27 @@ const HostDashboard = () => {
                   <Card key={property.id} className="overflow-hidden rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300">
                     <div className="aspect-video relative">
                       <img
-                        src={property.images[0] || '/placeholder.svg'}
+                        src={property.images?.[0] || '/placeholder.svg'}
                         alt={property.title}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute top-4 right-4 flex flex-col gap-2">
-                        <Badge className={`${getStatusColor(property.approval_status)} border-0`}>
-                          {property.approval_status}
+                        <Badge className={`${getStatusColor(property.approval_status || 'pending')} border-0`}>
+                          {property.approval_status || 'pending'}
                         </Badge>
                         <Badge variant={property.is_active ? "default" : "secondary"}>
                           {property.is_active ? "Active" : "Inactive"}
                         </Badge>
-                        <Badge className={`${getRentalTypeColor(property.rental_type || 'daily')} border-0`}>
-                          {property.rental_type === 'both' ? 'Daily + Monthly' : 
-                           property.rental_type === 'monthly' ? 'Monthly' : 'Daily'}
-                        </Badge>
                       </div>
                     </div>
-                    <CardContent className="p-4">
+                    
+                    <CardContent className="p-6">
                       <h3 className="font-semibold text-lg mb-2 truncate">{property.title}</h3>
                       <p className="text-sm text-gray-600 mb-2">{property.city}, {property.state}</p>
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{property.description}</p>
                       
                       <div className="flex items-center justify-between text-sm mb-4">
-                        <div className="space-y-1">
-                          {property.price_per_night && (
-                            <div className="font-medium">EGP {property.price_per_night}/night</div>
-                          )}
-                          {property.monthly_price && (
-                            <div className="font-medium">EGP {property.monthly_price}/month</div>
-                          )}
-                        </div>
+                        <PropertyPriceDisplay property={property} />
                         <span className="text-gray-600">{property.bedrooms} bed • {property.bathrooms} bath</span>
                       </div>
 
@@ -281,7 +302,7 @@ const HostDashboard = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => togglePropertyStatus(property.id, property.is_active)}
+                          onClick={() => togglePropertyStatus(property.id, property.is_active || false)}
                           className="flex-1 rounded-xl"
                         >
                           {property.is_active ? 'Pause' : 'Activate'}
@@ -306,19 +327,59 @@ const HostDashboard = () => {
             <BookingsList />
           </TabsContent>
 
+          <TabsContent value="calendar">
+            {properties.length === 0 ? (
+              <Card className="rounded-3xl shadow-lg">
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <Calendar className="h-16 w-16 text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No properties to display</h3>
+                  <p className="text-gray-600 mb-4">Add properties to view their booking calendars</p>
+                  <Button 
+                    onClick={() => setEditingProperty({} as Property)}
+                    className="bg-black text-white hover:bg-gray-800 rounded-2xl"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Your First Property
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-8">
+                {properties.map((property) => (
+                  <motion.div
+                    key={property.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <HostCalendar
+                      propertyId={property.id}
+                      propertyTitle={property.title}
+                      onBookingClick={(bookingId) => console.log('Booking clicked:', bookingId)}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="analytics">
             <HostStats />
           </TabsContent>
 
           <TabsContent value="settings">
-            <Card className="rounded-3xl shadow-lg">
-              <CardHeader>
-                <CardTitle>Host Settings</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600">Host settings will be available soon.</p>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              <SimplePropertyTest />
+              
+              <Card className="rounded-3xl shadow-lg">
+                <CardHeader>
+                  <CardTitle>Host Settings</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">Host settings will be available soon.</p>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

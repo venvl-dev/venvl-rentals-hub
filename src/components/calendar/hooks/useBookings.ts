@@ -76,7 +76,11 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
       // Get unique guest IDs for guest profile data
       const guestIds = [...new Set(bookingsData.map(b => b.guest_id).filter(Boolean))];
       
-      let guestProfiles: any[] = [];
+      let guestProfiles: Array<{
+        id: string;
+        first_name?: string;
+        last_name?: string;
+      }> = [];
       if (guestIds.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')

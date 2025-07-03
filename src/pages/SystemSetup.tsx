@@ -8,10 +8,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Users, Database, Trash2, Play, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
+interface InitializationResult {
+  success: boolean;
+  error?: string;
+  users_created?: number;
+  demo_data_result?: string;
+  results?: Array<{
+    email: string;
+    role: string;
+    success: boolean;
+  }>;
+}
+
 const SystemSetup = () => {
   const [isInitializing, setIsInitializing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
-  const [initializationResult, setInitializationResult] = useState<any>(null);
+  const [initializationResult, setInitializationResult] = useState<InitializationResult | null>(null);
 
   const clearAllData = async () => {
     setIsClearing(true);
@@ -19,11 +31,11 @@ const SystemSetup = () => {
       console.log('Starting data cleanup...');
       
       // Delete all existing data in correct order
-      const tables = ['reviews', 'bookings', 'properties', 'notifications', 'profiles'];
+      const tables = ['reviews', 'bookings', 'properties', 'notifications', 'profiles'] as const;
       
       for (const table of tables) {
         console.log(`Clearing ${table}...`);
-        const { error } = await supabase.from(table as any).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (error && !error.message.includes('No rows')) {
           console.error(`Error clearing ${table}:`, error);
         }
@@ -43,7 +55,8 @@ const SystemSetup = () => {
       setInitializationResult(null);
     } catch (error) {
       console.error('Error clearing data:', error);
-      toast.error('Error clearing data: ' + (error as Error).message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error('Error clearing data: ' + errorMessage);
     } finally {
       setIsClearing(false);
     }
@@ -75,10 +88,11 @@ const SystemSetup = () => {
       }
     } catch (error) {
       console.error('Error initializing system:', error);
-      toast.error('Error initializing system: ' + (error as Error).message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error('Error initializing system: ' + errorMessage);
       setInitializationResult({
         success: false,
-        error: (error as Error).message
+        error: errorMessage
       });
     } finally {
       setIsInitializing(false);
@@ -230,7 +244,7 @@ const SystemSetup = () => {
                     <div>
                       <span className="font-medium">User Creation Details:</span>
                       <div className="mt-2 space-y-2">
-                        {initializationResult.results.map((result: any, index: number) => (
+                        {initializationResult.results.map((result, index: number) => (
                           <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
                             <span className="text-sm">{result.email}</span>
                             <div className="flex items-center gap-2">

@@ -87,7 +87,13 @@ Deno.serve(async (req) => {
     }
 
     let createdUsers = 0;
-    const results: any[] = [];
+    const results: Array<{
+      email: string;
+      role: string;
+      success: boolean;
+      error?: string;
+      id?: string;
+    }> = [];
 
     // Create default users
     for (const user of defaultUsers) {

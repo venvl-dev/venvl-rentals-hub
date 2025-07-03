@@ -15,29 +15,62 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Home, Calendar, DollarSign, Settings, ArrowLeft, Plus, X } from 'lucide-react';
 import { Property } from '@/types/property';
+import { 
+  getRentalType, 
+  getDailyPrice, 
+  getMonthlyPrice, 
+  getRentalTypeBadge,
+  supportsBookingType,
+  type RentalType,
+  type PropertyRentalData 
+} from '@/lib/rentalTypeUtils';
 
-const propertySchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().min(10, 'Description must be at least 10 characters'),
-  property_type: z.enum(['apartment', 'house', 'villa', 'studio', 'cabin', 'loft']),
-  address: z.string().min(1, 'Address is required'),
-  city: z.string().min(1, 'City is required'),
-  state: z.string().optional(),
-  country: z.string().default('US'),
-  postal_code: z.string().optional(),
-  rental_type: z.enum(['daily', 'monthly', 'both']),
-  bedrooms: z.number().min(0),
-  bathrooms: z.number().min(0),
-  max_guests: z.number().min(1),
-  price_per_night: z.number().optional(),
-  monthly_price: z.number().optional(),
-  min_nights: z.number().optional(),
-  min_months: z.number().optional(),
-  amenities: z.array(z.string()).default([]),
-  images: z.array(z.string()).default([]),
-});
+// Dynamic schema creator based on rental type
+const createPropertySchema = (rentalType: RentalType) => {
+  const baseSchema = z.object({
+    title: z.string().min(1, 'Title is required'),
+    description: z.string().min(10, 'Description must be at least 10 characters'),
+    property_type: z.enum(['apartment', 'house', 'villa', 'studio', 'cabin', 'loft']),
+    address: z.string().min(1, 'Address is required'),
+    city: z.string().min(1, 'City is required'),
+    state: z.string().optional(),
+    country: z.string().default('US'),
+    postal_code: z.string().optional(),
+    rental_type: z.enum(['daily', 'monthly', 'both']),
+    bedrooms: z.number().min(0),
+    bathrooms: z.number().min(0),
+    max_guests: z.number().min(1),
+    amenities: z.array(z.string()).default([]),
+    images: z.array(z.string()).default([]),
+  });
 
-type PropertyFormData = z.infer<typeof propertySchema>;
+  // Add conditional validation based on rental type
+  if (rentalType === 'daily') {
+    return baseSchema.extend({
+      price_per_night: z.number().min(1, 'Daily price must be greater than 0'),
+      min_nights: z.number().min(1, 'Minimum nights must be at least 1'),
+      monthly_price: z.number().optional(),
+      min_months: z.number().optional(),
+    });
+  } else if (rentalType === 'monthly') {
+    return baseSchema.extend({
+      monthly_price: z.number().min(1, 'Monthly price must be greater than 0'),
+      min_months: z.number().min(1, 'Minimum months must be at least 1'),
+      price_per_night: z.number().optional(),
+      min_nights: z.number().optional(),
+    });
+  } else {
+    // Both types require both prices
+    return baseSchema.extend({
+      price_per_night: z.number().min(1, 'Daily price must be greater than 0'),
+      min_nights: z.number().min(1, 'Minimum nights must be at least 1'),
+      monthly_price: z.number().min(1, 'Monthly price must be greater than 0'),
+      min_months: z.number().min(1, 'Minimum months must be at least 1'),
+    });
+  }
+};
+
+type PropertyFormData = z.infer<ReturnType<typeof createPropertySchema>>;
 
 interface EnhancedPropertyFormProps {
   property?: Property | null;
@@ -56,24 +89,31 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   const [imageUrls, setImageUrls] = useState<string[]>(property?.images || []);
   const [newImageUrl, setNewImageUrl] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
+  const [currentRentalType, setCurrentRentalType] = useState<RentalType>('daily');
+
+  // Get current rental type for existing property or default for new property
+  const initialRentalType = property ? getRentalType(property as PropertyRentalData) : 'daily';
+
+  // Create dynamic schema based on current rental type
+  const propertySchema = createPropertySchema(currentRentalType);
 
   const form = useForm<PropertyFormData>({
     resolver: zodResolver(propertySchema),
     defaultValues: {
       title: property?.title || '',
       description: property?.description || '',
-      property_type: (property?.property_type as any) || 'apartment',
+      property_type: (property?.property_type as 'apartment' | 'house' | 'villa' | 'studio' | 'cabin' | 'loft') || 'apartment',
       address: property?.address || '',
       city: property?.city || '',
       state: property?.state || '',
       country: property?.country || 'US',
       postal_code: property?.postal_code || '',
-      rental_type: property?.rental_type as 'daily' | 'monthly' | 'both' || 'daily',
+      rental_type: initialRentalType as RentalType,
       bedrooms: property?.bedrooms || 1,
       bathrooms: property?.bathrooms || 1,
       max_guests: property?.max_guests || 2,
-      price_per_night: property?.price_per_night || undefined,
-      monthly_price: property?.monthly_price || undefined,
+      price_per_night: property ? getDailyPrice(property as PropertyRentalData) : undefined,
+      monthly_price: property ? getMonthlyPrice(property as PropertyRentalData) : undefined,
       min_nights: property?.min_nights || 1,
       min_months: property?.min_months || 1,
       amenities: property?.amenities || [],
@@ -81,7 +121,29 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     },
   });
 
-  const watchedRentalType = form.watch('rental_type');
+  const watchedRentalType = form.watch('rental_type') as RentalType;
+
+  // Update schema when rental type changes
+  useEffect(() => {
+    if (watchedRentalType !== currentRentalType) {
+      setCurrentRentalType(watchedRentalType);
+      
+      // Re-initialize form with new schema
+      const newSchema = createPropertySchema(watchedRentalType);
+      const currentValues = form.getValues();
+      
+      // Auto-clear irrelevant fields based on rental type
+      if (watchedRentalType === 'daily') {
+        currentValues.monthly_price = undefined;
+        currentValues.min_months = undefined;
+      } else if (watchedRentalType === 'monthly') {
+        currentValues.price_per_night = undefined;
+        currentValues.min_nights = undefined;
+      }
+      
+      form.reset(currentValues);
+    }
+  }, [watchedRentalType, currentRentalType, form]);
 
   const handleAmenityToggle = (amenity: string) => {
     const updated = selectedAmenities.includes(amenity)
@@ -110,24 +172,51 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     try {
       setIsSubmitting(true);
 
-      // Validate pricing based on rental type
-      if (data.rental_type === 'daily' && !data.price_per_night) {
-        toast.error('Nightly rate is required for daily rentals');
-        return;
-      }
-      if (data.rental_type === 'monthly' && !data.monthly_price) {
-        toast.error('Monthly rate is required for monthly rentals');
-        return;
-      }
-      if (data.rental_type === 'both' && (!data.price_per_night || !data.monthly_price)) {
-        toast.error('Both nightly and monthly rates are required');
-        return;
+      const rentalType = data.rental_type as RentalType;
+      
+      // Enhanced validation with detailed error messages
+      if (rentalType === 'daily') {
+        if (!data.price_per_night || data.price_per_night <= 0) {
+          toast.error('Daily price is required and must be greater than 0 for daily rentals');
+          return;
+        }
+        if (!data.min_nights || data.min_nights < 1) {
+          toast.error('Minimum nights must be at least 1 for daily rentals');
+          return;
+        }
+      } else if (rentalType === 'monthly') {
+        if (!data.monthly_price || data.monthly_price <= 0) {
+          toast.error('Monthly price is required and must be greater than 0 for monthly rentals');
+          return;
+        }
+        if (!data.min_months || data.min_months < 1) {
+          toast.error('Minimum months must be at least 1 for monthly rentals');
+          return;
+        }
+      } else if (rentalType === 'both') {
+        if (!data.price_per_night || data.price_per_night <= 0) {
+          toast.error('Daily price is required for flexible booking properties');
+          return;
+        }
+        if (!data.monthly_price || data.monthly_price <= 0) {
+          toast.error('Monthly price is required for flexible booking properties');
+          return;
+        }
+        if (!data.min_nights || data.min_nights < 1) {
+          toast.error('Minimum nights must be at least 1');
+          return;
+        }
+        if (!data.min_months || data.min_months < 1) {
+          toast.error('Minimum months must be at least 1');
+          return;
+        }
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      const propertyData = {
+      // Prepare property data with only relevant price fields
+      const propertyData: any = {
         title: data.title,
         description: data.description,
         property_type: data.property_type,
@@ -140,41 +229,99 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         bedrooms: data.bedrooms,
         bathrooms: data.bathrooms,
         max_guests: data.max_guests,
-        price_per_night: data.price_per_night,
-        daily_price: data.price_per_night,
-        monthly_price: data.monthly_price,
-        min_nights: data.min_nights,
-        min_months: data.min_months,
         host_id: user.id,
         amenities: selectedAmenities,
         images: imageUrls,
-        booking_types: data.rental_type === 'both' ? ['daily', 'monthly'] : [data.rental_type],
+        // Ensure booking_types is always an array for consistency
+        booking_types: rentalType === 'both' ? ['daily', 'monthly'] : [rentalType],
+        is_active: true,
+        approval_status: 'pending'
       };
 
+      // Only include relevant price fields based on rental type (don't set null values)
+      if (rentalType === 'daily') {
+        propertyData.price_per_night = data.price_per_night;
+        propertyData.daily_price = data.price_per_night;
+        propertyData.min_nights = data.min_nights;
+        // Don't include monthly fields for daily-only properties
+      } else if (rentalType === 'monthly') {
+        propertyData.monthly_price = data.monthly_price;
+        propertyData.min_months = data.min_months;
+        // Don't include daily fields for monthly-only properties
+      } else if (rentalType === 'both') {
+        // Include both price types for flexible properties
+        propertyData.price_per_night = data.price_per_night;
+        propertyData.daily_price = data.price_per_night;
+        propertyData.monthly_price = data.monthly_price;
+        propertyData.min_nights = data.min_nights;
+        propertyData.min_months = data.min_months;
+      }
+
+      console.log('Submitting property data:', propertyData); // Debug log
+      console.log('Property ID for edit:', property?.id); // Debug log
+      console.log('User ID:', user.id); // Debug log
+
       if (property) {
-        const { error } = await supabase
-          .from('properties')
-          .update(propertyData)
-          .eq('id', property.id);
+        // Remove fields that shouldn't be updated
+        const updateData = { ...propertyData };
+        delete updateData.host_id; // Don't update host_id on edit
+        delete updateData.approval_status; // Don't reset approval status on edit
         
-        if (error) throw error;
+        console.log('Update data:', updateData); // Debug log
+        
+        const { data: result, error } = await supabase
+          .from('properties')
+          .update(updateData)
+          .eq('id', property.id)
+          .select(); // Return updated record for debugging
+        
+        if (error) {
+          console.error('Update error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Update failed: ${error.message}`);
+        }
+        
+        console.log('Update result:', result); // Debug log
         toast.success('Property updated successfully!');
       } else {
-        const { error } = await supabase
-          .from('properties')
-          .insert(propertyData);
+        console.log('Insert data:', propertyData); // Debug log
         
-        if (error) throw error;
+        const { data: result, error } = await supabase
+          .from('properties')
+          .insert(propertyData)
+          .select(); // Return inserted record for debugging
+        
+        if (error) {
+          console.error('Insert error details:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
+          throw new Error(`Insert failed: ${error.message}`);
+        }
+        
+        console.log('Insert result:', result); // Debug log
         toast.success('Property created successfully!');
       }
 
       onSave();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error saving property:', error);
-      toast.error(error.message || 'Failed to save property');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save property';
+      toast.error(`Save failed: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Get rental type badge for current selection
+  const getRentalTypeBadgeForForm = (type: RentalType) => {
+    return getRentalTypeBadge(type);
   };
 
   return (
@@ -199,42 +346,39 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
               <h1 className="text-3xl font-bold">
                 {property ? 'Edit Property' : 'Add New Property'}
               </h1>
-              <p className="text-gray-600 mt-1">
-                {property ? 'Update your property details' : 'List your property on VENVL'}
+              <p className="text-gray-600">
+                {property ? 'Update your property details' : 'Create a new listing for your property'}
               </p>
             </div>
           </div>
-          <Badge variant="outline" className="bg-black text-white">
-            VENVL Host
-          </Badge>
         </div>
 
-        {/* Form Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 rounded-2xl bg-gray-100 p-2">
-            <TabsTrigger value="basic" className="rounded-xl flex items-center gap-2">
-              <Home className="h-4 w-4" />
-              Basic Info
-            </TabsTrigger>
-            <TabsTrigger value="pricing" className="rounded-xl flex items-center gap-2">
-              <DollarSign className="h-4 w-4" />
-              Pricing
-            </TabsTrigger>
-            <TabsTrigger value="details" className="rounded-xl flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Details
-            </TabsTrigger>
-            <TabsTrigger value="media" className="rounded-xl flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Media
-            </TabsTrigger>
-          </TabsList>
+        {/* Form */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 rounded-2xl p-1 bg-gray-100">
+              <TabsTrigger value="basic" className="rounded-xl">
+                <Home className="h-4 w-4 mr-2" />
+                Basic Info
+              </TabsTrigger>
+              <TabsTrigger value="pricing" className="rounded-xl">
+                <DollarSign className="h-4 w-4 mr-2" />
+                Pricing
+              </TabsTrigger>
+              <TabsTrigger value="details" className="rounded-xl">
+                <Settings className="h-4 w-4 mr-2" />
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="media" className="rounded-xl">
+                <Calendar className="h-4 w-4 mr-2" />
+                Media
+              </TabsTrigger>
+            </TabsList>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             {/* Basic Info Tab */}
             <TabsContent value="basic">
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
               >
@@ -248,20 +392,34 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="title">Property Title *</Label>
-                        <Input
-                          id="title"
-                          {...form.register('title')}
-                          placeholder="Beautiful downtown apartment"
-                          className="rounded-xl border-gray-200 focus:border-black"
-                        />
-                        {form.formState.errors.title && (
-                          <p className="text-red-500 text-sm">{form.formState.errors.title.message}</p>
-                        )}
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Property Title *</Label>
+                      <Input
+                        id="title"
+                        {...form.register('title')}
+                        placeholder="Beautiful downtown apartment"
+                        className="rounded-xl border-gray-200 focus:border-black"
+                      />
+                      {form.formState.errors.title && (
+                        <p className="text-red-500 text-sm">{form.formState.errors.title.message}</p>
+                      )}
+                    </div>
 
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description *</Label>
+                      <Textarea
+                        id="description"
+                        {...form.register('description')}
+                        placeholder="Describe your property..."
+                        rows={4}
+                        className="rounded-xl border-gray-200 focus:border-black"
+                      />
+                      {form.formState.errors.description && (
+                        <p className="text-red-500 text-sm">{form.formState.errors.description.message}</p>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="property_type">Property Type *</Label>
                         <Select
@@ -281,23 +439,33 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                           </SelectContent>
                         </Select>
                       </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="rental_type">Rental Type *</Label>
+                        <Select
+                          value={form.watch('rental_type')}
+                          onValueChange={(value) => form.setValue('rental_type', value as RentalType)}
+                        >
+                          <SelectTrigger className="rounded-xl border-gray-200 focus:border-black">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="daily">Daily Rental</SelectItem>
+                            <SelectItem value="monthly">Monthly Rental</SelectItem>
+                            <SelectItem value="both">Both Daily & Monthly</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {watchedRentalType && (
+                          <div className="mt-2">
+                            <Badge className={getRentalTypeBadgeForForm(watchedRentalType as RentalType).color}>
+                              {getRentalTypeBadgeForForm(watchedRentalType as RentalType).label}
+                            </Badge>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description *</Label>
-                      <Textarea
-                        id="description"
-                        {...form.register('description')}
-                        placeholder="Describe your property..."
-                        rows={4}
-                        className="rounded-xl border-gray-200 focus:border-black"
-                      />
-                      {form.formState.errors.description && (
-                        <p className="text-red-500 text-sm">{form.formState.errors.description.message}</p>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="address">Address *</Label>
                         <Input
@@ -306,8 +474,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                           placeholder="123 Main Street"
                           className="rounded-xl border-gray-200 focus:border-black"
                         />
+                        {form.formState.errors.address && (
+                          <p className="text-red-500 text-sm">{form.formState.errors.address.message}</p>
+                        )}
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="city">City *</Label>
                         <Input
@@ -316,8 +486,13 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                           placeholder="New York"
                           className="rounded-xl border-gray-200 focus:border-black"
                         />
+                        {form.formState.errors.city && (
+                          <p className="text-red-500 text-sm">{form.formState.errors.city.message}</p>
+                        )}
                       </div>
+                    </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="state">State</Label>
                         <Input
@@ -327,23 +502,24 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                           className="rounded-xl border-gray-200 focus:border-black"
                         />
                       </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="rental_type">Rental Type *</Label>
-                      <Select
-                        value={form.watch('rental_type')}
-                        onValueChange={(value) => form.setValue('rental_type', value as any)}
-                      >
-                        <SelectTrigger className="rounded-xl border-gray-200 focus:border-black">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="daily">Daily Rental</SelectItem>
-                          <SelectItem value="monthly">Monthly Rental</SelectItem>
-                          <SelectItem value="both">Both Daily & Monthly</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div className="space-y-2">
+                        <Label htmlFor="country">Country</Label>
+                        <Input
+                          id="country"
+                          {...form.register('country')}
+                          placeholder="US"
+                          className="rounded-xl border-gray-200 focus:border-black"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="postal_code">Postal Code</Label>
+                        <Input
+                          id="postal_code"
+                          {...form.register('postal_code')}
+                          placeholder="10001"
+                          className="rounded-xl border-gray-200 focus:border-black"
+                        />
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -367,7 +543,18 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    {/* Show current rental type info */}
+                    <div className="bg-gray-50 rounded-xl p-4">
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-medium text-gray-700">Current Rental Type:</span>
+                        <Badge className={getRentalTypeBadgeForForm(watchedRentalType as RentalType).color}>
+                          {getRentalTypeBadgeForForm(watchedRentalType as RentalType).label}
+                        </Badge>
+                      </div>
+                    </div>
+
                     <AnimatePresence mode="wait">
+                      {/* Daily Pricing - Only show if supports daily rentals */}
                       {(watchedRentalType === 'daily' || watchedRentalType === 'both') && (
                         <motion.div
                           key="daily-pricing"
@@ -382,7 +569,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                              <Label htmlFor="price_per_night">Nightly Rate (EGP) *</Label>
+                              <Label htmlFor="price_per_night">
+                                Nightly Rate (EGP) *
+                              </Label>
                               <Input
                                 id="price_per_night"
                                 type="number"
@@ -391,9 +580,12 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                                 placeholder="250.00"
                                 className="rounded-xl border-gray-200 focus:border-black"
                               />
+                              {form.formState.errors.price_per_night && (
+                                <p className="text-red-500 text-sm">{form.formState.errors.price_per_night.message}</p>
+                              )}
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="min_nights">Minimum Days</Label>
+                              <Label htmlFor="min_nights">Minimum Days *</Label>
                               <Input
                                 id="min_nights"
                                 type="number"
@@ -401,11 +593,15 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                                 placeholder="1"
                                 className="rounded-xl border-gray-200 focus:border-black"
                               />
+                              {form.formState.errors.min_nights && (
+                                <p className="text-red-500 text-sm">{form.formState.errors.min_nights.message}</p>
+                              )}
                             </div>
                           </div>
                         </motion.div>
                       )}
 
+                      {/* Monthly Pricing - Only show if supports monthly rentals */}
                       {(watchedRentalType === 'monthly' || watchedRentalType === 'both') && (
                         <motion.div
                           key="monthly-pricing"
@@ -420,7 +616,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                              <Label htmlFor="monthly_price">Monthly Rate (EGP) *</Label>
+                              <Label htmlFor="monthly_price">
+                                Monthly Rate (EGP) *
+                              </Label>
                               <Input
                                 id="monthly_price"
                                 type="number"
@@ -429,9 +627,12 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                                 placeholder="6500.00"
                                 className="rounded-xl border-gray-200 focus:border-black"
                               />
+                              {form.formState.errors.monthly_price && (
+                                <p className="text-red-500 text-sm">{form.formState.errors.monthly_price.message}</p>
+                              )}
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="min_months">Minimum Months</Label>
+                              <Label htmlFor="min_months">Minimum Months *</Label>
                               <Input
                                 id="min_months"
                                 type="number"
@@ -439,6 +640,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                                 placeholder="1"
                                 className="rounded-xl border-gray-200 focus:border-black"
                               />
+                              {form.formState.errors.min_months && (
+                                <p className="text-red-500 text-sm">{form.formState.errors.min_months.message}</p>
+                              )}
                             </div>
                           </div>
                         </motion.div>
@@ -611,8 +815,8 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                 {isSubmitting ? 'Saving...' : property ? 'Update Property' : 'Create Property'}
               </Button>
             </motion.div>
-          </form>
-        </Tabs>
+          </Tabs>
+        </form>
       </motion.div>
     </div>
   );

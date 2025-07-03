@@ -92,7 +92,7 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof typeof formData, value: string | number | string[]) => {
     setFormData(prev => ({
       ...prev,
       [field]: value

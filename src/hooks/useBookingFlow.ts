@@ -20,6 +20,11 @@ interface BookingData {
   status: BookingStatus;
 }
 
+interface ConfirmedBooking extends BookingData {
+  id: string;
+  created_at: string;
+}
+
 interface UseBookingFlowProps {
   user: User | null;
   propertyId: string;
@@ -29,8 +34,8 @@ export const useBookingFlow = ({ user, propertyId }: UseBookingFlowProps) => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStep, setCurrentStep] = useState<'booking' | 'summary' | 'confirmation'>('booking');
-  const [bookingData, setBookingData] = useState<any>(null);
-  const [confirmedBooking, setConfirmedBooking] = useState<any>(null);
+  const [bookingData, setBookingData] = useState<BookingData | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<ConfirmedBooking | null>(null);
 
   const checkDateAvailability = useCallback(async (checkIn: Date, checkOut: Date) => {
     try {
@@ -105,16 +110,17 @@ export const useBookingFlow = ({ user, propertyId }: UseBookingFlowProps) => {
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating booking:', error);
-      toast.error(error.message || 'Failed to create booking');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
+      toast.error(errorMessage);
       return null;
     } finally {
       setIsProcessing(false);
     }
   }, [user, propertyId, checkDateAvailability, navigate]);
 
-  const proceedToSummary = useCallback((booking: any) => {
+  const proceedToSummary = useCallback((booking: BookingData) => {
     setBookingData(booking);
     setCurrentStep('summary');
   }, []);

@@ -72,7 +72,7 @@ const DatePicker = ({ checkIn, checkOut, bookingType, onDateChange, onBookingTyp
               <Button
                 key={option.value}
                 variant={bookingType === option.value ? "default" : "outline"}
-                onClick={() => onBookingTypeChange(option.value as any)}
+                onClick={() => onBookingTypeChange(option.value as 'daily' | 'monthly' | 'flexible')}
                 className={`px-4 py-2 rounded-full transition-all duration-200 ${
                   bookingType === option.value ? 'bg-gray-900 text-white' : 'hover:bg-gray-100'
                 }`}

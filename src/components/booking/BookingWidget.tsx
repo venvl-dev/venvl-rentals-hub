@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
@@ -229,17 +228,19 @@ const BookingWidget = ({ property, user }: BookingWidgetProps) => {
                 <Clock className="h-4 w-4 mr-2" />
                 Booking Type
               </label>
-              <div className="flex space-x-2">
+              <div className="inline-flex p-1 bg-muted rounded-lg w-full">
                 {availableBookingTypes.map((type) => (
                   <Button
                     key={type}
-                    variant={bookingType === type ? "default" : "outline"}
+                    variant="ghost"
                     onClick={() => setBookingType(type as 'daily' | 'monthly')}
-                    className={`flex-1 py-3 rounded-2xl transition-all duration-200 ${
-                      bookingType === type 
-                        ? 'bg-gray-900 text-white shadow-lg' 
-                        : 'bg-white border-2 hover:border-gray-300'
-                    }`}
+                    className={`
+                      flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-200
+                      ${bookingType === type 
+                        ? 'bg-black text-white shadow-sm' 
+                        : 'text-muted-foreground'
+                      }
+                    `}
                   >
                     <span className="capitalize">{type} stays</span>
                   </Button>

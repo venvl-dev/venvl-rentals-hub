@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import PropertyCard from '@/components/PropertyCard';
@@ -9,6 +9,14 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { MapPin, Star, Users, Bed, Bath, Search } from 'lucide-react';
+import { 
+  matchesSearchCriteria, 
+  type BookingType, 
+  type PropertyRentalData 
+} from '@/lib/rentalTypeUtils';
 
 interface Property {
   id: string;
@@ -16,17 +24,25 @@ interface Property {
   description: string;
   price_per_night: number;
   monthly_price?: number;
+  daily_price?: number;
   images: string[];
   city: string;
   state: string;
+  country: string;
   property_type: string;
   bedrooms: number;
   bathrooms: number;
   max_guests: number;
   amenities: string[];
-  booking_types: string[];
-  approval_status: string;
+  booking_types?: string[];
+  rental_type?: string;
+  min_nights?: number;
+  min_months?: number;
   is_active: boolean;
+  approval_status?: string;
+  created_at: string;
+  updated_at: string;
+  blocked_dates?: string[];
 }
 
 interface SearchFilters {
@@ -34,7 +50,7 @@ interface SearchFilters {
   checkIn?: Date;
   checkOut?: Date;
   guests: number;
-  bookingType: 'daily' | 'monthly' | 'flexible';
+  bookingType: BookingType;
   flexibleOption?: string;
   duration?: number;
   propertyType?: string;
@@ -44,7 +60,16 @@ interface SearchFilters {
   bathrooms?: number;
 }
 
+interface AdvancedFilters {
+  priceRange: [number, number];
+  propertyTypes: string[];
+  amenities: string[];
+  bedrooms: number;
+  bathrooms: number;
+}
+
 const Index = () => {
+  const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,116 +77,85 @@ const Index = () => {
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     location: '',
     guests: 1,
-    bookingType: 'daily',
+    bookingType: 'flexible' as BookingType,
   });
-  const [advancedFilters, setAdvancedFilters] = useState<any>({});
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
+    priceRange: [0, 10000],
+    propertyTypes: [],
+    amenities: [],
+    bedrooms: 0,
+    bathrooms: 0,
+  });
 
   useEffect(() => {
     fetchProperties();
   }, []);
 
   useEffect(() => {
-    applyFilters();
+    filterProperties();
   }, [properties, searchFilters, advancedFilters]);
 
   const fetchProperties = async () => {
     try {
       setLoading(true);
-      console.log('Fetching properties...');
-      
       const { data, error } = await supabase
         .from('properties')
-        .select(`
-          id,
-          title,
-          description,
-          price_per_night,
-          monthly_price,
-          images,
-          city,
-          state,
-          property_type,
-          bedrooms,
-          bathrooms,
-          max_guests,
-          amenities,
-          booking_types,
-          approval_status,
-          is_active
-        `)
+        .select('*')
         .eq('is_active', true)
-        .eq('approval_status', 'approved');
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Supabase error details:', error);
-        throw error;
+        console.error('Error fetching properties:', error);
+        toast.error('Failed to load properties');
+        return;
       }
-      
-      console.log('Raw data from Supabase:', data);
-      const propertiesData = data || [];
-      console.log(`Successfully fetched ${propertiesData.length} properties`);
-      
-      setProperties(propertiesData);
-      
-      if (propertiesData.length === 0) {
-        console.warn('No approved and active properties found in database');
-        toast.info('No properties are currently available. Please check back later.');
-      }
-      
-    } catch (error: any) {
-      console.error('Error fetching properties:', error);
-      toast.error(`Failed to load properties: ${error.message || 'Unknown error'}`);
-      setProperties([]);
+
+      console.log('Fetched properties:', data?.length);
+      setProperties(data || []);
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Failed to load properties');
     } finally {
       setLoading(false);
     }
   };
 
-  const applyFilters = () => {
-    console.log('Applying filters:', searchFilters, advancedFilters);
-    console.log('Total properties to filter:', properties.length);
-    
+  const filterProperties = () => {
     let filtered = [...properties];
+    console.log('Starting with properties:', filtered.length);
 
     // Location filter
-    if (searchFilters.location.trim()) {
-      const searchLocation = searchFilters.location.toLowerCase().trim();
-      filtered = filtered.filter(property => {
-        const cityMatch = property.city?.toLowerCase().includes(searchLocation);
-        const stateMatch = property.state?.toLowerCase().includes(searchLocation);
-        const fullLocationMatch = `${property.city}, ${property.state}`.toLowerCase().includes(searchLocation);
-        return cityMatch || stateMatch || fullLocationMatch;
-      });
-      console.log(`After location filter "${searchFilters.location}": ${filtered.length} properties`);
+    if (searchFilters.location) {
+      filtered = filtered.filter(property => 
+        property.city?.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
+        property.state?.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
+        property.country?.toLowerCase().includes(searchFilters.location.toLowerCase())
+      );
+      console.log(`After location filter: ${filtered.length} properties`);
     }
 
     // Guest capacity filter
-    if (searchFilters.guests > 0) {
+    if (searchFilters.guests > 1) {
       filtered = filtered.filter(property => property.max_guests >= searchFilters.guests);
-      console.log(`After guests filter (${searchFilters.guests}): ${filtered.length} properties`);
+      console.log(`After guest filter: ${filtered.length} properties`);
     }
 
-    // Booking type filter
+    // Booking type filter - Use unified rental type logic
     if (searchFilters.bookingType !== 'flexible') {
       filtered = filtered.filter(property => {
-        const supportsBookingType = property.booking_types?.includes(searchFilters.bookingType);
-        const defaultSupport = !property.booking_types && searchFilters.bookingType === 'daily';
-        const monthlySupport = searchFilters.bookingType === 'monthly' && property.monthly_price;
-        return supportsBookingType || defaultSupport || monthlySupport;
+        return matchesSearchCriteria(
+          property as PropertyRentalData, 
+          searchFilters.bookingType,
+          advancedFilters.priceRange ? { 
+            min: advancedFilters.priceRange[0], 
+            max: advancedFilters.priceRange[1] 
+          } : undefined
+        );
       });
       console.log(`After booking type filter (${searchFilters.bookingType}): ${filtered.length} properties`);
     }
 
     // Advanced filters
-    if (advancedFilters.priceRange) {
-      filtered = filtered.filter(property => {
-        const price = searchFilters.bookingType === 'monthly' && property.monthly_price 
-          ? property.monthly_price 
-          : property.price_per_night;
-        return price >= advancedFilters.priceRange[0] && price <= advancedFilters.priceRange[1];
-      });
-    }
-
     if (advancedFilters.propertyTypes?.length > 0) {
       filtered = filtered.filter(property => 
         advancedFilters.propertyTypes.includes(property.property_type)
@@ -194,7 +188,7 @@ const Index = () => {
     saveSearchPreferences(filters);
   };
 
-  const handleAdvancedFilters = (filters: any) => {
+  const handleAdvancedFilters = (filters: AdvancedFilters) => {
     setAdvancedFilters(filters);
     setShowAdvancedFilters(false);
   };
@@ -345,7 +339,7 @@ const Index = () => {
                   </motion.div>
                 ) : (
                   <motion.div 
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6"
+                    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.6, delay: 0.8 }}
@@ -356,8 +350,6 @@ const Index = () => {
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: index * 0.1 }}
-                        whileHover={{ y: -8, scale: 1.02 }}
-                        className="transition-transform duration-300"
                       >
                         <PropertyCard property={property} />
                       </motion.div>

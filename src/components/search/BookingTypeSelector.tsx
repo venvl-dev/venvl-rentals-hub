@@ -1,4 +1,3 @@
-
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 
@@ -12,61 +11,83 @@ const BookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSelector
     { 
       id: 'daily', 
       label: 'Daily', 
-      description: 'Short-term stays' 
+      description: 'Short-term stays'
     },
     { 
       id: 'monthly', 
       label: 'Monthly', 
-      description: 'Extended stays' 
+      description: 'Extended stays'
     },
     { 
       id: 'flexible', 
       label: 'Flexible', 
-      description: 'Best deals' 
+      description: 'Best deals'
     }
   ];
 
   return (
     <motion.div 
-      className="flex justify-center"
+      className="w-full max-w-md mx-auto"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="inline-flex p-1.5 bg-gray-100 rounded-2xl shadow-inner">
-        {bookingTypes.map((type, index) => (
-          <motion.div
-            key={type.id}
-            className="relative"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-          >
-            <motion.button
-              onClick={() => onTypeChange(type.id as any)}
-              className={`relative px-8 py-4 rounded-xl font-semibold transition-all duration-300 ${
-                selectedType === type.id
-                  ? 'bg-black text-white shadow-lg scale-105'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white hover:shadow-md'
-              }`}
-              whileHover={{ scale: selectedType === type.id ? 1.05 : 1.02 }}
-              whileTap={{ scale: 0.98 }}
+      {/* Desktop & Tablet View */}
+      <div className="hidden sm:block">
+        <div className="inline-flex p-1 bg-muted rounded-lg w-full">
+          {bookingTypes.map((type, index) => (
+            <motion.div
+              key={type.id}
+              className="flex-1"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
             >
-              <div className="text-center">
-                <div className="text-base font-bold">{type.label}</div>
-                <div className="text-xs opacity-75 mt-1">{type.description}</div>
-              </div>
-              
-              {selectedType === type.id && (
-                <motion.div
-                  className="absolute inset-0 bg-black rounded-xl -z-10"
-                  layoutId="activeTab"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-            </motion.button>
-          </motion.div>
-        ))}
+              <Button
+                variant="ghost"
+                onClick={() => onTypeChange(type.id as 'daily' | 'monthly' | 'flexible')}
+                className={`
+                  w-full h-9 px-3 text-xs font-medium rounded-md transition-all duration-200
+                  ${selectedType === type.id 
+                    ? 'bg-black text-white shadow-sm' 
+                    : 'text-muted-foreground'
+                  }
+                `}
+              >
+                {type.label}
+              </Button>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile View */}
+      <div className="block sm:hidden">
+        <div className="flex p-1 bg-muted rounded-lg">
+          {bookingTypes.map((type, index) => (
+            <motion.div
+              key={type.id}
+              className="flex-1"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+            >
+              <Button
+                variant="ghost"
+                onClick={() => onTypeChange(type.id as 'daily' | 'monthly' | 'flexible')}
+                className={`
+                  w-full h-8 px-2 text-xs font-medium rounded-md transition-all duration-200
+                  ${selectedType === type.id 
+                    ? 'bg-black text-white shadow-sm' 
+                    : 'text-muted-foreground'
+                  }
+                `}
+              >
+                {type.label}
+              </Button>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </motion.div>
   );

@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 
 interface BookingTypeSelectorProps {
@@ -11,41 +10,64 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
     { 
       id: 'daily', 
       label: 'Daily Stay', 
-      description: 'Perfect for short trips' 
+      description: 'Perfect for short trips'
     },
     { 
       id: 'monthly', 
       label: 'Monthly Stay', 
-      description: 'Long-term comfort' 
+      description: 'Long-term comfort'
     },
     { 
       id: 'flexible', 
       label: 'Flexible', 
-      description: 'Best available deals' 
+      description: 'Best available deals'
     }
   ];
 
   return (
-    <div className="flex justify-center w-full">
-      <div className="flex flex-col sm:flex-row w-full max-w-lg bg-muted rounded-2xl p-1 gap-1 sm:gap-0">
-        {bookingTypes.map((type) => (
-          <div key={type.id} className="flex-1">
+    <div className="w-full max-w-md mx-auto">
+      {/* Desktop & Tablet View */}
+      <div className="hidden sm:block">
+        <div className="inline-flex p-1 bg-muted rounded-lg w-full">
+          {bookingTypes.map((type) => (
             <Button
+              key={type.id}
               variant="ghost"
-              onClick={() => onTypeChange(type.id as any)}
-              className={`w-full px-4 py-3 sm:px-6 sm:py-4 rounded-xl font-medium transition-colors duration-200 ${
-                selectedType === type.id
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground'
-              }`}
+              onClick={() => onTypeChange(type.id as 'daily' | 'monthly' | 'flexible')}
+              className={`
+                flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-200
+                ${selectedType === type.id 
+                  ? 'bg-black text-white shadow-sm hover:bg-black hover:text-white' 
+                  : 'text-muted-foreground hover:bg-gray-50 hover:text-muted-foreground'
+                }
+              `}
             >
-              <div className="text-center">
-                <div className="text-sm font-semibold">{type.label}</div>
-                <div className="text-xs opacity-75 mt-0.5 hidden sm:block">{type.description}</div>
-              </div>
+              {type.label}
             </Button>
-          </div>
-        ))}
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile View - More Compact */}
+      <div className="block sm:hidden">
+        <div className="flex p-1 bg-muted rounded-lg">
+          {bookingTypes.map((type) => (
+            <Button
+              key={type.id}
+              variant="ghost"
+              onClick={() => onTypeChange(type.id as 'daily' | 'monthly' | 'flexible')}
+              className={`
+                flex-1 h-8 px-2 text-xs font-medium rounded-md transition-all duration-200
+                ${selectedType === type.id 
+                  ? 'bg-black text-white shadow-sm hover:bg-black hover:text-white' 
+                  : 'text-muted-foreground hover:bg-gray-50 hover:text-muted-foreground'
+                }
+              `}
+            >
+              {type.id === 'daily' ? 'Daily' : type.id === 'monthly' ? 'Monthly' : 'Flexible'}
+            </Button>
+          ))}
+        </div>
       </div>
     </div>
   );

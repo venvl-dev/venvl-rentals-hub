@@ -30,6 +30,20 @@ interface Property {
   address: string;
 }
 
+interface BookingData {
+  checkIn: Date;
+  checkOut: Date;
+  guests: number;
+  bookingType: 'daily' | 'monthly';
+  totalPrice: number;
+  duration?: number;
+}
+
+interface DateRange {
+  from?: Date;
+  to?: Date;
+}
+
 interface EnhancedDynamicBookingWidgetProps {
   property: Property;
   user: User | null;
@@ -43,7 +57,7 @@ const EnhancedDynamicBookingWidget = ({ property, user }: EnhancedDynamicBooking
   const [guests, setGuests] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
   const [showBookingFlow, setShowBookingFlow] = useState(false);
-  const [bookingData, setBookingData] = useState<any>(null);
+  const [bookingData, setBookingData] = useState<BookingData | null>(null);
 
   const getRentalType = () => {
     if (property.rental_type) return property.rental_type;
@@ -102,9 +116,9 @@ const EnhancedDynamicBookingWidget = ({ property, user }: EnhancedDynamicBooking
     }
   }, [user, property.id]);
 
-  const handleDateSelect = (date: any) => {
+  const handleDateSelect = (date: DateRange | Date | undefined) => {
     if (bookingMode === 'daily') {
-      if (typeof date === 'object' && date?.from) {
+      if (typeof date === 'object' && date && 'from' in date) {
         setSelectedDates({ from: date.from, to: date.to });
       }
     } else if (bookingMode === 'monthly') {

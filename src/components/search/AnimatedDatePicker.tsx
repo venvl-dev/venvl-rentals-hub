@@ -10,7 +10,7 @@ interface AnimatedDatePickerProps {
   minDays?: number;
   minMonths?: number;
   isActive: boolean;
-  onDateChange: (dates: any) => void;
+  onDateChange: (dates: { checkIn?: Date; checkOut?: Date; duration?: number; flexibleOption?: string }) => void;
 }
 
 const AnimatedDatePicker = ({ 

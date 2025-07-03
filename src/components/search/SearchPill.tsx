@@ -8,9 +8,17 @@ import DestinationPicker from './DestinationPicker';
 import DatePicker from './DatePicker';
 import GuestPicker from './GuestPicker';
 
+interface SearchFilters {
+  location: string;
+  checkIn?: Date;
+  checkOut?: Date;
+  guests: number;
+  bookingType: string;
+}
+
 interface SearchPillProps {
-  onSearch: (filters: any) => void;
-  initialFilters?: any;
+  onSearch: (filters: SearchFilters) => void;
+  initialFilters?: Partial<SearchFilters>;
 }
 
 const SearchPill = ({ onSearch, initialFilters }: SearchPillProps) => {
