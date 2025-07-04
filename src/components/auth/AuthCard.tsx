@@ -75,7 +75,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
         break;
       case 'guest':
       default:
-        navigate('/guest/bookings');
+        navigate('/'); // Redirect guests to main page to browse properties
         break;
     }
   };

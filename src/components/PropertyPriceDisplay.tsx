@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { 
   getRentalType, 
   getDailyPrice, 
@@ -32,11 +31,6 @@ const PropertyPriceDisplay = ({ property, className = "" }: PropertyPriceDisplay
             EGP {dailyPrice}
           </span>
           <span className="text-gray-600">/ night</span>
-          {rentalType === 'daily' && (
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-              Daily stays
-            </Badge>
-          )}
         </div>
       )}
       
@@ -46,11 +40,6 @@ const PropertyPriceDisplay = ({ property, className = "" }: PropertyPriceDisplay
             EGP {monthlyPrice}
           </span>
           <span className="text-gray-600">/ month</span>
-          {rentalType === 'monthly' && (
-            <Badge variant="secondary" className="bg-green-100 text-green-800">
-              Monthly stays
-            </Badge>
-          )}
         </div>
       )}
     </div>

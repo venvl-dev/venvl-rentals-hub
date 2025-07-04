@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
@@ -17,6 +17,8 @@ import {
   type BookingType, 
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
+import { getAmenitiesByCategory } from '@/lib/amenitiesUtils';
+import React from 'react';
 
 interface Property {
   id: string;
@@ -95,14 +97,42 @@ const Index = () => {
     filterProperties();
   }, [properties, searchFilters, advancedFilters]);
 
-  const fetchProperties = async () => {
+  const fetchProperties = useCallback(async (offset = 0, limit = 20) => {
     try {
       setLoading(true);
+      // Optimized query - fetch only essential fields with pagination
       const { data, error } = await supabase
         .from('properties')
-        .select('*')
+        .select(`
+          id,
+          title,
+          description,
+          price_per_night,
+          daily_price,
+          monthly_price,
+          images,
+          city,
+          state,
+          country,
+          property_type,
+          bedrooms,
+          bathrooms,
+          max_guests,
+          amenities,
+          booking_types,
+          rental_type,
+          min_nights,
+          min_months,
+          blocked_dates,
+          is_active,
+          approval_status,
+          created_at,
+          updated_at
+        `)
         .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .eq('approval_status', 'approved')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
       if (error) {
         console.error('Error fetching properties:', error);
@@ -110,7 +140,7 @@ const Index = () => {
         return;
       }
 
-      console.log('Fetched properties:', data?.length);
+      console.log('Fetched approved properties:', data?.length);
       setProperties(data || []);
     } catch (error) {
       console.error('Error:', error);
@@ -118,9 +148,9 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterProperties = () => {
+  const filterProperties = useCallback(() => {
     let filtered = [...properties];
     console.log('Starting with properties:', filtered.length);
 
@@ -180,18 +210,18 @@ const Index = () => {
 
     console.log(`Final filtered properties: ${filtered.length}`);
     setFilteredProperties(filtered);
-  };
+  }, [properties, searchFilters, advancedFilters]);
 
-  const handleSearch = (filters: SearchFilters) => {
+  const handleSearch = useCallback((filters: SearchFilters) => {
     console.log('Search triggered with filters:', filters);
     setSearchFilters(filters);
     saveSearchPreferences(filters);
-  };
+  }, []);
 
-  const handleAdvancedFilters = (filters: AdvancedFilters) => {
+  const handleAdvancedFilters = useCallback((filters: AdvancedFilters) => {
     setAdvancedFilters(filters);
     setShowAdvancedFilters(false);
-  };
+  }, []);
 
   const saveSearchPreferences = async (filters: SearchFilters) => {
     try {
@@ -288,13 +318,22 @@ const Index = () => {
           <div className="max-w-7xl mx-auto">
             {loading ? (
               <motion.div 
-                className="flex flex-col items-center justify-center py-16 sm:py-24"
+                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
-                <span className="text-lg text-gray-600">Loading properties...</span>
+                {/* Loading Skeleton Cards */}
+                {[...Array(8)].map((_, index) => (
+                  <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-pulse">
+                    <div className="aspect-square bg-gray-200"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                    </div>
+                  </div>
+                ))}
               </motion.div>
             ) : (
               <>
@@ -329,7 +368,7 @@ const Index = () => {
                           It looks like there are no approved properties in the system yet.
                         </p>
                         <button 
-                          onClick={fetchProperties}
+                          onClick={() => fetchProperties()}
                           className="bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors font-medium"
                         >
                           Retry Loading
@@ -349,7 +388,7 @@ const Index = () => {
                         key={property.id}
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                        transition={{ duration: 0.4, delay: Math.min(index * 0.1, 0.8) }}
                       >
                         <PropertyCard property={property} />
                       </motion.div>

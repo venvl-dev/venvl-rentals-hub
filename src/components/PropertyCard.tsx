@@ -1,16 +1,17 @@
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, MapPin, Bed, Bath, Users, Calendar, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Bed, Bath, Users, Star, Calendar, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
 import { 
   getRentalType, 
   getDailyPrice, 
   getMonthlyPrice, 
-  getPrimaryPrice, 
   getRentalTypeBadge,
+  supportsBookingType,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
+import { getTopAmenities, getAmenityById } from '@/lib/amenitiesUtils';
 
 interface PropertyCardProps {
   property: {
@@ -27,6 +28,7 @@ interface PropertyCardProps {
     bedrooms: number;
     bathrooms: number;
     max_guests: number;
+    amenities: string[];
     booking_types?: string[];
     rental_type?: string;
     min_nights?: number;
@@ -37,6 +39,10 @@ interface PropertyCardProps {
 const PropertyCard = ({ property }: PropertyCardProps) => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
   
   const handleClick = () => {
     navigate(`/property/${property.id}`);
@@ -44,18 +50,67 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
 
   const images = property.images?.length > 0 ? property.images : ['/placeholder.svg'];
 
-  const nextImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const nextImage = useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  };
+  }, [images.length]);
 
-  const prevImage = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const prevImage = useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
+  }, [images.length]);
+
+  // Touch handlers for swipe gestures
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  }, []);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+    setTouchEnd(e.targetTouches[0].clientX);
+  }, []);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && images.length > 1) {
+      nextImage();
+    }
+    if (isRightSwipe && images.length > 1) {
+      prevImage();
+    }
+  }, [touchStart, touchEnd, images.length, nextImage, prevImage]);
+
+  // Preload next images for better performance
+  const handleImageLoad = useCallback(() => {
+    setIsLoading(false);
+    
+    // Preload next image
+    if (images.length > 1) {
+      const nextIndex = (currentImageIndex + 1) % images.length;
+      const img = new Image();
+      img.src = images[nextIndex];
+    }
+  }, [images, currentImageIndex]);
+
+  const handleImageError = useCallback(() => {
+    setIsLoading(false);
+    console.warn('Failed to load image:', images[currentImageIndex]);
+  }, [images, currentImageIndex]);
+
+  // Set loading state when image changes
+  useEffect(() => {
+    setIsLoading(true);
+  }, [currentImageIndex]);
 
   const rentalType = getRentalType(property);
-  const primaryPrice = getPrimaryPrice(property);
   const badge = getRentalTypeBadge(rentalType);
 
   const getPricingDisplay = () => {
@@ -132,9 +187,9 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           <div className="h-24 flex flex-col justify-center space-y-2">
             <div className="flex items-baseline space-x-2">
               <span className="text-2xl font-bold text-gray-900">
-                EGP {primaryPrice.price}
+                EGP {property.price_per_night}
               </span>
-              <span className="text-gray-600 text-sm">/ {primaryPrice.unit}</span>
+              <span className="text-gray-600 text-sm">/ night</span>
             </div>
           </div>
         );
@@ -162,11 +217,30 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
       onClick={handleClick}
     >
       {/* Image Carousel Container */}
-      <div className="aspect-[4/3] relative overflow-hidden flex-shrink-0 group">
+      <div 
+        className="aspect-[4/3] relative overflow-hidden flex-shrink-0 group select-none"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Loading skeleton */}
+        {isLoading && (
+          <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        )}
+        
         <img
+          ref={imageRef}
           src={images[currentImageIndex]}
           alt={property.title}
-          className="w-full h-full object-cover transition-transform duration-500"
+          className="w-full h-full object-cover transition-all duration-500"
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          style={{ 
+            opacity: isLoading ? 0 : 1,
+            transform: touchEnd && touchStart ? `translateX(${(touchEnd - touchStart) * 0.1}px)` : 'translateX(0)'
+          }}
         />
         
         {/* Image Navigation */}
@@ -174,13 +248,15 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           <>
             <button
               onClick={prevImage}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+              className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation"
+              aria-label="Previous image"
             >
               <ChevronLeft className="h-4 w-4 text-gray-900" />
             </button>
             <button
               onClick={nextImage}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation"
+              aria-label="Next image"
             >
               <ChevronRight className="h-4 w-4 text-gray-900" />
             </button>
@@ -268,6 +344,46 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             </Badge>
           </div>
 
+          {/* Top Amenities */}
+          {property.amenities && property.amenities.length > 0 ? (
+            <div className="space-y-2">
+              <div className="flex flex-wrap gap-2">
+                {property.amenities.slice(0, 3).map((amenityId, index) => {
+                  const amenity = getAmenityById(amenityId);
+                  const IconComponent = amenity?.iconComponent;
+                  
+                  return (
+                    <div 
+                      key={index}
+                      className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 rounded-full px-2 py-1"
+                      title={amenity?.label || amenityId}
+                    >
+                      <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
+                        {IconComponent ? (
+                          <IconComponent className="h-3 w-3 text-gray-700" strokeWidth={1.5} />
+                        ) : (
+                          <div className="w-3 h-3 rounded-full bg-gray-700"></div>
+                        )}
+                      </div>
+                      <span className="hidden sm:inline truncate max-w-16 font-medium">
+                        {amenity?.label || amenityId}
+                      </span>
+                    </div>
+                  );
+                })}
+                {property.amenities.length > 3 && (
+                  <div className="flex items-center text-xs text-gray-500 rounded-full px-2 py-1">
+                    <span className="font-medium">+{property.amenities.length - 3} More</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-xs text-gray-400 italic">
+              No amenities listed
+            </div>
+          )}
+
           {/* Description */}
           <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed flex-1">
             {property.description}
@@ -294,4 +410,4 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   );
 };
 
-export default PropertyCard;
+export default PropertyCard; 

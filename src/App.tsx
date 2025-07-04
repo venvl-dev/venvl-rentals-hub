@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import SuperAdminLogin from "./pages/SuperAdminLogin";
@@ -36,19 +37,74 @@ function App() {
           <Toaster />
           <BrowserRouter>
             <Routes>
+              {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/super-admin/login" element={<SuperAdminLogin />} />
               <Route path="/host/signup" element={<HostSignup />} />
               <Route path="/guest/signup" element={<GuestSignup />} />
               <Route path="/property/:id" element={<PropertyListing />} />
-              <Route path="/host/dashboard" element={<HostDashboard />} />
-              <Route path="/guest/bookings" element={<GuestBookings />} />
-              <Route path="/calendar" element={<Calendar />} />
-              <Route path="/admin/panel" element={<AdminPanel />} />
-              <Route path="/system-setup" element={<SystemSetup />} />
-              <Route path="/create-test-users" element={<CreateTestUsers />} />
-              <Route path="/data-seeding" element={<DataSeeding />} />
+              
+              {/* Protected routes */}
+              <Route 
+                path="/host/dashboard" 
+                element={
+                  <ProtectedRoute allowedRoles={['host']}>
+                    <HostDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/guest/bookings" 
+                element={
+                  <ProtectedRoute allowedRoles={['guest']}>
+                    <GuestBookings />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/calendar" 
+                element={
+                  <ProtectedRoute allowedRoles={['host', 'super_admin']}>
+                    <Calendar />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/panel" 
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <AdminPanel />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Development/Testing routes - require authentication but no specific role */}
+              <Route 
+                path="/system-setup" 
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <SystemSetup />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/create-test-users" 
+                element={
+                  <ProtectedRoute allowedRoles={['super_admin']}>
+                    <CreateTestUsers />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/data-seeding" 
+                element={
+                  <ProtectedRoute>
+                    <DataSeeding />
+                  </ProtectedRoute>
+                } 
+              />
+              
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

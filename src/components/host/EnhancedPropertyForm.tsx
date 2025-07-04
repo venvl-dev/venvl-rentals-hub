@@ -24,6 +24,7 @@ import {
   type RentalType,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
+import { AMENITIES } from '@/lib/amenitiesUtils';
 
 // Dynamic schema creator based on rental type
 const createPropertySchema = (rentalType: RentalType) => {
@@ -78,14 +79,12 @@ interface EnhancedPropertyFormProps {
   onCancel: () => void;
 }
 
-const AMENITIES_OPTIONS = [
-  'WiFi', 'Kitchen', 'Air Conditioning', 'TV', 'Washer', 'Dryer', 
-  'Pool', 'Parking', 'Gym', 'Balcony', 'Garden', 'Fireplace'
-];
-
 const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFormProps) => {
+  // Fixed amenities synchronization: form now uses AMENITIES from amenitiesUtils.ts consistently
+  console.log('🔧 EnhancedPropertyForm - Initial property data:', property);
+  console.log('🔧 Property amenities received:', property?.amenities);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(property?.amenities || []);
   const [imageUrls, setImageUrls] = useState<string[]>(property?.images || []);
   const [newImageUrl, setNewImageUrl] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
@@ -93,6 +92,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
   // Get current rental type for existing property or default for new property
   const initialRentalType = property ? getRentalType(property as PropertyRentalData) : 'daily';
+  console.log('🔧 Initial rental type:', initialRentalType);
 
   // Create dynamic schema based on current rental type
   const propertySchema = createPropertySchema(currentRentalType);
@@ -121,7 +121,12 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     },
   });
 
+  console.log('🔧 Form default values - amenities:', property?.amenities || []);
+
   const watchedRentalType = form.watch('rental_type') as RentalType;
+  const watchedAmenities = form.watch('amenities') || [];
+  
+  console.log('🔧 Watched amenities:', watchedAmenities);
 
   // Update schema when rental type changes
   useEffect(() => {
@@ -145,12 +150,59 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     }
   }, [watchedRentalType, currentRentalType, form]);
 
+  // Update form when property changes (important for editing mode)
+  useEffect(() => {
+    if (property) {
+      console.log('🔄 Property prop changed, updating form with:', property);
+      console.log('🔄 Amenities to load:', property.amenities);
+      
+      const formData = {
+        title: property.title || '',
+        description: property.description || '',
+        property_type: property.property_type as 'apartment' | 'house' | 'villa' | 'studio' | 'cabin' | 'loft',
+        address: property.address || '',
+        city: property.city || '',
+        state: property.state || '',
+        country: property.country || 'US',
+        postal_code: property.postal_code || '',
+        rental_type: getRentalType(property as PropertyRentalData) as RentalType,
+        bedrooms: property.bedrooms || 1,
+        bathrooms: property.bathrooms || 1,
+        max_guests: property.max_guests || 2,
+        price_per_night: getDailyPrice(property as PropertyRentalData),
+        monthly_price: getMonthlyPrice(property as PropertyRentalData),
+        min_nights: property.min_nights || 1,
+        min_months: property.min_months || 1,
+        amenities: property.amenities || [],
+        images: property.images || [],
+      };
+      
+      console.log('🔄 Form data to reset with:', formData);
+      console.log('🔄 Amenities in form data:', formData.amenities);
+      
+      form.reset(formData);
+      setImageUrls(property.images || []);
+      
+      // Verify form was updated
+      setTimeout(() => {
+        const currentAmenities = form.getValues('amenities');
+        console.log('🔄 Form amenities after reset:', currentAmenities);
+      }, 100);
+    }
+  }, [property, form]);
+
   const handleAmenityToggle = (amenity: string) => {
-    const updated = selectedAmenities.includes(amenity)
-      ? selectedAmenities.filter(a => a !== amenity)
-      : [...selectedAmenities, amenity];
-    setSelectedAmenities(updated);
+    console.log('🔧 Toggling amenity:', amenity);
+    const currentAmenities = form.getValues('amenities') || [];
+    console.log('🔧 Current amenities before toggle:', currentAmenities);
+    
+    const updated = currentAmenities.includes(amenity)
+      ? currentAmenities.filter(a => a !== amenity)
+      : [...currentAmenities, amenity];
+    
+    console.log('🔧 Updated amenities after toggle:', updated);
     form.setValue('amenities', updated);
+    console.log('🔧 Form amenities after setValue:', form.getValues('amenities'));
   };
 
   const addImage = () => {
@@ -169,51 +221,70 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   };
 
   const onSubmit = async (data: PropertyFormData) => {
+    console.log('🚀 Starting form submission...');
+    console.log('🚀 Form data received:', data);
+    console.log('🚀 Amenities in form data:', data.amenities);
+    console.log('🚀 Is editing mode?', !!property);
+    console.log('🚀 Property ID for edit:', property?.id);
+    
     try {
       setIsSubmitting(true);
 
       const rentalType = data.rental_type as RentalType;
+      console.log('🚀 Rental type:', rentalType);
       
       // Enhanced validation with detailed error messages
       if (rentalType === 'daily') {
         if (!data.price_per_night || data.price_per_night <= 0) {
+          console.error('❌ Daily price validation failed:', data.price_per_night);
           toast.error('Daily price is required and must be greater than 0 for daily rentals');
           return;
         }
         if (!data.min_nights || data.min_nights < 1) {
+          console.error('❌ Min nights validation failed:', data.min_nights);
           toast.error('Minimum nights must be at least 1 for daily rentals');
           return;
         }
       } else if (rentalType === 'monthly') {
         if (!data.monthly_price || data.monthly_price <= 0) {
+          console.error('❌ Monthly price validation failed:', data.monthly_price);
           toast.error('Monthly price is required and must be greater than 0 for monthly rentals');
           return;
         }
         if (!data.min_months || data.min_months < 1) {
+          console.error('❌ Min months validation failed:', data.min_months);
           toast.error('Minimum months must be at least 1 for monthly rentals');
           return;
         }
       } else if (rentalType === 'both') {
         if (!data.price_per_night || data.price_per_night <= 0) {
+          console.error('❌ Daily price validation failed for both:', data.price_per_night);
           toast.error('Daily price is required for flexible booking properties');
           return;
         }
         if (!data.monthly_price || data.monthly_price <= 0) {
+          console.error('❌ Monthly price validation failed for both:', data.monthly_price);
           toast.error('Monthly price is required for flexible booking properties');
           return;
         }
         if (!data.min_nights || data.min_nights < 1) {
+          console.error('❌ Min nights validation failed for both:', data.min_nights);
           toast.error('Minimum nights must be at least 1');
           return;
         }
         if (!data.min_months || data.min_months < 1) {
+          console.error('❌ Min months validation failed for both:', data.min_months);
           toast.error('Minimum months must be at least 1');
           return;
         }
       }
 
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        console.error('❌ User not authenticated');
+        throw new Error('User not authenticated');
+      }
+      console.log('✅ User authenticated:', user.id);
 
       // Prepare property data with only relevant price fields
       const propertyData: any = {
@@ -230,13 +301,16 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         bathrooms: data.bathrooms,
         max_guests: data.max_guests,
         host_id: user.id,
-        amenities: selectedAmenities,
+        amenities: data.amenities,
         images: imageUrls,
         // Ensure booking_types is always an array for consistency
         booking_types: rentalType === 'both' ? ['daily', 'monthly'] : [rentalType],
         is_active: true,
         approval_status: 'pending'
       };
+
+      console.log('🚀 Property data before price fields:', propertyData);
+      console.log('🚀 Amenities being saved:', propertyData.amenities);
 
       // Only include relevant price fields based on rental type (don't set null values)
       if (rentalType === 'daily') {
@@ -257,64 +331,70 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         propertyData.min_months = data.min_months;
       }
 
-      console.log('Submitting property data:', propertyData); // Debug log
-      console.log('Property ID for edit:', property?.id); // Debug log
-      console.log('User ID:', user.id); // Debug log
+      console.log('🚀 Final property data to save:', propertyData);
 
+      // Save property with synchronized amenities data
       if (property) {
+        console.log('🔄 Updating existing property...');
         // Remove fields that shouldn't be updated
         const updateData = { ...propertyData };
         delete updateData.host_id; // Don't update host_id on edit
         delete updateData.approval_status; // Don't reset approval status on edit
         
-        console.log('Update data:', updateData); // Debug log
+        console.log('🔄 Update data being sent:', updateData);
         
         const { data: result, error } = await supabase
           .from('properties')
           .update(updateData)
           .eq('id', property.id)
-          .select(); // Return updated record for debugging
+          .select();
         
         if (error) {
-          console.error('Update error details:', {
+          console.error('❌ Update error details:', {
             message: error.message,
             details: error.details,
             hint: error.hint,
-            code: error.code
+            code: error.code,
+            updateData: updateData
           });
           throw new Error(`Update failed: ${error.message}`);
         }
         
-        console.log('Update result:', result); // Debug log
+        console.log('✅ Property updated successfully:', result);
         toast.success('Property updated successfully!');
       } else {
-        console.log('Insert data:', propertyData); // Debug log
+        console.log('➕ Creating new property...');
+        console.log('➕ Insert data being sent:', propertyData);
         
         const { data: result, error } = await supabase
           .from('properties')
           .insert(propertyData)
-          .select(); // Return inserted record for debugging
+          .select();
         
         if (error) {
-          console.error('Insert error details:', {
+          console.error('❌ Insert error details:', {
             message: error.message,
             details: error.details,
             hint: error.hint,
-            code: error.code
+            code: error.code,
+            propertyData: propertyData
           });
           throw new Error(`Insert failed: ${error.message}`);
         }
         
-        console.log('Insert result:', result); // Debug log
+        console.log('✅ Property created successfully:', result);
         toast.success('Property created successfully!');
       }
 
+      console.log('✅ Calling onSave callback...');
       onSave();
     } catch (error) {
-      console.error('Error saving property:', error);
+      console.error('❌ Error saving property:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save property';
+      console.error('❌ Error message for user:', errorMessage);
       toast.error(`Save failed: ${errorMessage}`);
     } finally {
+      console.log('🏁 Setting isSubmitting to false');
       setIsSubmitting(false);
     }
   };
@@ -702,23 +782,47 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
                     <div className="space-y-4">
                       <Label>Amenities</Label>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {AMENITIES_OPTIONS.map((amenity) => (
-                          <motion.div
-                            key={amenity}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <Button
-                              type="button"
-                              variant={selectedAmenities.includes(amenity) ? "default" : "outline"}
-                              onClick={() => handleAmenityToggle(amenity)}
-                              className="w-full rounded-xl justify-start"
-                            >
-                              {amenity}
-                            </Button>
-                          </motion.div>
-                        ))}
+                      {console.log('🎨 Rendering amenities section. Current selected:', watchedAmenities)}
+                      <div className="space-y-6">
+                        {AMENITIES.map((category) => {
+                          console.log(`🎨 Rendering category: ${category.category} with ${category.items.length} items`);
+                          return (
+                            <div key={category.category} className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <h4 className="font-medium text-sm text-gray-700">{category.category}</h4>
+                                <div className="flex-1 h-px bg-gray-200"></div>
+                              </div>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {category.items.map((amenity) => {
+                                  const IconComponent = amenity.iconComponent!;
+                                  const isSelected = watchedAmenities.includes(amenity.id);
+                                  console.log(`🎨 Amenity ${amenity.id}: selected = ${isSelected}`);
+                                  
+                                  return (
+                                    <motion.div
+                                      key={amenity.id}
+                                      whileHover={{ scale: 1.02 }}
+                                      whileTap={{ scale: 0.98 }}
+                                    >
+                                      <Button
+                                        type="button"
+                                        variant={isSelected ? "default" : "outline"}
+                                        onClick={() => {
+                                          console.log(`🎨 Clicking amenity: ${amenity.id}`);
+                                          handleAmenityToggle(amenity.id);
+                                        }}
+                                        className="w-full rounded-xl justify-start h-auto p-3"
+                                      >
+                                        <IconComponent className="h-5 w-5 mr-2 flex-shrink-0" />
+                                        <span className="text-sm font-medium">{amenity.label}</span>
+                                      </Button>
+                                    </motion.div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </CardContent>

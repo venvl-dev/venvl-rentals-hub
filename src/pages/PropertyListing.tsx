@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { MapPin, Bed, Bath, Users, Star, Calendar, Clock } from 'lucide-react';
 import Header from '@/components/Header';
@@ -17,6 +19,15 @@ import {
   getAvailableBookingTypes,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
+import { getAmenitiesByCategory, getAmenityById, getCategoryByAmenityId } from '@/lib/amenitiesUtils';
+import React from 'react';
+import { 
+  ArrowLeft, 
+  ChevronLeft, 
+  ChevronRight,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react';
 
 interface Property {
   id: string;
@@ -47,6 +58,7 @@ const PropertyListing = () => {
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -227,13 +239,93 @@ const PropertyListing = () => {
               <>
                 <Separator className="my-6" />
                 <div>
-                  <h2 className="text-xl font-semibold mb-3">Amenities</h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {property.amenities.map((amenity, index) => (
-                      <div key={index} className="flex items-center">
-                        <span className="text-gray-700">{amenity}</span>
-                      </div>
-                    ))}
+                  <h2 className="text-xl font-semibold mb-4">Amenities</h2>
+                  <div className="space-y-6">
+                    {(() => {
+                      // Get amenities with their categories
+                      const amenitiesWithCategories = property.amenities.map(amenityId => {
+                        const amenity = getAmenityById(amenityId);
+                        return {
+                          id: amenityId,
+                          label: amenity?.label || amenityId,
+                          iconComponent: amenity?.iconComponent,
+                          category: getCategoryByAmenityId(amenityId)
+                        };
+                      });
+                      
+                      // Group by category
+                      const categorizedAmenities = amenitiesWithCategories.reduce((acc, amenity) => {
+                        const category = amenity.category;
+                        if (!acc[category]) acc[category] = [];
+                        acc[category].push(amenity);
+                        return acc;
+                      }, {} as Record<string, typeof amenitiesWithCategories>);
+
+                      return Object.entries(categorizedAmenities).map(([category, amenities]) => {
+                        if (amenities.length === 0) return null;
+                        
+                        const isExpanded = expandedCategories[category];
+                        const maxDisplayItems = 6; // 2 rows of 3 items each
+                        const displayAmenities = isExpanded ? amenities : amenities.slice(0, maxDisplayItems);
+                        
+                        return (
+                          <div key={category}>
+                            <div className="flex items-center gap-3 mb-3">
+                              <h3 className="text-lg font-semibold text-gray-900">
+                                {category}
+                              </h3>
+                              <div className="flex-1 h-px bg-gray-200"></div>
+                              <Badge variant="outline" className="text-xs px-2 py-1">
+                                {amenities.length} items
+                              </Badge>
+                            </div>
+                            
+                            {/* Responsive grid with 3 amenities per row */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {displayAmenities.map((amenity, index) => {
+                                const IconComponent = amenity.iconComponent;
+                                return (
+                                  <div key={index} className="flex items-center gap-3 bg-gray-50 rounded-lg px-3 py-3 hover:bg-gray-100 transition-colors">
+                                    <div className="w-6 h-6 flex items-center justify-center">
+                                      {IconComponent ? (
+                                        <IconComponent className="h-5 w-5 text-gray-800" strokeWidth={1.5} />
+                                      ) : (
+                                        <div className="w-4 h-4 rounded-full bg-gray-700"></div>
+                                      )}
+                                    </div>
+                                    <span className="text-sm font-medium text-gray-900">{amenity.label}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            
+                            {/* Show more/less button if there are more than maxDisplayItems */}
+                            {amenities.length > maxDisplayItems && (
+                              <Button 
+                                variant="outline" 
+                                className="mt-3 w-full"
+                                onClick={() => setExpandedCategories(prev => ({ 
+                                  ...prev, 
+                                  [category]: !prev[category] 
+                                }))}
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <ChevronUp className="mr-2 h-4 w-4" />
+                                    Show less
+                                  </>
+                                ) : (
+                                  <>
+                                    <ChevronDown className="mr-2 h-4 w-4" />
+                                    Show all {amenities.length} amenities
+                                  </>
+                                )}
+                              </Button>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 </div>
               </>

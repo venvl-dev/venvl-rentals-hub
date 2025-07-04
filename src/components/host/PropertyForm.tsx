@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ArrowLeft, Upload, X } from 'lucide-react';
 import { PropertyType } from '@/types/property';
+import { AMENITIES } from '@/lib/amenitiesUtils';
 
 interface Property {
   id?: string;
@@ -78,18 +79,17 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
     }
   }, [property]);
 
-  const fetchAmenities = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('amenities')
-        .select('*')
-        .order('category', { ascending: true });
-
-      if (error) throw error;
-      setAmenities(data || []);
-    } catch (error) {
-      console.error('Error fetching amenities:', error);
-    }
+  const fetchAmenities = () => {
+    // Use the structured amenities from amenitiesUtils.ts
+    const structuredAmenities = AMENITIES.flatMap(category => 
+      category.items.map(item => ({
+        id: item.id,
+        name: item.label,
+        icon: item.icon,
+        category: category.category
+      }))
+    );
+    setAmenities(structuredAmenities);
   };
 
   const handleInputChange = (field: keyof typeof formData, value: string | number | string[]) => {
