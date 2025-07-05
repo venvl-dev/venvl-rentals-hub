@@ -24,7 +24,7 @@ import {
   type RentalType,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
-import { AMENITIES } from '@/lib/amenitiesUtils';
+import { AMENITIES, normalizeAmenities } from '@/lib/amenitiesUtils';
 
 // Dynamic schema creator based on rental type
 const createPropertySchema = (rentalType: RentalType) => {
@@ -120,7 +120,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       monthly_price: property ? getMonthlyPrice(property as PropertyRentalData) : undefined,
       min_nights: property?.min_nights || 1,
       min_months: property?.min_months || 1,
-      amenities: property?.amenities || [],
+      amenities: property ? normalizeAmenities(property.amenities || []) : [],
       images: property?.images || [],
     },
   });
@@ -183,7 +183,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         monthly_price: getMonthlyPrice(property as PropertyRentalData),
         min_nights: property.min_nights || 1,
         min_months: property.min_months || 1,
-        amenities: property.amenities || [],
+        amenities: normalizeAmenities(property.amenities || []),
         images: property.images || [],
       };
       
@@ -315,6 +315,8 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       }
 
       // Prepare property data with only relevant price fields
+      const normalizedAmenityIds = normalizeAmenities(data.amenities || []);
+
       const propertyData: any = {
         title: data.title,
         description: data.description,
@@ -329,7 +331,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         bathrooms: data.bathrooms,
         max_guests: data.max_guests,
         host_id: user.id,
-        amenities: data.amenities,
+        amenities: normalizedAmenityIds,
         images: imageUrls,
         // Ensure booking_types is always an array for consistency
         booking_types: rentalType === 'both' ? ['daily', 'monthly'] : [rentalType],

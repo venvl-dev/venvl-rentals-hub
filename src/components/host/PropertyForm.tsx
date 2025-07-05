@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ArrowLeft, Upload, X } from 'lucide-react';
 import { PropertyType } from '@/types/property';
-import { AMENITIES } from '@/lib/amenitiesUtils';
+import { AMENITIES, normalizeAmenities } from '@/lib/amenitiesUtils';
 
 interface Property {
   id?: string;
@@ -74,7 +74,7 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
     if (property) {
       setFormData({
         ...property,
-        amenities: property.amenities || []
+        amenities: normalizeAmenities(property.amenities || [])
       });
     }
   }, [property]);
@@ -168,8 +168,11 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
         return;
       }
 
+      const normalizedAmenities = normalizeAmenities(formData.amenities);
+
       const propertyData = {
         ...formData,
+        amenities: normalizedAmenities,
         host_id: user.data.user.id,
         daily_price: formData.price_per_night // Keep backward compatibility
       };

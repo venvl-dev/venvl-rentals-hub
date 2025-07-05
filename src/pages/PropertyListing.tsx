@@ -19,7 +19,7 @@ import {
   getAvailableBookingTypes,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
-import { getAmenitiesByCategory, getAmenityById, getCategoryByAmenityId } from '@/lib/amenitiesUtils';
+import { getAmenitiesByCategory, getAmenityById, getCategoryByAmenityId, normalizeAmenities } from '@/lib/amenitiesUtils';
 import React from 'react';
 import { 
   ArrowLeft, 
@@ -81,6 +81,9 @@ const PropertyListing = () => {
         .single();
 
       if (error) throw error;
+      if (data) {
+        data.amenities = normalizeAmenities(data.amenities || []);
+      }
       setProperty(data);
     } catch (error) {
       console.error('Error fetching property:', error);
