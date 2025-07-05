@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, MapPin, Bed, Bath, Users, Star, Calendar, Clock } from 'lucide-react';
@@ -11,7 +11,7 @@ import {
   supportsBookingType,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
-import { getTopAmenities, getAmenityById } from '@/lib/amenitiesUtils';
+import { getTopAmenities } from '@/lib/amenitiesUtils';
 
 interface PropertyCardProps {
   property: {
@@ -43,6 +43,10 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
+  const topAmenities = useMemo(
+    () => getTopAmenities(property.amenities || [], 3),
+    [property.amenities]
+  );
   
   const handleClick = () => {
     navigate(`/property/${property.id}`);
@@ -345,18 +349,17 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           </div>
 
           {/* Top Amenities */}
-          {property.amenities && property.amenities.length > 0 ? (
+          {topAmenities.length > 0 ? (
             <div className="space-y-2">
               <div className="flex flex-wrap gap-2">
-                {property.amenities.slice(0, 3).map((amenityId, index) => {
-                  const amenity = getAmenityById(amenityId);
-                  const IconComponent = amenity?.iconComponent;
-                  
+                {topAmenities.map((amenity, index) => {
+                  const IconComponent = amenity.iconComponent;
+
                   return (
-                    <div 
+                    <div
                       key={index}
                       className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 rounded-full px-2 py-1"
-                      title={amenity?.label || amenityId}
+                      title={amenity.label}
                     >
                       <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
                         {IconComponent ? (
@@ -366,7 +369,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
                         )}
                       </div>
                       <span className="hidden sm:inline truncate max-w-16 font-medium">
-                        {amenity?.label || amenityId}
+                        {amenity.label}
                       </span>
                     </div>
                   );
