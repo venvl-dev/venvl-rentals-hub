@@ -137,7 +137,9 @@ const HostDashboard = () => {
 
   const fixAmenities = useCallback(async () => {
     setIsFixingAmenities(true);
-    console.log('🔧 Starting amenities fix process...');
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔧 Starting amenities fix process...');
+    }
     
     try {
       const { data: user } = await supabase.auth.getUser();
@@ -170,21 +172,29 @@ const HostDashboard = () => {
 
       if (fetchError) throw fetchError;
 
-      console.log('🔧 Found properties to fix:', userProperties);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔧 Found properties to fix:', userProperties);
+      }
 
       // Update each property's amenities
       for (const property of userProperties || []) {
-        console.log(`🔧 Fixing amenities for property ${property.id}:`, property.amenities);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`🔧 Fixing amenities for property ${property.id}:`, property.amenities);
+        }
         
         const updatedAmenities = property.amenities?.map((amenity: string) => {
           const newAmenity = amenityMapping[amenity] || amenity;
           if (newAmenity !== amenity) {
-            console.log(`🔧 Mapping ${amenity} → ${newAmenity}`);
+            if (process.env.NODE_ENV !== 'production') {
+              console.log(`🔧 Mapping ${amenity} → ${newAmenity}`);
+            }
           }
           return newAmenity;
         }) || [];
 
-        console.log(`🔧 Updated amenities for ${property.id}:`, updatedAmenities);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`🔧 Updated amenities for ${property.id}:`, updatedAmenities);
+        }
 
         const { error: updateError } = await supabase
           .from('properties')
@@ -198,7 +208,9 @@ const HostDashboard = () => {
       await fetchProperties();
       
       toast.success('Amenities fixed successfully! All properties updated.');
-      console.log('✅ Amenities fix completed successfully');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ Amenities fix completed successfully');
+      }
     } catch (error) {
       console.error('❌ Error fixing amenities:', error);
       toast.error('Failed to fix amenities');

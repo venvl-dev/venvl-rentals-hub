@@ -81,8 +81,10 @@ interface EnhancedPropertyFormProps {
 
 const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFormProps) => {
   // Fixed amenities synchronization: form now uses AMENITIES from amenitiesUtils.ts consistently
-  console.log('🔧 EnhancedPropertyForm - Initial property data:', property);
-  console.log('🔧 Property amenities received:', property?.amenities);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔧 EnhancedPropertyForm - Initial property data:', property);
+    console.log('🔧 Property amenities received:', property?.amenities);
+  }
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>(property?.images || []);
@@ -92,7 +94,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
   // Get current rental type for existing property or default for new property
   const initialRentalType = property ? getRentalType(property as PropertyRentalData) : 'daily';
-  console.log('🔧 Initial rental type:', initialRentalType);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔧 Initial rental type:', initialRentalType);
+  }
 
   // Create dynamic schema based on current rental type
   const propertySchema = createPropertySchema(currentRentalType);
@@ -121,12 +125,16 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     },
   });
 
-  console.log('🔧 Form default values - amenities:', property?.amenities || []);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔧 Form default values - amenities:', property?.amenities || []);
+  }
 
   const watchedRentalType = form.watch('rental_type') as RentalType;
   const watchedAmenities = form.watch('amenities') || [];
   
-  console.log('🔧 Watched amenities:', watchedAmenities);
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔧 Watched amenities:', watchedAmenities);
+  }
 
   // Update schema when rental type changes
   useEffect(() => {
@@ -153,8 +161,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   // Update form when property changes (important for editing mode)
   useEffect(() => {
     if (property) {
-      console.log('🔄 Property prop changed, updating form with:', property);
-      console.log('🔄 Amenities to load:', property.amenities);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔄 Property prop changed, updating form with:', property);
+        console.log('🔄 Amenities to load:', property.amenities);
+      }
       
       const formData = {
         title: property.title || '',
@@ -177,8 +187,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         images: property.images || [],
       };
       
-      console.log('🔄 Form data to reset with:', formData);
-      console.log('🔄 Amenities in form data:', formData.amenities);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🔄 Form data to reset with:', formData);
+        console.log('🔄 Amenities in form data:', formData.amenities);
+      }
       
       form.reset(formData);
       setImageUrls(property.images || []);
@@ -186,23 +198,33 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       // Verify form was updated
       setTimeout(() => {
         const currentAmenities = form.getValues('amenities');
-        console.log('🔄 Form amenities after reset:', currentAmenities);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🔄 Form amenities after reset:', currentAmenities);
+        }
       }, 100);
     }
   }, [property, form]);
 
   const handleAmenityToggle = (amenity: string) => {
-    console.log('🔧 Toggling amenity:', amenity);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔧 Toggling amenity:', amenity);
+    }
     const currentAmenities = form.getValues('amenities') || [];
-    console.log('🔧 Current amenities before toggle:', currentAmenities);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔧 Current amenities before toggle:', currentAmenities);
+    }
     
     const updated = currentAmenities.includes(amenity)
       ? currentAmenities.filter(a => a !== amenity)
       : [...currentAmenities, amenity];
     
-    console.log('🔧 Updated amenities after toggle:', updated);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔧 Updated amenities after toggle:', updated);
+    }
     form.setValue('amenities', updated);
-    console.log('🔧 Form amenities after setValue:', form.getValues('amenities'));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🔧 Form amenities after setValue:', form.getValues('amenities'));
+    }
   };
 
   const addImage = () => {
@@ -221,17 +243,21 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   };
 
   const onSubmit = async (data: PropertyFormData) => {
-    console.log('🚀 Starting form submission...');
-    console.log('🚀 Form data received:', data);
-    console.log('🚀 Amenities in form data:', data.amenities);
-    console.log('🚀 Is editing mode?', !!property);
-    console.log('🚀 Property ID for edit:', property?.id);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('🚀 Starting form submission...');
+      console.log('🚀 Form data received:', data);
+      console.log('🚀 Amenities in form data:', data.amenities);
+      console.log('🚀 Is editing mode?', !!property);
+      console.log('🚀 Property ID for edit:', property?.id);
+    }
     
     try {
       setIsSubmitting(true);
 
       const rentalType = data.rental_type as RentalType;
-      console.log('🚀 Rental type:', rentalType);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🚀 Rental type:', rentalType);
+      }
       
       // Enhanced validation with detailed error messages
       if (rentalType === 'daily') {
@@ -284,7 +310,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         console.error('❌ User not authenticated');
         throw new Error('User not authenticated');
       }
-      console.log('✅ User authenticated:', user.id);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ User authenticated:', user.id);
+      }
 
       // Prepare property data with only relevant price fields
       const propertyData: any = {
@@ -309,8 +337,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         approval_status: 'pending'
       };
 
-      console.log('🚀 Property data before price fields:', propertyData);
-      console.log('🚀 Amenities being saved:', propertyData.amenities);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🚀 Property data before price fields:', propertyData);
+        console.log('🚀 Amenities being saved:', propertyData.amenities);
+      }
 
       // Only include relevant price fields based on rental type (don't set null values)
       if (rentalType === 'daily') {
@@ -331,17 +361,23 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         propertyData.min_months = data.min_months;
       }
 
-      console.log('🚀 Final property data to save:', propertyData);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🚀 Final property data to save:', propertyData);
+      }
 
       // Save property with synchronized amenities data
       if (property) {
-        console.log('🔄 Updating existing property...');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🔄 Updating existing property...');
+        }
         // Remove fields that shouldn't be updated
         const updateData = { ...propertyData };
         delete updateData.host_id; // Don't update host_id on edit
         delete updateData.approval_status; // Don't reset approval status on edit
         
-        console.log('🔄 Update data being sent:', updateData);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('🔄 Update data being sent:', updateData);
+        }
         
         const { data: result, error } = await supabase
           .from('properties')
@@ -360,11 +396,15 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
           throw new Error(`Update failed: ${error.message}`);
         }
         
-        console.log('✅ Property updated successfully:', result);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('✅ Property updated successfully:', result);
+        }
         toast.success('Property updated successfully!');
       } else {
-        console.log('➕ Creating new property...');
-        console.log('➕ Insert data being sent:', propertyData);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('➕ Creating new property...');
+          console.log('➕ Insert data being sent:', propertyData);
+        }
         
         const { data: result, error } = await supabase
           .from('properties')
@@ -382,11 +422,15 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
           throw new Error(`Insert failed: ${error.message}`);
         }
         
-        console.log('✅ Property created successfully:', result);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('✅ Property created successfully:', result);
+        }
         toast.success('Property created successfully!');
       }
 
-      console.log('✅ Calling onSave callback...');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('✅ Calling onSave callback...');
+      }
       onSave();
     } catch (error) {
       console.error('❌ Error saving property:', error);
@@ -394,7 +438,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       console.error('❌ Error message for user:', errorMessage);
       toast.error(`Save failed: ${errorMessage}`);
     } finally {
-      console.log('🏁 Setting isSubmitting to false');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('🏁 Setting isSubmitting to false');
+      }
       setIsSubmitting(false);
     }
   };
@@ -782,10 +828,12 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
                     <div className="space-y-4">
                       <Label>Amenities</Label>
-                      {console.log('🎨 Rendering amenities section. Current selected:', watchedAmenities)}
+                      {process.env.NODE_ENV !== 'production' &&
+                        console.log('🎨 Rendering amenities section. Current selected:', watchedAmenities)}
                       <div className="space-y-6">
                         {AMENITIES.map((category) => {
-                          console.log(`🎨 Rendering category: ${category.category} with ${category.items.length} items`);
+                          {process.env.NODE_ENV !== 'production' &&
+                            console.log(`🎨 Rendering category: ${category.category} with ${category.items.length} items`)}
                           return (
                             <div key={category.category} className="space-y-3">
                               <div className="flex items-center gap-2">
@@ -796,7 +844,8 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                                 {category.items.map((amenity) => {
                                   const IconComponent = amenity.iconComponent!;
                                   const isSelected = watchedAmenities.includes(amenity.id);
-                                  console.log(`🎨 Amenity ${amenity.id}: selected = ${isSelected}`);
+                                  {process.env.NODE_ENV !== 'production' &&
+                                    console.log(`🎨 Amenity ${amenity.id}: selected = ${isSelected}`)}
                                   
                                   return (
                                     <motion.div
@@ -808,7 +857,8 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                                         type="button"
                                         variant={isSelected ? "default" : "outline"}
                                         onClick={() => {
-                                          console.log(`🎨 Clicking amenity: ${amenity.id}`);
+                                          {process.env.NODE_ENV !== 'production' &&
+                                            console.log(`🎨 Clicking amenity: ${amenity.id}`)}
                                           handleAmenityToggle(amenity.id);
                                         }}
                                         className="w-full rounded-xl justify-start h-auto p-3"
