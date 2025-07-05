@@ -245,16 +245,14 @@ const PropertyListing = () => {
                   <h2 className="text-xl font-semibold mb-4">Amenities</h2>
                   <div className="space-y-6">
                     {(() => {
-                      // Get amenities with their categories
-                      const amenitiesWithCategories = property.amenities.map(amenityId => {
-                        const amenity = getAmenityById(amenityId);
-                        return {
-                          id: amenityId,
-                          label: amenity?.label || amenityId,
-                          iconComponent: amenity?.iconComponent,
-                          category: getCategoryByAmenityId(amenityId)
-                        };
-                      });
+                      // Filter out any unknown amenities and map them to their categories
+                      const recognizedAmenities = getAmenitiesByIds(property.amenities);
+                      const amenitiesWithCategories = recognizedAmenities.map(amenity => ({
+                        id: amenity.id,
+                        label: amenity.label,
+                        iconComponent: amenity.iconComponent,
+                        category: getCategoryByAmenityId(amenity.id)
+                      }));
                       
                       // Group by category
                       const categorizedAmenities = amenitiesWithCategories.reduce((acc, amenity) => {

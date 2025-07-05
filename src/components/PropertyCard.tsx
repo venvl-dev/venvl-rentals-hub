@@ -11,7 +11,7 @@ import {
   supportsBookingType,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
-import { getTopAmenities } from '@/lib/amenitiesUtils';
+import { getTopAmenities, getAmenitiesByIds } from '@/lib/amenitiesUtils';
 
 interface PropertyCardProps {
   property: {
@@ -43,10 +43,15 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
+  const validAmenities = useMemo(
+    () => getAmenitiesByIds(property.amenities || []),
+    [property.amenities]
+  );
   const topAmenities = useMemo(
     () => getTopAmenities(property.amenities || [], 3),
     [property.amenities]
   );
+  const remainingAmenitiesCount = Math.max(validAmenities.length - topAmenities.length, 0);
   
   const handleClick = () => {
     navigate(`/property/${property.id}`);
@@ -374,9 +379,9 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
                     </div>
                   );
                 })}
-                {property.amenities.length > 3 && (
+                {remainingAmenitiesCount > 0 && (
                   <div className="flex items-center text-xs text-gray-500 rounded-full px-2 py-1">
-                    <span className="font-medium">+{property.amenities.length - 3} More</span>
+                    <span className="font-medium">+{remainingAmenitiesCount} More</span>
                   </div>
                 )}
               </div>
