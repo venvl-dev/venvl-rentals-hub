@@ -261,7 +261,9 @@ const PropertyListing = () => {
                         return acc;
                       }, {} as Record<string, typeof amenitiesWithCategories>);
 
-                      return Object.entries(categorizedAmenities).map(([category, amenities]) => {
+                      return Object.entries(categorizedAmenities)
+                        .filter(([category]) => category !== 'Other')
+                        .map(([category, amenities]) => {
                         if (amenities.length === 0) return null;
                         
                         const isExpanded = expandedCategories[category];
