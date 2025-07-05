@@ -18,6 +18,8 @@ import {
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
 import { getAmenitiesByCategory, cleanAmenityIds } from '@/lib/amenitiesUtils';
+import { preloadPropertyImages } from '@/lib/imageOptimization';
+import { useAuthImagePreload } from '@/hooks/useAuthImagePreload';
 import React from 'react';
 
 interface Property {
@@ -89,6 +91,9 @@ const Index = () => {
     bathrooms: 0,
   });
 
+  // Use authentication-aware image preloading
+  const { user, isLoading: authLoading, imagesPreloaded, preloadImages, refreshImages } = useAuthImagePreload();
+
   useEffect(() => {
     fetchProperties();
   }, []);
@@ -97,9 +102,24 @@ const Index = () => {
     filterProperties();
   }, [properties, searchFilters, advancedFilters]);
 
+  // Preload images when properties change or user auth state changes
+  useEffect(() => {
+    if (properties.length > 0 && !authLoading) {
+      preloadImages(properties);
+    }
+  }, [properties, authLoading, preloadImages]);
+
+  // Refresh images when user logs in/out
+  useEffect(() => {
+    if (properties.length > 0 && !authLoading) {
+      refreshImages(properties);
+    }
+  }, [user, refreshImages, properties, authLoading]);
+
   const fetchProperties = useCallback(async (offset = 0, limit = 20) => {
     try {
       setLoading(true);
+      
       // Optimized query - fetch only essential fields with pagination
       const { data, error } = await supabase
         .from('properties')
@@ -142,11 +162,13 @@ const Index = () => {
 
       console.log('Fetched approved properties:', data?.length);
       if (data) {
+        // Clean amenities data
         data.forEach(p => {
           p.amenities = cleanAmenityIds(p.amenities || []);
         });
+        
+        setProperties(data);
       }
-      setProperties(data || []);
     } catch (error) {
       console.error('Error:', error);
       toast.error('Failed to load properties');
@@ -259,6 +281,9 @@ const Index = () => {
     }
   };
 
+  // Enhanced loading state
+  const isFullyLoaded = !loading && !authLoading && imagesPreloaded;
+
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <Header />
@@ -321,9 +346,9 @@ const Index = () => {
         {/* Results Section */}
         <section className="w-full px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
           <div className="max-w-7xl mx-auto">
-            {loading ? (
+            {loading || authLoading ? (
               <motion.div 
-                className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
@@ -348,9 +373,14 @@ const Index = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.7 }}
                 >
-                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                    {filteredProperties.length} propert{filteredProperties.length !== 1 ? 'ies' : 'y'} found
-                  </h2>
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                      {filteredProperties.length} propert{filteredProperties.length !== 1 ? 'ies' : 'y'} found
+                    </h2>
+                    
+
+                  </div>
+                  
                   {searchFilters.location && (
                     <div className="text-sm sm:text-base text-gray-600">
                       in {searchFilters.location}
@@ -358,62 +388,69 @@ const Index = () => {
                   )}
                 </motion.div>
 
-                {filteredProperties.length === 0 ? (
-                  <motion.div 
-                    className="text-center py-16 sm:py-24"
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.6, delay: 0.8 }}
-                  >
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-3">No properties found</h3>
-                    <p className="text-gray-600 mb-6 px-4">Try adjusting your search criteria or filters</p>
-                    {properties.length === 0 && (
-                      <div className="space-y-4">
-                        <p className="text-sm text-gray-500 px-4">
-                          It looks like there are no approved properties in the system yet.
-                        </p>
-                        <button 
-                          onClick={() => fetchProperties()}
-                          className="bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors font-medium"
-                        >
-                          Retry Loading
-                        </button>
-                      </div>
-                    )}
-                  </motion.div>
-                ) : (
-                  <motion.div 
-                    className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6"
+                {/* Properties Grid */}
+                {filteredProperties.length > 0 ? (
+                  <motion.div
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ duration: 0.6, delay: 0.8 }}
+                    transition={{ duration: 0.5 }}
                   >
                     {filteredProperties.map((property, index) => (
                       <motion.div
                         key={property.id}
-                        initial={{ opacity: 0, y: 30 }}
+                        initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: Math.min(index * 0.1, 0.8) }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }}
                       >
                         <PropertyCard property={property} />
                       </motion.div>
                     ))}
                   </motion.div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                      No Properties Found
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Try adjusting your search criteria or filters
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setSearchFilters({
+                          location: '',
+                          guests: 1,
+                          bookingType: 'flexible' as BookingType,
+                        });
+                        setAdvancedFilters({
+                          priceRange: [0, 10000],
+                          propertyTypes: [],
+                          amenities: [],
+                          bedrooms: 0,
+                          bathrooms: 0,
+                        });
+                      }}
+                      variant="outline"
+                    >
+                      Clear All Filters
+                    </Button>
+                  </div>
                 )}
               </>
             )}
           </div>
         </section>
-      </main>
 
-      {/* Advanced Filters Modal */}
-      {showAdvancedFilters && (
-        <VenvlAdvancedFilters
-          onFiltersChange={handleAdvancedFilters}
-          onClose={() => setShowAdvancedFilters(false)}
-          initialFilters={advancedFilters}
-        />
-      )}
+        {/* Advanced Filters Modal */}
+        {showAdvancedFilters && (
+          <VenvlAdvancedFilters
+            initialFilters={advancedFilters}
+            onFiltersChange={handleAdvancedFilters}
+            onClose={() => setShowAdvancedFilters(false)}
+          />
+        )}
+      </main>
     </div>
   );
 };

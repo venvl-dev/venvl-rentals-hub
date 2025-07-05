@@ -12,6 +12,7 @@ import {
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
 import { getTopAmenities, cleanAmenityIds } from '@/lib/amenitiesUtils';
+import OptimizedImage from '@/components/ui/OptimizedImage';
 
 interface PropertyCardProps {
   property: {
@@ -97,27 +98,21 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     }
   }, [touchStart, touchEnd, images.length, nextImage, prevImage]);
 
-  // Preload next images for better performance
-  const handleImageLoad = useCallback(() => {
-    setIsLoading(false);
-    
-    // Preload next image
+  // Preload next and previous images for smoother transitions
+  useEffect(() => {
     if (images.length > 1) {
       const nextIndex = (currentImageIndex + 1) % images.length;
-      const img = new Image();
-      img.src = images[nextIndex];
+      const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
+      
+      // Preload next image
+      const nextImg = new Image();
+      nextImg.src = images[nextIndex];
+      
+      // Preload previous image
+      const prevImg = new Image();
+      prevImg.src = images[prevIndex];
     }
-  }, [images, currentImageIndex]);
-
-  const handleImageError = useCallback(() => {
-    setIsLoading(false);
-    console.warn('Failed to load image:', images[currentImageIndex]);
-  }, [images, currentImageIndex]);
-
-  // Set loading state when image changes
-  useEffect(() => {
-    setIsLoading(true);
-  }, [currentImageIndex]);
+  }, [currentImageIndex, images]);
 
   const rentalType = getRentalType(property);
   const badge = getRentalTypeBadge(rentalType);
@@ -232,22 +227,17 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Loading skeleton */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
-            <div className="w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-          </div>
-        )}
-        
-        <img
-          ref={imageRef}
+        {/* Optimized Image with Lazy Loading */}
+        <OptimizedImage
           src={images[currentImageIndex]}
           alt={property.title}
-          className="w-full h-full object-cover transition-all duration-500"
-          onLoad={handleImageLoad}
-          onError={handleImageError}
+          className="w-full h-full object-cover"
+          fallbackSrc="/placeholder.svg"
+          lazy={true}
+          quality={85}
+          width={400}
+          height={300}
           style={{ 
-            opacity: isLoading ? 0 : 1,
             transform: touchEnd && touchStart ? `translateX(${(touchEnd - touchStart) * 0.1}px)` : 'translateX(0)'
           }}
         />
@@ -321,8 +311,8 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
       </div>
 
       {/* Content Area */}
-      <CardContent className="p-4 lg:p-6 flex-1 flex flex-col">
-        <div className="space-y-3 flex-1">
+      <CardContent className="p-4 sm:p-4 lg:p-6 flex-1 flex flex-col">
+        <div className="space-y-2 sm:space-y-3 flex-1">
           {/* Location */}
           <div className="flex items-center text-gray-600">
             <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -330,7 +320,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           </div>
 
           {/* Title - Single line only */}
-          <h3 className="font-bold text-lg text-gray-900 truncate leading-tight" title={property.title}>
+          <h3 className="font-bold text-lg sm:text-lg lg:text-xl text-gray-900 truncate leading-tight" title={property.title}>
             {property.title}
           </h3>
           
@@ -395,7 +385,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           )}
 
           {/* Description */}
-          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed flex-1">
+          <p className="text-sm sm:text-sm lg:text-base text-gray-600 line-clamp-2 leading-relaxed flex-1">
             {property.description}
           </p>
 
@@ -407,7 +397,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
 
         {/* Book Now Button */}
         <button
-          className="w-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold py-3 px-6 rounded-2xl transition-all duration-200 shadow-lg mt-4 text-sm lg:text-base hover:from-black hover:to-gray-900"
+          className="w-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-2xl transition-all duration-200 shadow-lg mt-3 sm:mt-4 text-xs sm:text-sm lg:text-base hover:from-black hover:to-gray-900"
           onClick={(e) => {
             e.stopPropagation();
             handleClick();
