@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { X, Home, DollarSign, Wifi } from 'lucide-react';
+import { AMENITIES } from '@/lib/amenitiesUtils';
 
 interface SearchFilters {
   location: string;
@@ -30,10 +31,9 @@ const AnimatedFilterPanel = ({ filters, onFiltersChange, onClose }: AnimatedFilt
     'apartment', 'house', 'villa', 'studio', 'cabin', 'loft'
   ];
 
-  const amenitiesList = [
-    'WiFi', 'Kitchen', 'Pool', 'Parking', 'Air Conditioning', 
-    'TV', 'Washer', 'Dryer', 'Hot Tub', 'Gym'
-  ];
+  const amenitiesList = AMENITIES.flatMap((category) =>
+    category.items.map((item) => item.id)
+  );
 
   const toggleAmenity = (amenity: string) => {
     const currentAmenities = filters.amenities || [];
