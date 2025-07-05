@@ -17,7 +17,7 @@ import {
   type BookingType, 
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
-import { getAmenitiesByCategory } from '@/lib/amenitiesUtils';
+import { getAmenitiesByCategory, normalizeAmenities } from '@/lib/amenitiesUtils';
 import React from 'react';
 
 interface Property {
@@ -141,6 +141,11 @@ const Index = () => {
       }
 
       console.log('Fetched approved properties:', data?.length);
+      if (data) {
+        data.forEach(p => {
+          p.amenities = normalizeAmenities(p.amenities || []);
+        });
+      }
       setProperties(data || []);
     } catch (error) {
       console.error('Error:', error);

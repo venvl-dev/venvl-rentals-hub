@@ -82,6 +82,25 @@ export const AMENITIES: AmenityCategory[] = [
   }
 ];
 
+// Mapping of legacy amenity ids to the new canonical ids
+export const LEGACY_AMENITY_MAPPING: Record<string, string> = {
+  wifi: 'WiFi',
+  kitchen: 'Kitchen',
+  air_conditioning: 'Air Conditioning',
+  heating: 'Heating',
+  tv: 'TV',
+  netflix: 'Netflix',
+  sound_system: 'Sound System',
+  gaming_console: 'Gaming Console',
+  parking: 'Free Parking',
+  private_entrance: 'Private Entrance',
+  security: 'Security',
+  balcony: 'Balcony',
+  washing_machine: 'Washing Machine',
+  workspace: 'Workspace',
+  closet: 'Closet'
+};
+
 // Create a flat map for quick lookups
 export const AMENITY_MAP = new Map<string, AmenityItem>();
 AMENITIES.forEach(category => {
@@ -90,26 +109,40 @@ AMENITIES.forEach(category => {
   });
 });
 
-// Get amenity by ID
-export const getAmenityById = (id: string): AmenityItem | undefined => {
-  // Attempt exact match first
-  const direct = AMENITY_MAP.get(id);
-  if (direct) return direct;
+// Normalize a single amenity id to the canonical format
+export const normalizeAmenityId = (id: string): string => {
+  const trimmed = id.trim();
+  const mapped =
+    LEGACY_AMENITY_MAPPING[trimmed] || LEGACY_AMENITY_MAPPING[trimmed.toLowerCase()];
+  if (mapped) return mapped;
 
-  // Fallback: try case-insensitive match after trimming
-  const normalized = id.trim().toLowerCase();
-  for (const [key, value] of AMENITY_MAP.entries()) {
-    if (key.toLowerCase() === normalized) {
-      return value;
+  for (const key of AMENITY_MAP.keys()) {
+    if (key.toLowerCase() === trimmed.toLowerCase()) {
+      return key;
     }
   }
-  return undefined;
+
+  return trimmed;
+};
+
+// Normalize an array of amenity ids
+export const normalizeAmenities = (ids: string[]): string[] => {
+  const normalized = ids.map(id => normalizeAmenityId(id));
+  // Remove duplicates while preserving order
+  return Array.from(new Set(normalized));
+};
+
+// Get amenity by ID
+export const getAmenityById = (id: string): AmenityItem | undefined => {
+  const normalizedId = normalizeAmenityId(id);
+  return AMENITY_MAP.get(normalizedId);
 };
 
 // Get category by amenity ID
 export const getCategoryByAmenityId = (id: string): string => {
+  const normalizedId = normalizeAmenityId(id);
   for (const category of AMENITIES) {
-    if (category.items.some(item => item.id === id)) {
+    if (category.items.some(item => item.id === normalizedId)) {
       return category.category;
     }
   }
@@ -118,7 +151,9 @@ export const getCategoryByAmenityId = (id: string): string => {
 
 // Get amenities by IDs
 export const getAmenitiesByIds = (ids: string[]): AmenityItem[] => {
-  return ids.map(id => getAmenityById(id)).filter((item): item is AmenityItem => item !== undefined);
+  return ids
+    .map(id => getAmenityById(id))
+    .filter((item): item is AmenityItem => item !== undefined);
 };
 
 // Get top amenities for display (prioritized order)
