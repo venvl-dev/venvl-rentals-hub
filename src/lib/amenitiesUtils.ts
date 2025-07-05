@@ -92,7 +92,18 @@ AMENITIES.forEach(category => {
 
 // Get amenity by ID
 export const getAmenityById = (id: string): AmenityItem | undefined => {
-  return AMENITY_MAP.get(id);
+  // Attempt exact match first
+  const direct = AMENITY_MAP.get(id);
+  if (direct) return direct;
+
+  // Fallback: try case-insensitive match after trimming
+  const normalized = id.trim().toLowerCase();
+  for (const [key, value] of AMENITY_MAP.entries()) {
+    if (key.toLowerCase() === normalized) {
+      return value;
+    }
+  }
+  return undefined;
 };
 
 // Get category by amenity ID
