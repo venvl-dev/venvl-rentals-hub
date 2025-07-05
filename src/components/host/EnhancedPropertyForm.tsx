@@ -24,7 +24,7 @@ import {
   type RentalType,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
-import { AMENITIES, normalizeAmenities } from '@/lib/amenitiesUtils';
+import { AMENITIES_LIST, cleanAmenityIds, getAmenitiesByCategory } from '@/lib/amenitiesUtils';
 
 // Dynamic schema creator based on rental type
 const createPropertySchema = (rentalType: RentalType) => {
@@ -120,7 +120,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       monthly_price: property ? getMonthlyPrice(property as PropertyRentalData) : undefined,
       min_nights: property?.min_nights || 1,
       min_months: property?.min_months || 1,
-      amenities: property ? normalizeAmenities(property.amenities || []) : [],
+      amenities: property ? cleanAmenityIds(property.amenities || []) : [],
       images: property?.images || [],
     },
   });
@@ -183,7 +183,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         monthly_price: getMonthlyPrice(property as PropertyRentalData),
         min_nights: property.min_nights || 1,
         min_months: property.min_months || 1,
-        amenities: normalizeAmenities(property.amenities || []),
+        amenities: cleanAmenityIds(property.amenities || []),
         images: property.images || [],
       };
       
@@ -315,7 +315,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       }
 
       // Prepare property data with only relevant price fields
-      const normalizedAmenityIds = normalizeAmenities(data.amenities || []);
+      const normalizedAmenityIds = cleanAmenityIds(data.amenities || []);
 
       const propertyData: any = {
         title: data.title,
@@ -830,51 +830,102 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
                     <div className="space-y-4">
                       <Label>Amenities</Label>
-                      {process.env.NODE_ENV !== 'production' &&
-                        console.log('🎨 Rendering amenities section. Current selected:', watchedAmenities)}
                       <div className="space-y-6">
-                        {AMENITIES.map((category) => {
-                          {process.env.NODE_ENV !== 'production' &&
-                            console.log(`🎨 Rendering category: ${category.category} with ${category.items.length} items`)}
-                          return (
-                            <div key={category.category} className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium text-sm text-gray-700">{category.category}</h4>
-                                <div className="flex-1 h-px bg-gray-200"></div>
-                              </div>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {category.items.map((amenity) => {
-                                  const IconComponent = amenity.iconComponent!;
-                                  const isSelected = watchedAmenities.includes(amenity.id);
-                                  {process.env.NODE_ENV !== 'production' &&
-                                    console.log(`🎨 Amenity ${amenity.id}: selected = ${isSelected}`)}
-                                  
-                                  return (
-                                    <motion.div
-                                      key={amenity.id}
-                                      whileHover={{ scale: 1.02 }}
-                                      whileTap={{ scale: 0.98 }}
-                                    >
-                                      <Button
-                                        type="button"
-                                        variant={isSelected ? "default" : "outline"}
-                                        onClick={() => {
-                                          {process.env.NODE_ENV !== 'production' &&
-                                            console.log(`🎨 Clicking amenity: ${amenity.id}`)}
-                                          handleAmenityToggle(amenity.id);
-                                        }}
-                                        className="w-full rounded-xl justify-start h-auto p-3"
-                                      >
-                                        <IconComponent className="h-5 w-5 mr-2 flex-shrink-0" />
-                                        <span className="text-sm font-medium">{amenity.label}</span>
-                                      </Button>
-                                    </motion.div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {/* الأساسيات */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-sm text-gray-700">الأساسيات</h4>
+                            <div className="flex-1 h-px bg-gray-200"></div>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {AMENITIES_LIST.filter(amenity => amenity.category === 'essential').map((amenity) => {
+                              const IconComponent = amenity.icon;
+                              const isSelected = watchedAmenities.includes(amenity.id);
+                              
+                              return (
+                                <motion.div
+                                  key={amenity.id}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <Button
+                                    type="button"
+                                    variant={isSelected ? "default" : "outline"}
+                                    onClick={() => handleAmenityToggle(amenity.id)}
+                                    className="w-full rounded-xl justify-start h-auto p-3"
+                                  >
+                                    <IconComponent className="h-5 w-5 mr-2 flex-shrink-0" />
+                                    <span className="text-sm font-medium">{amenity.name}</span>
+                                  </Button>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* الراحة */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-sm text-gray-700">الراحة</h4>
+                            <div className="flex-1 h-px bg-gray-200"></div>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {AMENITIES_LIST.filter(amenity => amenity.category === 'comfort').map((amenity) => {
+                              const IconComponent = amenity.icon;
+                              const isSelected = watchedAmenities.includes(amenity.id);
+                              
+                              return (
+                                <motion.div
+                                  key={amenity.id}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <Button
+                                    type="button"
+                                    variant={isSelected ? "default" : "outline"}
+                                    onClick={() => handleAmenityToggle(amenity.id)}
+                                    className="w-full rounded-xl justify-start h-auto p-3"
+                                  >
+                                    <IconComponent className="h-5 w-5 mr-2 flex-shrink-0" />
+                                    <span className="text-sm font-medium">{amenity.name}</span>
+                                  </Button>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* الترفيه */}
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-medium text-sm text-gray-700">الترفيه</h4>
+                            <div className="flex-1 h-px bg-gray-200"></div>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {AMENITIES_LIST.filter(amenity => amenity.category === 'entertainment').map((amenity) => {
+                              const IconComponent = amenity.icon;
+                              const isSelected = watchedAmenities.includes(amenity.id);
+                              
+                              return (
+                                <motion.div
+                                  key={amenity.id}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <Button
+                                    type="button"
+                                    variant={isSelected ? "default" : "outline"}
+                                    onClick={() => handleAmenityToggle(amenity.id)}
+                                    className="w-full rounded-xl justify-start h-auto p-3"
+                                  >
+                                    <IconComponent className="h-5 w-5 mr-2 flex-shrink-0" />
+                                    <span className="text-sm font-medium">{amenity.name}</span>
+                                  </Button>
+                                </motion.div>
+                              );
+                            })}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>

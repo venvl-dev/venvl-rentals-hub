@@ -15,7 +15,7 @@ import HostStats from '@/components/host/HostStats';
 import HostCalendar from '@/components/calendar/HostCalendar';
 import SimplePropertyTest from '@/components/host/SimplePropertyTest';
 import { Property } from '@/types/property';
-import { normalizeAmenities } from '@/lib/amenitiesUtils';
+import { cleanAmenityIds } from '@/lib/amenitiesUtils';
 import {
   getRentalType,
   getDailyPrice,
@@ -84,7 +84,7 @@ const HostDashboard = () => {
       if (error) throw error;
       if (data) {
         data.forEach(p => {
-          p.amenities = normalizeAmenities(p.amenities || []);
+          p.amenities = cleanAmenityIds(p.amenities || []);
         });
       }
       setProperties(data || []);

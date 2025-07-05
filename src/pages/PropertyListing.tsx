@@ -19,7 +19,7 @@ import {
   getAvailableBookingTypes,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
-import { getAmenitiesByCategory, getAmenityById, getCategoryByAmenityId, normalizeAmenities } from '@/lib/amenitiesUtils';
+import { getAmenitiesByCategory, getAmenityWithLegacyInterface, getCategoryByAmenityId, cleanAmenityIds } from '@/lib/amenitiesUtils';
 import React from 'react';
 import { 
   ArrowLeft, 
@@ -82,7 +82,7 @@ const PropertyListing = () => {
 
       if (error) throw error;
       if (data) {
-        data.amenities = normalizeAmenities(data.amenities || []);
+        data.amenities = cleanAmenityIds(data.amenities || []);
       }
       setProperty(data);
     } catch (error) {
@@ -247,7 +247,7 @@ const PropertyListing = () => {
                     {(() => {
                       // Get amenities with their categories
                       const amenitiesWithCategories = property.amenities.map(amenityId => {
-                        const amenity = getAmenityById(amenityId);
+                        const amenity = getAmenityWithLegacyInterface(amenityId);
                         return {
                           id: amenityId,
                           label: amenity?.label || amenityId,

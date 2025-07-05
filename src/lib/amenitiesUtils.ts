@@ -1,205 +1,175 @@
-// Amenities utilities with corrected IDs matching database format
 import { 
   Wifi,
   ChefHat,
   ThermometerSnowflake,
-  Flame,
-  WashingMachine,
-  Wind,
-  Droplets,
-  ShieldCheck,
-  SprayCan,
-  Landmark,
-  MoveVertical,
-  ParkingCircle,
-  DoorClosed,
-  Shield,
-  Laptop2,
-  Shirt,
   Tv2,
-  PlayCircle,
-  Speaker,
-  Dice3,
-  BookOpen,
-  Gamepad2,
-  FlameKindling,
-  CircleDashed,
+  Car,
+  Shield,
+  Wind,
+  Waves,
+  UtensilsCrossed,
+  GamepadIcon,
   LucideIcon
 } from 'lucide-react';
 
-export interface AmenityItem {
+// الواجهة الأساسية للـ amenity
+export interface Amenity {
   id: string;
-  label: string;
-  icon: string;
-  iconComponent?: LucideIcon;
+  name: string;
+  category: 'essential' | 'comfort' | 'entertainment';
+  icon: LucideIcon;
 }
 
-export interface AmenityCategory {
-  category: string;
-  items: AmenityItem[];
-}
+// قائمة الـ amenities المتاحة مع 3 فئات أساسية فقط
+export const AMENITIES_LIST: Amenity[] = [
+  // Essential - الأساسيات
+  { id: 'wifi', name: 'Wi-Fi', category: 'essential', icon: Wifi },
+  { id: 'kitchen', name: 'Kitchen', category: 'essential', icon: ChefHat },
+  { id: 'air_conditioning', name: 'Air Conditioning', category: 'essential', icon: ThermometerSnowflake },
+  { id: 'parking', name: 'Free Parking', category: 'essential', icon: Car },
+  { id: 'security', name: 'Security', category: 'essential', icon: Shield },
+  { id: 'heating', name: 'Heating', category: 'essential', icon: ThermometerSnowflake },
+  { id: 'washing_machine', name: 'Washing Machine', category: 'essential', icon: Wind },
+  { id: 'private_entrance', name: 'Private Entrance', category: 'essential', icon: Shield },
+  { id: 'elevator', name: 'Elevator', category: 'essential', icon: Wind },
+  { id: 'workspace', name: 'Workspace', category: 'essential', icon: Wind },
 
-// Centralized amenities structure
-export const AMENITIES: AmenityCategory[] = [
-  {
-    category: "Essential",
-    items: [
-      { id: "WiFi", label: "Wi-Fi", icon: "Wifi", iconComponent: Wifi },
-      { id: "Kitchen", label: "Kitchen", icon: "ChefHat", iconComponent: ChefHat },
-      { id: "Air Conditioning", label: "Air Conditioning", icon: "ThermometerSnowflake", iconComponent: ThermometerSnowflake },
-      { id: "Heating", label: "Heating", icon: "Flame", iconComponent: Flame },
-      { id: "Washing Machine", label: "Washing Machine", icon: "WashingMachine", iconComponent: WashingMachine },
-      { id: "Dryer", label: "Dryer", icon: "Wind", iconComponent: Wind },
-      { id: "Hot Water", label: "Hot Water", icon: "Droplets", iconComponent: Droplets },
-      { id: "First Aid Kit", label: "First Aid Kit", icon: "ShieldCheck", iconComponent: ShieldCheck },
-      { id: "Fire Extinguisher", label: "Fire Extinguisher", icon: "SprayCan", iconComponent: SprayCan }
-    ]
-  },
-  {
-    category: "Comfort",
-    items: [
-      { id: "Balcony", label: "Balcony", icon: "Landmark", iconComponent: Landmark },
-      { id: "Elevator", label: "Elevator", icon: "MoveVertical", iconComponent: MoveVertical },
-      { id: "Free Parking", label: "Free Parking", icon: "ParkingCircle", iconComponent: ParkingCircle },
-      { id: "Private Entrance", label: "Private Entrance", icon: "DoorClosed", iconComponent: DoorClosed },
-      { id: "Security", label: "Security", icon: "Shield", iconComponent: Shield },
-      { id: "Workspace", label: "Workspace", icon: "Laptop2", iconComponent: Laptop2 },
-      { id: "Closet", label: "Closet", icon: "Shirt", iconComponent: Shirt }
-    ]
-  },
-  {
-    category: "Entertainment",
-    items: [
-      { id: "TV", label: "TV", icon: "Tv2", iconComponent: Tv2 },
-      { id: "Netflix", label: "Netflix", icon: "PlayCircle", iconComponent: PlayCircle },
-      { id: "Sound System", label: "Sound System", icon: "Speaker", iconComponent: Speaker },
-      { id: "Board Games", label: "Board Games", icon: "Dice3", iconComponent: Dice3 },
-      { id: "Books", label: "Books", icon: "BookOpen", iconComponent: BookOpen },
-      { id: "Gaming Console", label: "Gaming Console", icon: "Gamepad2", iconComponent: Gamepad2 },
-      { id: "Indoor Fireplace", label: "Indoor Fireplace", icon: "FlameKindling", iconComponent: FlameKindling },
-      { id: "Pool Table", label: "Pool Table", icon: "CircleDashed", iconComponent: CircleDashed }
-    ]
-  }
+  // Comfort - الراحة  
+  { id: 'balcony', name: 'Balcony', category: 'comfort', icon: Wind },
+  { id: 'pool', name: 'Swimming Pool', category: 'comfort', icon: Waves },
+  { id: 'dining_area', name: 'Dining Area', category: 'comfort', icon: UtensilsCrossed },
+  { id: 'garden', name: 'Garden', category: 'comfort', icon: Wind },
+  { id: 'terrace', name: 'Terrace', category: 'comfort', icon: Wind },
+  { id: 'spa', name: 'Spa', category: 'comfort', icon: Wind },
+  { id: 'gym', name: 'Gym', category: 'comfort', icon: Wind },
+  { id: 'sauna', name: 'Sauna', category: 'comfort', icon: Wind },
+  { id: 'hot_tub', name: 'Hot Tub', category: 'comfort', icon: Waves },
+  { id: 'ocean_view', name: 'Ocean View', category: 'comfort', icon: Wind },
+  { id: 'mountain_view', name: 'Mountain View', category: 'comfort', icon: Wind },
+  { id: 'city_view', name: 'City View', category: 'comfort', icon: Wind },
+  { id: 'fireplace', name: 'Fireplace', category: 'comfort', icon: Wind },
+  { id: 'closet', name: 'Closet', category: 'comfort', icon: Wind },
+  { id: 'iron', name: 'Iron', category: 'comfort', icon: Wind },
+
+  // Entertainment - الترفيه
+  { id: 'tv', name: 'TV', category: 'entertainment', icon: Tv2 },
+  { id: 'gaming', name: 'Gaming Console', category: 'entertainment', icon: GamepadIcon },
+  { id: 'netflix', name: 'Netflix', category: 'entertainment', icon: Tv2 },
+  { id: 'sound_system', name: 'Sound System', category: 'entertainment', icon: GamepadIcon },
+  { id: 'books', name: 'Books', category: 'entertainment', icon: GamepadIcon },
+  { id: 'board_games', name: 'Board Games', category: 'entertainment', icon: GamepadIcon },
+  { id: 'music_instruments', name: 'Music Instruments', category: 'entertainment', icon: GamepadIcon },
+  { id: 'outdoor_games', name: 'Outdoor Games', category: 'entertainment', icon: GamepadIcon },
+  { id: 'bbq', name: 'BBQ Grill', category: 'entertainment', icon: UtensilsCrossed },
+  { id: 'beach_access', name: 'Beach Access', category: 'entertainment', icon: Waves },
+  { id: 'water_sports', name: 'Water Sports Equipment', category: 'entertainment', icon: Waves },
+  { id: 'bicycles', name: 'Bicycles', category: 'entertainment', icon: GamepadIcon }
 ];
 
-// Mapping of legacy amenity ids to the new canonical ids
-export const LEGACY_AMENITY_MAPPING: Record<string, string> = {
-  wifi: 'WiFi',
-  kitchen: 'Kitchen',
-  air_conditioning: 'Air Conditioning',
-  heating: 'Heating',
-  tv: 'TV',
-  netflix: 'Netflix',
-  sound_system: 'Sound System',
-  gaming_console: 'Gaming Console',
-  parking: 'Free Parking',
-  private_entrance: 'Private Entrance',
-  security: 'Security',
-  balcony: 'Balcony',
-  washing_machine: 'Washing Machine',
-  workspace: 'Workspace',
-  closet: 'Closet'
+// Map للبحث السريع
+const AMENITIES_MAP = new Map<string, Amenity>(
+  AMENITIES_LIST.map(amenity => [amenity.id, amenity])
+);
+
+// دالة للحصول على amenity بالـ ID
+export const getAmenityById = (id: string): Amenity | undefined => {
+  return AMENITIES_MAP.get(id);
 };
 
-// Create a flat map for quick lookups
-export const AMENITY_MAP = new Map<string, AmenityItem>();
-AMENITIES.forEach(category => {
-  category.items.forEach(item => {
-    AMENITY_MAP.set(item.id, item);
-  });
-});
-
-// Normalize a single amenity id to the canonical format
-export const normalizeAmenityId = (id: string): string => {
-  const trimmed = id.trim();
-  const mapped =
-    LEGACY_AMENITY_MAPPING[trimmed] || LEGACY_AMENITY_MAPPING[trimmed.toLowerCase()];
-  if (mapped) return mapped;
-
-  for (const key of AMENITY_MAP.keys()) {
-    if (key.toLowerCase() === trimmed.toLowerCase()) {
-      return key;
-    }
-  }
-
-  return trimmed;
-};
-
-// Normalize an array of amenity ids
-export const normalizeAmenities = (ids: string[]): string[] => {
-  const normalized = ids.map(id => normalizeAmenityId(id));
-  // Remove duplicates while preserving order
-  return Array.from(new Set(normalized));
-};
-
-// Get amenity by ID
-export const getAmenityById = (id: string): AmenityItem | undefined => {
-  const normalizedId = normalizeAmenityId(id);
-  return AMENITY_MAP.get(normalizedId);
-};
-
-// Get category by amenity ID
-export const getCategoryByAmenityId = (id: string): string => {
-  const normalizedId = normalizeAmenityId(id);
-  for (const category of AMENITIES) {
-    if (category.items.some(item => item.id === normalizedId)) {
-      return category.category;
-    }
-  }
-  return 'Other';
-};
-
-// Get amenities by IDs
-export const getAmenitiesByIds = (ids: string[]): AmenityItem[] => {
+// دالة للحصول على قائمة amenities بالـ IDs
+export const getAmenitiesByIds = (ids: string[]): Amenity[] => {
   return ids
     .map(id => getAmenityById(id))
-    .filter((item): item is AmenityItem => item !== undefined);
+    .filter((amenity): amenity is Amenity => amenity !== undefined);
 };
 
-// Get top amenities for display (prioritized order)
-export const getTopAmenities = (amenityIds: string[], maxCount: number = 4): AmenityItem[] => {
-  // Priority order for display
-  const priorityOrder = ['WiFi', 'Kitchen', 'Air Conditioning', 'TV', 'Free Parking', 'Washing Machine', 'Balcony', 'Security'];
+// دالة للحصول على amenities مجمعة بالفئات
+export const getAmenitiesByCategory = (ids: string[]): Record<string, Amenity[]> => {
+  const amenities = getAmenitiesByIds(ids);
+  const grouped: Record<string, Amenity[]> = {
+    essential: [],
+    comfort: [],
+    entertainment: []
+  };
+
+  amenities.forEach(amenity => {
+    grouped[amenity.category].push(amenity);
+  });
+
+  return grouped;
+};
+
+// دالة للحصول على أهم amenities للعرض
+export const getTopAmenities = (ids: string[], maxCount: number = 4): Amenity[] => {
+  // ترتيب الأولوية: الأساسيات أولاً، ثم الراحة، ثم الترفيه
+  const priorityOrder = [
+    // Essential first
+    'wifi', 'kitchen', 'air_conditioning', 'parking', 'security', 'heating', 'washing_machine', 'private_entrance', 'elevator', 'workspace',
+    // Comfort second
+    'balcony', 'pool', 'dining_area', 'garden', 'terrace', 'spa', 'gym', 'ocean_view', 'mountain_view', 'city_view', 'fireplace', 'closet', 'iron', 'sauna', 'hot_tub',
+    // Entertainment third
+    'tv', 'netflix', 'gaming', 'sound_system', 'books', 'board_games', 'music_instruments', 'outdoor_games', 'bbq', 'beach_access', 'water_sports', 'bicycles'
+  ];
   
-  const amenities = getAmenitiesByIds(amenityIds);
+  const amenities = getAmenitiesByIds(ids);
   
-  // Sort by priority
-  const sortedAmenities = amenities.sort((a, b) => {
+  // ترتيب حسب الأولوية
+  const sorted = amenities.sort((a, b) => {
     const aIndex = priorityOrder.indexOf(a.id);
     const bIndex = priorityOrder.indexOf(b.id);
     
     if (aIndex === -1 && bIndex === -1) return 0;
     if (aIndex === -1) return 1;
     if (bIndex === -1) return -1;
+    
     return aIndex - bIndex;
   });
-  
-  return sortedAmenities.slice(0, maxCount);
+
+  return sorted.slice(0, maxCount);
 };
 
-// Get amenities grouped by category
-export const getAmenitiesByCategory = (amenityIds: string[]): Record<string, AmenityItem[]> => {
-  const categorized: Record<string, AmenityItem[]> = {};
-  
-  AMENITIES.forEach(category => {
-    const categoryAmenities = category.items.filter(item => amenityIds.includes(item.id));
-    if (categoryAmenities.length > 0) {
-      categorized[category.category] = categoryAmenities;
-    }
-  });
-  
-  return categorized;
+// دالة للحصول على جميع amenities بفئة معينة
+export const getAmenitiesBySpecificCategory = (category: 'essential' | 'comfort' | 'entertainment'): Amenity[] => {
+  return AMENITIES_LIST.filter(amenity => amenity.category === category);
 };
 
-// Legacy compatibility functions for existing code
-export const getAmenityIcon = (amenity: string): { icon: any; label: string; category: string } | null => {
-  const item = getAmenityById(amenity);
-  if (item) {
-    return {
-      icon: item.iconComponent,
-      label: item.label,
-      category: 'essential' // Default category for legacy support
-    };
-  }
-  return null;
+// دالة للتحقق من صحة amenity ID
+export const isValidAmenityId = (id: string): boolean => {
+  return AMENITIES_MAP.has(id);
+};
+
+// دالة لتنظيف قائمة amenity IDs (إزالة غير الصحيحة)
+export const cleanAmenityIds = (ids: string[]): string[] => {
+  return ids.filter(id => isValidAmenityId(id));
+};
+
+// أسماء الفئات للعرض
+export const CATEGORY_LABELS = {
+  essential: 'الأساسيات',
+  comfort: 'الراحة', 
+  entertainment: 'الترفيه'
+} as const;
+
+// دالة للحصول على اسم الفئة بالعربية
+export const getCategoryLabel = (category: string): string => {
+  return CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] || category;
+};
+
+// دالة للحصول على فئة amenity بالـ ID
+export const getCategoryByAmenityId = (amenityId: string): string => {
+  const amenity = getAmenityById(amenityId);
+  return amenity?.category || 'Other';
+};
+
+// دالة للحصول على amenity with legacy interface for backward compatibility
+export const getAmenityWithLegacyInterface = (id: string) => {
+  const amenity = getAmenityById(id);
+  if (!amenity) return null;
+  
+  return {
+    id: amenity.id,
+    label: amenity.name,
+    iconComponent: amenity.icon,
+    category: amenity.category
+  };
 }; 

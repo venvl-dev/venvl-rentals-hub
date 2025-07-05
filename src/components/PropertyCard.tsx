@@ -11,7 +11,7 @@ import {
   supportsBookingType,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
-import { getTopAmenities, normalizeAmenities } from '@/lib/amenitiesUtils';
+import { getTopAmenities, cleanAmenityIds } from '@/lib/amenitiesUtils';
 
 interface PropertyCardProps {
   property: {
@@ -43,14 +43,14 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const imageRef = useRef<HTMLImageElement>(null);
-  const normalizedAmenities = useMemo(
-    () => normalizeAmenities(property.amenities || []),
+  const cleanedAmenities = useMemo(
+    () => cleanAmenityIds(property.amenities || []),
     [property.amenities]
   );
 
   const topAmenities = useMemo(
-    () => getTopAmenities(normalizedAmenities, 3),
-    [normalizedAmenities]
+    () => getTopAmenities(cleanedAmenities, 3),
+    [cleanedAmenities]
   );
   
   const handleClick = () => {
@@ -353,37 +353,39 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             </Badge>
           </div>
 
-          {/* Top Amenities */}
+          {/* Top Amenities - Single line with horizontal scroll */}
           {topAmenities.length > 0 ? (
-            <div className="space-y-2">
-              <div className="flex flex-wrap gap-2">
-                {topAmenities.map((amenity, index) => {
-                  const IconComponent = amenity.iconComponent;
+            <div className="w-full">
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 scroll-smooth-x touch-pan-x">
+                <div className="flex items-center gap-2 flex-nowrap min-w-0">
+                  {topAmenities.slice(0, 5).map((amenity, index) => {
+                    const IconComponent = amenity.icon;
 
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 rounded-full px-2 py-1"
-                      title={amenity.label}
-                    >
-                      <div className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-                        {IconComponent ? (
-                          <IconComponent className="h-3 w-3 text-gray-700" strokeWidth={1.5} />
-                        ) : (
-                          <div className="w-3 h-3 rounded-full bg-gray-700"></div>
-                        )}
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full px-2 py-1 flex-shrink-0 whitespace-nowrap transition-colors duration-200"
+                        title={amenity.name}
+                      >
+                        <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
+                          {IconComponent ? (
+                            <IconComponent className="h-2.5 w-2.5 text-gray-700" strokeWidth={1.5} />
+                          ) : (
+                            <div className="w-2.5 h-2.5 rounded-full bg-gray-700"></div>
+                          )}
+                        </div>
+                        <span className="hidden sm:inline font-medium text-xs">
+                          {amenity.name}
+                        </span>
                       </div>
-                      <span className="hidden sm:inline truncate max-w-16 font-medium">
-                        {amenity.label}
-                      </span>
+                    );
+                  })}
+                  {cleanedAmenities.length > 5 && (
+                    <div className="flex items-center text-xs text-gray-500 rounded-full px-2 py-1 flex-shrink-0 bg-gray-100 hover:bg-gray-200 transition-colors duration-200">
+                      <span className="font-medium whitespace-nowrap">+{cleanedAmenities.length - 5}</span>
                     </div>
-                  );
-                })}
-                {normalizedAmenities.length > 3 && (
-                  <div className="flex items-center text-xs text-gray-500 rounded-full px-2 py-1">
-                    <span className="font-medium">+{normalizedAmenities.length - 3} More</span>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
           ) : (

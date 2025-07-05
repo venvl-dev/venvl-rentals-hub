@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { X, SlidersHorizontal, Home } from 'lucide-react';
-import { AMENITIES } from '@/lib/amenitiesUtils';
+import { AMENITIES_LIST } from '@/lib/amenitiesUtils';
 
 interface AdvancedFilters {
   priceRange?: [number, number] | null;
@@ -43,7 +43,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
     { id: 'loft', label: 'Loft', icon: Home },
   ];
 
-  const amenities = AMENITIES.flatMap((category) => category.items);
+  const amenities = AMENITIES_LIST;
 
   const togglePropertyType = (type: string) => {
     setSelectedPropertyTypes(prev => 
@@ -224,12 +224,12 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
                   >
                     <div className="flex items-center gap-3">
                       {(() => {
-                        const IconComponent = amenity.iconComponent;
+                        const IconComponent = amenity.icon;
                         return IconComponent ? (
                           <IconComponent className="h-4 w-4 text-gray-700" />
                         ) : null;
                       })()}
-                      <span className="font-medium text-sm">{amenity.label}</span>
+                      <span className="font-medium text-sm">{amenity.name}</span>
                     </div>
                   </motion.button>
                 ))}
