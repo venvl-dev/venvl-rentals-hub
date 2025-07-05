@@ -15,10 +15,11 @@ import HostStats from '@/components/host/HostStats';
 import HostCalendar from '@/components/calendar/HostCalendar';
 import SimplePropertyTest from '@/components/host/SimplePropertyTest';
 import { Property } from '@/types/property';
-import { 
-  getRentalType, 
-  getDailyPrice, 
-  getMonthlyPrice, 
+import { normalizeAmenities } from '@/lib/amenitiesUtils';
+import {
+  getRentalType,
+  getDailyPrice,
+  getMonthlyPrice,
   getRentalTypeBadge,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
@@ -81,6 +82,11 @@ const HostDashboard = () => {
         .limit(20);
 
       if (error) throw error;
+      if (data) {
+        data.forEach(p => {
+          p.amenities = normalizeAmenities(p.amenities || []);
+        });
+      }
       setProperties(data || []);
     } catch (error) {
       console.error('Error fetching properties:', error);
