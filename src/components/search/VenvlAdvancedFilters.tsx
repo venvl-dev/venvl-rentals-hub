@@ -1,12 +1,11 @@
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
-import { Checkbox } from '@/components/ui/checkbox';
-import { X, SlidersHorizontal, Home, Wifi, Car, Utensils, Waves, Dumbbell, Tv, Snowflake } from 'lucide-react';
+import { X, SlidersHorizontal, Home } from 'lucide-react';
+import { AMENITIES } from '@/lib/amenitiesUtils';
 
 interface AdvancedFilters {
   priceRange?: [number, number] | null;
@@ -44,15 +43,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
     { id: 'loft', label: 'Loft', icon: Home },
   ];
 
-  const amenities = [
-    { id: 'WiFi', label: 'WiFi', icon: Wifi },
-    { id: 'Kitchen', label: 'Kitchen', icon: Utensils },
-    { id: 'Parking', label: 'Parking', icon: Car },
-    { id: 'Pool', label: 'Pool', icon: Waves },
-    { id: 'Gym', label: 'Gym', icon: Dumbbell },
-    { id: 'TV', label: 'TV', icon: Tv },
-    { id: 'Air Conditioning', label: 'AC', icon: Snowflake },
-  ];
+  const amenities = AMENITIES.flatMap((category) => category.items);
 
   const togglePropertyType = (type: string) => {
     setSelectedPropertyTypes(prev => 
@@ -232,7 +223,12 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
                     whileTap={{ scale: 0.98 }}
                   >
                     <div className="flex items-center gap-3">
-                      <amenity.icon className="h-4 w-4 text-gray-700" />
+                      {(() => {
+                        const IconComponent = amenity.iconComponent;
+                        return IconComponent ? (
+                          <IconComponent className="h-4 w-4 text-gray-700" />
+                        ) : null;
+                      })()}
                       <span className="font-medium text-sm">{amenity.label}</span>
                     </div>
                   </motion.button>
