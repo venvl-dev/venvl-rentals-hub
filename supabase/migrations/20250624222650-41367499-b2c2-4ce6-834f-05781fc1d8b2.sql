@@ -28,7 +28,7 @@ BEGIN
     4, 2, 2,
     'daily',
     ARRAY['https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=800', 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800', 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800'],
-    ARRAY['WiFi', 'Kitchen', 'Air Conditioning', 'TV', 'Washer', 'Dryer'],
+    ARRAY['WiFi', 'Kitchen', 'Air Conditioning', 'TV', 'Washing Machine', 'Dryer'],
     'approved',
     true
   ),
@@ -68,7 +68,7 @@ BEGIN
     8, 4, 3,
     'daily',
     ARRAY['https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800', 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800', 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800'],
-    ARRAY['WiFi', 'Kitchen', 'Pool', 'Parking', 'Air Conditioning', 'TV', 'Washer', 'Dryer'],
+    ARRAY['WiFi', 'Kitchen', 'Pool', 'Free Parking', 'Air Conditioning', 'TV', 'Washing Machine', 'Dryer'],
     'approved',
     true
   );

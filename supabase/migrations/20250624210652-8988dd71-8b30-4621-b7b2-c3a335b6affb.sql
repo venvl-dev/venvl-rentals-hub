@@ -91,18 +91,30 @@ CREATE POLICY "Users can update their own bookings" ON public.bookings
 
 -- Insert some default amenities
 INSERT INTO public.amenities (name, icon, category) VALUES
-('WiFi', 'wifi', 'essentials'),
-('Kitchen', 'chef-hat', 'essentials'),
-('Parking', 'car', 'essentials'),
-('Air Conditioning', 'wind', 'comfort'),
-('Heating', 'thermometer', 'comfort'),
-('Pool', 'waves', 'recreation'),
-('Gym', 'dumbbell', 'recreation'),
-('Pet Friendly', 'heart', 'policies'),
-('Smoking Allowed', 'cigarette', 'policies'),
-('TV', 'tv', 'entertainment'),
-('Washer', 'shirt', 'essentials'),
-('Dryer', 'shirt', 'essentials')
+  ('WiFi', 'Wifi', 'Essential'),
+  ('Kitchen', 'ChefHat', 'Essential'),
+  ('Air Conditioning', 'ThermometerSnowflake', 'Essential'),
+  ('Heating', 'Flame', 'Essential'),
+  ('Washing Machine', 'WashingMachine', 'Essential'),
+  ('Dryer', 'Wind', 'Essential'),
+  ('Hot Water', 'Droplets', 'Essential'),
+  ('First Aid Kit', 'ShieldCheck', 'Essential'),
+  ('Fire Extinguisher', 'SprayCan', 'Essential'),
+  ('Balcony', 'Landmark', 'Comfort'),
+  ('Elevator', 'MoveVertical', 'Comfort'),
+  ('Free Parking', 'ParkingCircle', 'Comfort'),
+  ('Private Entrance', 'DoorClosed', 'Comfort'),
+  ('Security', 'Shield', 'Comfort'),
+  ('Workspace', 'Laptop2', 'Comfort'),
+  ('Closet', 'Shirt', 'Comfort'),
+  ('TV', 'Tv2', 'Entertainment'),
+  ('Netflix', 'PlayCircle', 'Entertainment'),
+  ('Sound System', 'Speaker', 'Entertainment'),
+  ('Board Games', 'Dice3', 'Entertainment'),
+  ('Books', 'BookOpen', 'Entertainment'),
+  ('Gaming Console', 'Gamepad2', 'Entertainment'),
+  ('Indoor Fireplace', 'FlameKindling', 'Entertainment'),
+  ('Pool Table', 'CircleDashed', 'Entertainment')
 ON CONFLICT (name) DO NOTHING;
 
 -- Create storage bucket for property images
