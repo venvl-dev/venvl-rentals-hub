@@ -33,13 +33,6 @@ CREATE TABLE IF NOT EXISTS public.property_images (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Create property_amenities junction table
-CREATE TABLE IF NOT EXISTS public.property_amenities (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  property_id UUID REFERENCES public.properties(id) ON DELETE CASCADE NOT NULL,
-  amenity_id UUID REFERENCES public.amenities(id) ON DELETE CASCADE NOT NULL,
-  UNIQUE(property_id, amenity_id)
-);
 
 -- Add rental_type and pricing columns to properties table
 ALTER TABLE public.properties 
@@ -56,7 +49,6 @@ WHERE daily_price IS NULL AND price_per_night IS NOT NULL;
 -- Enable RLS on new tables
 ALTER TABLE public.amenities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.property_images ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.property_amenities ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for amenities (public read access)
 CREATE POLICY "Amenities are viewable by everyone" ON public.amenities
@@ -72,15 +64,6 @@ CREATE POLICY "Hosts can manage their property images" ON public.property_images
     )
   );
 
--- RLS Policies for property_amenities
-CREATE POLICY "Property amenities are viewable by everyone" ON public.property_amenities
-  FOR SELECT USING (true);
-CREATE POLICY "Hosts can manage their property amenities" ON public.property_amenities
-  FOR ALL USING (
-    property_id IN (
-      SELECT id FROM public.properties WHERE host_id = auth.uid()
-    )
-  );
 
 -- Update existing properties policies to include new columns
 DROP POLICY IF EXISTS "Hosts can insert their own properties" ON public.properties;
