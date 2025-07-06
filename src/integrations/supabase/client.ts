@@ -5,18 +5,16 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Validate required environment variables
-if (!SUPABASE_URL) {
+// Gracefully handle missing environment variables
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  console.error('Missing Supabase environment variables. Please set up your .env file.');
+  // Create a placeholder client that will show errors in the UI instead of crashing
+  const errorMessage = !SUPABASE_URL 
+    ? 'Missing VITE_SUPABASE_URL environment variable'
+    : 'Missing VITE_SUPABASE_ANON_KEY environment variable';
+  
   throw new Error(
-    'Missing VITE_SUPABASE_URL environment variable. ' +
-    'Please copy .env.example to .env and set your Supabase project URL.'
-  );
-}
-
-if (!SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error(
-    'Missing VITE_SUPABASE_ANON_KEY environment variable. ' +
-    'Please copy .env.example to .env and set your Supabase anonymous key.'
+    `${errorMessage}. Please copy .env.example to .env and set your Supabase credentials.`
   );
 }
 

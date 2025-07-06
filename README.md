@@ -4,20 +4,28 @@
 
 **URL**: https://lovable.dev/projects/33969250-c7b4-45da-9e5a-af9f6021ec27
 
-## Environment Setup
+## ⚠️ Important: Environment Setup Required
 
-Before running the application, you need to set up your environment variables:
+**The application will show a blank screen without proper environment setup.**
 
-1. Copy the example environment file:
+Before running the application, you **MUST** set up your environment variables:
+
+1. **Copy the example environment file:**
    ```sh
    cp .env.example .env
    ```
 
-2. Open the `.env` file and add your Supabase credentials:
+2. **Add your Supabase credentials to the `.env` file:**
    - `VITE_SUPABASE_URL`: Your Supabase project URL
    - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
 
-You can find these values in your Supabase project dashboard under Settings > API.
+3. **Find these values in your Supabase project dashboard:**
+   - Go to Settings > API in your Supabase dashboard
+   - Copy the Project URL and anon/public key
+
+4. **Restart the development server after creating the `.env` file**
+
+**Without these environment variables, the application will display an error screen with setup instructions.**
 
 ## Role-Based Architecture
 
