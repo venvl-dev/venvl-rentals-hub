@@ -129,9 +129,83 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {}, m
 
           <CardContent className="p-6 space-y-8">
             {/* Price Range */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-gray-900">Price Range</h3>
-              <div className="space-y-3">
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <h3 className="text-lg font-semibold text-gray-900">Price Range</h3>
+                <p className="text-sm text-gray-600">Nightly rate, includes all fees</p>
+              </div>
+              
+              {/* Price Input Fields */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <label htmlFor="price-min" className="block text-xs font-medium text-gray-700 mb-2">
+                    Minimum
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                      $
+                    </span>
+                    <Input
+                      id="price-min"
+                      type="number"
+                      className="pl-7 h-12 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      value={priceRange[0]}
+                      min={minPrice}
+                      max={priceRange[1]}
+                      onChange={(e) =>
+                        setPriceRange([Number(e.target.value), priceRange[1]])
+                      }
+                    />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="price-max" className="block text-xs font-medium text-gray-700 mb-2">
+                    Maximum
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
+                      $
+                    </span>
+                    <Input
+                      id="price-max"
+                      type="number"
+                      className="pl-7 h-12 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                      value={priceRange[1]}
+                      min={priceRange[0]}
+                      max={maxPrice}
+                      onChange={(e) =>
+                        setPriceRange([priceRange[0], Number(e.target.value)])
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Price Distribution Histogram */}
+              <div className="relative h-16 bg-gray-50 rounded-lg p-2 overflow-hidden">
+                <div className="flex items-end justify-between h-full">
+                  {Array.from({ length: 40 }, (_, i) => {
+                    const height = Math.random() * 80 + 20; // Random heights for demo
+                    const position = (i / 39) * 100;
+                    const isInRange = 
+                      position >= ((priceRange[0] - minPrice) / (maxPrice - minPrice)) * 100 &&
+                      position <= ((priceRange[1] - minPrice) / (maxPrice - minPrice)) * 100;
+                    
+                    return (
+                      <div
+                        key={i}
+                        className={`w-1 rounded-t transition-colors duration-200 ${
+                          isInRange ? 'bg-primary' : 'bg-gray-300'
+                        }`}
+                        style={{ height: `${height}%` }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Range Slider */}
+              <div className="relative">
                 <Slider
                   value={priceRange}
                   onValueChange={(value) => setPriceRange(value as [number, number])}
@@ -140,33 +214,9 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {}, m
                   step={50}
                   className="w-full"
                 />
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      className="w-full h-9"
-                      value={priceRange[0]}
-                      min={minPrice}
-                      max={priceRange[1]}
-                      onChange={(e) =>
-                        setPriceRange([Number(e.target.value), priceRange[1]])
-                      }
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Min</p>
-                  </div>
-                  <div className="flex-1">
-                    <Input
-                      type="number"
-                      className="w-full h-9"
-                      value={priceRange[1]}
-                      min={priceRange[0]}
-                      max={maxPrice}
-                      onChange={(e) =>
-                        setPriceRange([priceRange[0], Number(e.target.value)])
-                      }
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Max</p>
-                  </div>
+                <div className="flex justify-between mt-2 text-xs text-gray-500">
+                  <span>${minPrice}</span>
+                  <span>${maxPrice}+</span>
                 </div>
               </div>
             </div>
