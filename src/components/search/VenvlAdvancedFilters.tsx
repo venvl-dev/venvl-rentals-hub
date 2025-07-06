@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
 import { X, SlidersHorizontal, Home } from 'lucide-react';
 import { AMENITIES_LIST } from '@/lib/amenitiesUtils';
 
@@ -19,11 +20,13 @@ interface FilterProps {
   onFiltersChange: (filters: AdvancedFilters) => void;
   onClose: () => void;
   initialFilters?: Partial<AdvancedFilters>;
+  minPrice?: number;
+  maxPrice?: number;
 }
 
-const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }: FilterProps) => {
+const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {}, minPrice = 0, maxPrice = 10000 }: FilterProps) => {
   const [priceRange, setPriceRange] = useState<[number, number]>(
-    initialFilters.priceRange || [0, 10000]
+    initialFilters.priceRange || [minPrice, maxPrice]
   );
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>(
     initialFilters.propertyTypes || []
@@ -128,18 +131,42 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
             {/* Price Range */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-900">Price Range</h3>
-              <div className="px-3">
+              <div className="space-y-3">
                 <Slider
                   value={priceRange}
                   onValueChange={(value) => setPriceRange(value as [number, number])}
-                  max={10000}
-                  min={0}
-                  step={100}
+                  max={maxPrice}
+                  min={minPrice}
+                  step={50}
                   className="w-full"
                 />
-                <div className="flex justify-between text-sm text-gray-600 mt-2">
-                  <span>EGP {priceRange[0]}</span>
-                  <span>EGP {priceRange[1]}+</span>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      className="w-full h-9"
+                      value={priceRange[0]}
+                      min={minPrice}
+                      max={priceRange[1]}
+                      onChange={(e) =>
+                        setPriceRange([Number(e.target.value), priceRange[1]])
+                      }
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Min</p>
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      type="number"
+                      className="w-full h-9"
+                      value={priceRange[1]}
+                      min={priceRange[0]}
+                      max={maxPrice}
+                      onChange={(e) =>
+                        setPriceRange([priceRange[0], Number(e.target.value)])
+                      }
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Max</p>
+                  </div>
                 </div>
               </div>
             </div>
