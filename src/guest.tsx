@@ -3,6 +3,7 @@ import './index.css'
 import { Layout } from './common/components/Layout'
 import { Routes, Route } from "react-router-dom";
 import { Suspense, lazy } from "react";
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Guest-specific pages
 import Index from "./pages/Index";
@@ -41,4 +42,8 @@ function GuestApp() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<GuestApp />);
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <GuestApp />
+  </ErrorBoundary>
+);

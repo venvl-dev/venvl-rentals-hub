@@ -11,11 +11,9 @@ const createStubClient = () => {
     ? 'Missing VITE_SUPABASE_URL environment variable'
     : 'Missing VITE_SUPABASE_ANON_KEY environment variable';
     
-  const error = new Error(`${errorMessage}. Please copy .env.example to .env and set your Supabase credentials.`);
-  
   return new Proxy({}, {
     get() {
-      throw error;
+      throw new Error(`${errorMessage}. Please copy .env.example to .env and set your Supabase credentials.`);
     }
   }) as any;
 };

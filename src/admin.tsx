@@ -4,6 +4,7 @@ import { Layout } from './common/components/Layout'
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { Suspense, lazy } from "react";
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Shared pages
 import Auth from "./pages/Auth";
@@ -93,4 +94,8 @@ function AdminApp() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<AdminApp />);
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <AdminApp />
+  </ErrorBoundary>
+);
