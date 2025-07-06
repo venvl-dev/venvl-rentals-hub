@@ -172,4 +172,13 @@ export const getAmenityWithLegacyInterface = (id: string) => {
     iconComponent: amenity.icon,
     category: amenity.category
   };
-}; 
+};
+
+// Legacy exports for backward compatibility
+export const AMENITIES = AMENITIES_LIST;
+
+// Legacy normalize function for backward compatibility
+export const normalizeAmenities = (amenities: string[] | undefined): string[] => {
+  if (!amenities) return [];
+  return cleanAmenityIds(amenities);
+};

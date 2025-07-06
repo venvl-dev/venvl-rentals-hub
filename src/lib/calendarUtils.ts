@@ -82,8 +82,8 @@ export async function fetchPropertyBookings(propertyId: string): Promise<Booking
       guest_id: booking.guest_id,
       booking_type: booking.booking_type as 'daily' | 'monthly',
       total_price: booking.total_price,
-      guest_name: booking.profiles ? 
-        `${booking.profiles.first_name} ${booking.profiles.last_name}` : 
+      guest_name: (booking as any).profiles ? 
+        `${(booking as any).profiles.first_name} ${(booking as any).profiles.last_name}` : 
         'Guest'
     })) || [];
 
@@ -117,7 +117,7 @@ export async function fetchBlockedDates(propertyId: string): Promise<BlockedDate
       property_id: item.property_id,
       date: item.blocked_date,
       reason: item.reason || 'Unavailable',
-      created_by: item.created_by,
+      created_by: (item as any).created_by || null,
       created_at: item.created_at
     })) || [];
 

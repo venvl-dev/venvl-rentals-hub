@@ -35,7 +35,7 @@ interface Property {
 interface Amenity {
   id: string;
   name: string;
-  icon: string;
+  icon: any;
   category: string;
 }
 
@@ -81,14 +81,12 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
 
   const fetchAmenities = () => {
     // Use the structured amenities from amenitiesUtils.ts
-    const structuredAmenities = AMENITIES.flatMap(category => 
-      category.items.map(item => ({
-        id: item.id,
-        name: item.label,
-        icon: item.icon,
-        category: category.category
-      }))
-    );
+    const structuredAmenities = AMENITIES.map(amenity => ({
+      id: amenity.id,
+      name: amenity.name,
+      icon: amenity.icon,
+      category: amenity.category
+    }));
     setAmenities(structuredAmenities);
   };
 

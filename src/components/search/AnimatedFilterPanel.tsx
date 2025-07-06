@@ -31,9 +31,7 @@ const AnimatedFilterPanel = ({ filters, onFiltersChange, onClose }: AnimatedFilt
     'apartment', 'house', 'villa', 'studio', 'cabin', 'loft'
   ];
 
-  const amenitiesList = AMENITIES.flatMap((category) =>
-    category.items.map((item) => item.id)
-  );
+  const amenitiesList = AMENITIES.map((amenity) => amenity.id);
 
   const toggleAmenity = (amenity: string) => {
     const currentAmenities = filters.amenities || [];

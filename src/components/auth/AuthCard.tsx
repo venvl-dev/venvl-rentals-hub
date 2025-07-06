@@ -30,6 +30,7 @@ interface FormErrors {
   password?: string;
   firstName?: string;
   lastName?: string;
+  role?: string;
   general?: string;
 }
 

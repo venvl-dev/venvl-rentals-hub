@@ -13,7 +13,7 @@ interface SearchFilters {
   checkIn?: Date;
   checkOut?: Date;
   guests: number;
-  bookingType: string;
+  bookingType: 'daily' | 'monthly' | 'flexible';
 }
 
 interface SearchPillProps {
@@ -133,7 +133,7 @@ const SearchPill = ({ onSearch, initialFilters }: SearchPillProps) => {
           checkOut={filters.checkOut}
           bookingType={filters.bookingType}
           onDateChange={(dates) => updateFilters(dates)}
-          onBookingTypeChange={(bookingType) => updateFilters({ bookingType })}
+          onBookingTypeChange={(bookingType) => updateFilters({ bookingType: bookingType as 'daily' | 'monthly' | 'flexible' })}
           onClose={() => setActiveSection(null)}
         />
       )}

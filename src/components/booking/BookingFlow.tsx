@@ -126,7 +126,6 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
                   images: property.images,
                   city: property.city,
                   state: property.state,
-                  address: property.address,
                   price_per_night: property.price_per_night,
                   monthly_price: property.monthly_price,
                 },
@@ -155,6 +154,7 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
             <BookingConfirmation
               booking={{
                 ...confirmedBooking,
+                booking_reference: (confirmedBooking as any).booking_reference || 'PENDING',
                 property: {
                   id: property.id,
                   title: property.title,

@@ -115,7 +115,7 @@ const PropertyFilters = ({ filters, onFiltersChange, availableFilters }: Propert
                     <div className="space-y-4">
                       <Slider
                         value={filters.priceRange}
-                        onValueChange={(value) => updateFilter('priceRange', value)}
+                        onValueChange={(value) => updateFilter('priceRange', value as [number, number])}
                         max={availableFilters.priceRange.max}
                         min={availableFilters.priceRange.min}
                         step={10}
@@ -292,7 +292,7 @@ const PropertyFilters = ({ filters, onFiltersChange, availableFilters }: Propert
                       <Checkbox
                         id="instant-book"
                         checked={filters.instantBook}
-                        onCheckedChange={(checked) => updateFilter('instantBook', checked)}
+                        onCheckedChange={(checked) => updateFilter('instantBook', checked as boolean)}
                         className="border-2"
                       />
                       <label
