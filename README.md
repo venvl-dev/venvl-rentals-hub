@@ -4,6 +4,21 @@
 
 **URL**: https://lovable.dev/projects/33969250-c7b4-45da-9e5a-af9f6021ec27
 
+## Environment Setup
+
+Before running the application, you need to set up your environment variables:
+
+1. Copy the example environment file:
+   ```sh
+   cp .env.example .env
+   ```
+
+2. Open the `.env` file and add your Supabase credentials:
+   - `VITE_SUPABASE_URL`: Your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+
+You can find these values in your Supabase project dashboard under Settings > API.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.

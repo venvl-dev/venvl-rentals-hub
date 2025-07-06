@@ -5,20 +5,29 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+import { Suspense, lazy } from "react";
+
+// Public pages (loaded immediately)
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import SuperAdminLogin from "./pages/SuperAdminLogin";
-import HostSignup from "./pages/HostSignup";
-import GuestSignup from "./pages/GuestSignup";
 import PropertyListing from "./pages/PropertyListing";
-import HostDashboard from "./pages/HostDashboard";
-import GuestBookings from "./pages/GuestBookings";
-import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
-import SystemSetup from "./pages/SystemSetup";
-import CreateTestUsers from "./pages/CreateTestUsers";
-import DataSeeding from "./pages/DataSeeding";
 import Calendar from "./pages/Calendar";
+
+// Lazy-loaded guest pages
+const GuestSignup = lazy(() => import("./pages/guest/GuestSignup"));
+const GuestBookings = lazy(() => import("./pages/guest/GuestBookings"));
+
+// Lazy-loaded host pages
+const HostSignup = lazy(() => import("./pages/host/HostSignup"));
+const HostDashboard = lazy(() => import("./pages/host/HostDashboard"));
+
+// Lazy-loaded admin pages
+const SuperAdminLogin = lazy(() => import("./pages/admin/SuperAdminLogin"));
+const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
+const SystemSetup = lazy(() => import("./pages/admin/SystemSetup"));
+const CreateTestUsers = lazy(() => import("./pages/admin/CreateTestUsers"));
+const DataSeeding = lazy(() => import("./pages/admin/DataSeeding"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -29,6 +38,16 @@ const queryClient = new QueryClient({
   },
 });
 
+// Loading fallback component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+      <div className="text-gray-600">Loading...</div>
+    </div>
+  </div>
+);
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -36,7 +55,8 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <BrowserRouter>
-            <Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
@@ -105,8 +125,9 @@ function App() {
                 } 
               />
               
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </TooltipProvider>
       </LanguageProvider>

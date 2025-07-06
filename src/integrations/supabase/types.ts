@@ -313,6 +313,39 @@ export type Database = {
         }
         Relationships: []
       }
+      property_amenities: {
+        Row: {
+          amenity_id: string
+          id: string
+          property_id: string
+        }
+        Insert: {
+          amenity_id: string
+          id?: string
+          property_id: string
+        }
+        Update: {
+          amenity_id?: string
+          id?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_amenities_amenity_id_fkey"
+            columns: ["amenity_id"]
+            isOneToOne: false
+            referencedRelation: "amenities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_amenities_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_availability: {
         Row: {
           blocked_date: string
