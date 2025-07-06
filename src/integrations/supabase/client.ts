@@ -2,16 +2,22 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://xhzgistgvcbmcfczcrib.supabase.co';
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhoemdpc3RndmNibWNmY3pjcmliIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA3OTcxNDgsImV4cCI6MjA2NjM3MzE0OH0.xUizmSWO6Ri1b9I6IdMr1-mbu6v2YaSfKY2gcjV0Ow0';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Validate required configuration
+// Validate required environment variables
 if (!SUPABASE_URL) {
-  throw new Error('Supabase URL is required');
+  throw new Error(
+    'Missing VITE_SUPABASE_URL environment variable. ' +
+    'Please copy .env.example to .env and set your Supabase project URL.'
+  );
 }
 
 if (!SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error('Supabase anonymous key is required');
+  throw new Error(
+    'Missing VITE_SUPABASE_ANON_KEY environment variable. ' +
+    'Please copy .env.example to .env and set your Supabase anonymous key.'
+  );
 }
 
 // Import the supabase client like this:
