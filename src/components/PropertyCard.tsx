@@ -43,7 +43,6 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const imageRef = useRef<HTMLImageElement>(null);
   const cleanedAmenities = useMemo(
     () => cleanAmenityIds(property.amenities || []),
     [property.amenities]
