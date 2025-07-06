@@ -11,8 +11,8 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
-import { 
+import { useAuth } from '@/contexts/AuthContext';
+import {
   Menu, 
   Search, 
   User as UserIcon, 
@@ -24,97 +24,48 @@ import {
 import { toast } from 'sonner';
 
 const Header = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const { user } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Listen for auth changes first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Fetch user role from profiles
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('role')
-              .eq('id', session.user.id)
-              .single();
-            
-            setUserRole(profile?.role || null);
-          } catch (error) {
-            console.error('Error fetching user role:', error);
-            setUserRole(null);
-          }
-        } else {
-          setUserRole(null);
-        }
-      }
-    );
-
-    // Get initial session
-    const getSession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
+    const fetchRole = async () => {
+      if (user) {
+        try {
           const { data: profile } = await supabase
             .from('profiles')
             .select('role')
-            .eq('id', session.user.id)
+            .eq('id', user.id)
             .single();
-          
           setUserRole(profile?.role || null);
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+          setUserRole(null);
         }
-      } catch (error) {
-        console.error('Error getting session:', error);
+      } else {
+        setUserRole(null);
       }
     };
 
-    getSession();
-
-    return () => subscription.unsubscribe();
-  }, []);
+    fetchRole();
+  }, [user]);
 
   const handleSignOut = async () => {
     try {
-      console.log('Starting sign out process...');
-      
-      // Clear local state immediately
-      setUser(null);
-      setSession(null);
-      setUserRole(null);
-      
-      // Clear all local storage related to auth
-      localStorage.removeItem('supabase.auth.token');
-      localStorage.clear();
-      
-      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
-      
+
       if (error) {
         console.error('Sign out error:', error);
         toast.error('Error signing out: ' + error.message);
       } else {
-        console.log('Successfully signed out');
         toast.success('Signed out successfully');
-        
-        // Force redirect to home page
-        window.location.href = '/';
+        navigate('/');
       }
     } catch (error) {
       console.error('Unexpected sign out error:', error);
       toast.error('Error signing out');
-      // Force redirect even on error
-      window.location.href = '/';
+      navigate('/');
     }
   };
 

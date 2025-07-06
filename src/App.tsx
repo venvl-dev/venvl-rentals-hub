@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
+import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { Suspense, lazy } from "react";
 
@@ -54,8 +55,9 @@ function App() {
       <LanguageProvider>
         <TooltipProvider>
           <Toaster />
-          <BrowserRouter>
-            <Suspense fallback={<PageLoader />}>
+          <AuthProvider>
+            <BrowserRouter>
+              <Suspense fallback={<PageLoader />}>
               <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
@@ -129,6 +131,7 @@ function App() {
               </Routes>
             </Suspense>
           </BrowserRouter>
+        </AuthProvider>
         </TooltipProvider>
       </LanguageProvider>
     </QueryClientProvider>

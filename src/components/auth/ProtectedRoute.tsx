@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 
@@ -18,55 +18,40 @@ const ProtectedRoute = ({
   requireAuth = true,
   redirectTo = '/auth'
 }: ProtectedRouteProps) => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, loading: authLoading } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    if (authLoading) return;
     checkAuth();
-  }, []);
+  }, [authLoading, user]);
 
   const checkAuth = async () => {
+    setLoading(true);
     try {
-      // Get current session
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error('Session error:', sessionError);
-        setLoading(false);
-        return;
-      }
-
-      if (!session?.user && requireAuth) {
-        console.log('No authenticated user, redirecting to auth');
+      if (!user && requireAuth) {
         toast.error('Please sign in to access this page');
         navigate(redirectTo);
         return;
       }
 
-      if (!session?.user && !requireAuth) {
-        // Public route, no auth required
+      if (!user && !requireAuth) {
         setAuthorized(true);
-        setLoading(false);
         return;
       }
 
-      setUser(session.user);
-
-      // If no role restrictions, allow access
       if (allowedRoles.length === 0) {
         setAuthorized(true);
-        setLoading(false);
         return;
       }
 
-      // Get user profile to check role
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('role')
-        .eq('id', session.user.id)
+        .eq('id', user!.id)
         .single();
 
       if (profileError) {
@@ -109,7 +94,7 @@ const ProtectedRoute = ({
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div>
         <Header />
