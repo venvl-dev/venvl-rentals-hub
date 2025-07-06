@@ -178,6 +178,12 @@ const Index = () => {
   }, []);
 
   const filterProperties = useCallback(() => {
+    // Skip filtering if properties haven't been loaded yet
+    if (!properties || properties.length === 0) {
+      setFilteredProperties([]);
+      return;
+    }
+    
     let filtered = [...properties];
     console.log('Starting with properties:', filtered.length);
 

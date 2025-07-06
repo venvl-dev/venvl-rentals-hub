@@ -104,13 +104,21 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
       const nextIndex = (currentImageIndex + 1) % images.length;
       const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
       
-      // Preload next image
-      const nextImg = new Image();
-      nextImg.src = images[nextIndex];
+      // Preload next image with error handling
+      try {
+        const nextImg = new Image();
+        nextImg.src = images[nextIndex];
+      } catch (error) {
+        console.warn('Failed to preload next image:', error);
+      }
       
-      // Preload previous image
-      const prevImg = new Image();
-      prevImg.src = images[prevIndex];
+      // Preload previous image with error handling
+      try {
+        const prevImg = new Image();
+        prevImg.src = images[prevIndex];
+      } catch (error) {
+        console.warn('Failed to preload previous image:', error);
+      }
     }
   }, [currentImageIndex, images]);
 
