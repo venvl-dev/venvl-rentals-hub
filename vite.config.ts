@@ -19,4 +19,14 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        guest: path.resolve(__dirname, 'guest.html'),
+        host: path.resolve(__dirname, 'host.html'),
+        admin: path.resolve(__dirname, 'admin.html'),
+      },
+    },
+  },
 }));

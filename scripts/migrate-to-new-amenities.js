@@ -3,9 +3,15 @@ import { createClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 dotenv.config();
 
+if (!process.env.VITE_SUPABASE_URL || !process.env.VITE_SUPABASE_ANON_KEY) {
+  console.error('❌ Missing required environment variables: VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
+  console.error('Please copy .env.example to .env and set your Supabase credentials.');
+  process.exit(1);
+}
+
 const supabase = createClient(
-  process.env.VITE_SUPABASE_URL || 'https://afosjxgxfnvvizwqgpjq.supabase.co',
-  process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFmb3NqeGd4Zm52dml6d3FncGpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzUwOTM2MjQsImV4cCI6MjA1MDY2OTYyNH0.aCvZxKmCGJNYKb_VjhWOQ3FNz8BdpJcLGZbqKbFdFCg'
+  process.env.VITE_SUPABASE_URL,
+  process.env.VITE_SUPABASE_ANON_KEY
 );
 
 // Old to new amenity mapping

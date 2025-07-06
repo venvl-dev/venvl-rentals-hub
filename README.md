@@ -19,6 +19,38 @@ Before running the application, you need to set up your environment variables:
 
 You can find these values in your Supabase project dashboard under Settings > API.
 
+## Role-Based Architecture
+
+This project is structured with role-based code splitting for optimal performance:
+
+### Directory Structure
+- `src/pages/guest/*` - Guest-specific pages (bookings, signup)
+- `src/pages/host/*` - Host-specific pages (dashboard, property management)
+- `src/pages/admin/*` - Admin-specific pages (user management, system setup)
+- `src/common/components/*` - Shared components across all roles
+
+### Multiple Entry Points
+The application supports separate builds for each user role:
+
+- **Guest Portal**: `guest.html` - Includes public pages and guest features
+- **Host Portal**: `host.html` - Host dashboard and property management
+- **Admin Portal**: `admin.html` - Administrative features and system management
+- **Main App**: `index.html` - Combined application (default)
+
+### Build Commands
+```sh
+# Development (loads all features)
+npm run dev
+
+# Build all entry points
+npm run build
+
+# Preview built application
+npm run preview
+```
+
+Each entry point loads only the code needed for that specific user role, improving performance and reducing bundle size.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.
