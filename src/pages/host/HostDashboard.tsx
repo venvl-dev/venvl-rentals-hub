@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,14 +27,17 @@ import {
 
 const HostDashboard = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [isFixingAmenities, setIsFixingAmenities] = useState(false);
 
   useEffect(() => {
-    fetchProperties();
-  }, []);
+    if (!authLoading && user) {
+      fetchProperties();
+    }
+  }, [authLoading, user]);
 
   const fetchProperties = useCallback(async () => {
     try {
