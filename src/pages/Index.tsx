@@ -78,6 +78,7 @@ const Index = () => {
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [priceBounds, setPriceBounds] = useState({ min: 0, max: 10000 });
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     location: '',
     guests: 1,
@@ -166,8 +167,20 @@ const Index = () => {
         data.forEach(p => {
           p.amenities = cleanAmenityIds(p.amenities || []);
         });
-        
+
         setProperties(data);
+
+        // Determine min and max prices across all properties
+        const priceValues = data
+          .map(p => p.monthly_price ?? p.daily_price ?? p.price_per_night)
+          .filter((v): v is number => typeof v === 'number');
+
+        if (priceValues.length > 0) {
+          const min = Math.min(...priceValues);
+          const max = Math.max(...priceValues);
+          setPriceBounds({ min, max });
+          setAdvancedFilters(prev => ({ ...prev, priceRange: [min, max] }));
+        }
       }
     } catch (error) {
       console.error('Error:', error);
@@ -452,6 +465,8 @@ const Index = () => {
         {showAdvancedFilters && (
           <VenvlAdvancedFilters
             initialFilters={advancedFilters}
+            minPrice={priceBounds.min}
+            maxPrice={priceBounds.max}
             onFiltersChange={handleAdvancedFilters}
             onClose={() => setShowAdvancedFilters(false)}
           />
