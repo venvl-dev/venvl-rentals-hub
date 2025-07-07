@@ -64,32 +64,24 @@ interface SearchFilters {
   bathrooms?: number;
 }
 
-interface AdvancedFilters {
-  priceRange: [number, number];
-  propertyTypes: string[];
-  amenities: string[];
-  bedrooms: number;
-  bathrooms: number;
-}
-
 const Index = () => {
   const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
   const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [priceBounds, setPriceBounds] = useState({ min: 0, max: 10000 });
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
     location: '',
     guests: 1,
-    bookingType: 'flexible' as BookingType,
+    bookingType: 'daily' as BookingType,
   });
-  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
-    priceRange: [0, 10000],
-    propertyTypes: [],
-    amenities: [],
-    bedrooms: 0,
-    bathrooms: 0,
+  const [advancedFilters, setAdvancedFilters] = useState<any>({
+    priceRange: null,
+    propertyTypes: null,
+    amenities: null,
+    bedrooms: null,
+    bathrooms: null,
+    bookingType: null,
   });
 
   // Use authentication-aware image preloading
@@ -170,17 +162,7 @@ const Index = () => {
 
         setProperties(data);
 
-        // Determine min and max prices across all properties
-        const priceValues = data
-          .map(p => p.monthly_price ?? p.daily_price ?? p.price_per_night)
-          .filter((v): v is number => typeof v === 'number');
-
-        if (priceValues.length > 0) {
-          const min = Math.min(...priceValues);
-          const max = Math.max(...priceValues);
-          setPriceBounds({ min, max });
-          setAdvancedFilters(prev => ({ ...prev, priceRange: [min, max] }));
-        }
+        // Properties loaded successfully - filtering will be handled by components
       }
     } catch (error) {
       console.error('Error:', error);
@@ -216,42 +198,68 @@ const Index = () => {
       console.log(`After guest filter: ${filtered.length} properties`);
     }
 
-    // Booking type filter - Use unified rental type logic
-    if (searchFilters.bookingType !== 'flexible') {
+    // Booking type filter - Use the advanced filter if set, otherwise use search filter
+    const activeBookingType = advancedFilters.bookingType || searchFilters.bookingType;
+    if (activeBookingType && activeBookingType !== 'daily') {
       filtered = filtered.filter(property => {
         return matchesSearchCriteria(
           property as PropertyRentalData, 
-          searchFilters.bookingType,
+          activeBookingType,
           advancedFilters.priceRange ? { 
             min: advancedFilters.priceRange[0], 
             max: advancedFilters.priceRange[1] 
           } : undefined
         );
       });
-      console.log(`After booking type filter (${searchFilters.bookingType}): ${filtered.length} properties`);
+      console.log(`After booking type filter (${activeBookingType}): ${filtered.length} properties`);
     }
 
-    // Advanced filters
-    if (advancedFilters.propertyTypes?.length > 0) {
+    // Advanced filters - Price Range
+    if (advancedFilters.priceRange && Array.isArray(advancedFilters.priceRange)) {
+      filtered = filtered.filter(property => {
+        // Use appropriate price based on booking type
+        let price = property.price_per_night; // default
+        
+        if (activeBookingType === 'daily') {
+          price = property.daily_price || property.price_per_night;
+        } else if (activeBookingType === 'monthly') {
+          price = property.monthly_price ? Math.round(property.monthly_price / 30) : property.price_per_night;
+        }
+        
+        if (!price) return false;
+        return price >= advancedFilters.priceRange[0] && price <= advancedFilters.priceRange[1];
+      });
+      console.log(`After price range filter: ${filtered.length} properties`);
+    }
+
+    // Property types filter
+    if (advancedFilters.propertyTypes && advancedFilters.propertyTypes.length > 0) {
       filtered = filtered.filter(property => 
         advancedFilters.propertyTypes.includes(property.property_type)
       );
+      console.log(`After property types filter: ${filtered.length} properties`);
     }
 
-    if (advancedFilters.amenities?.length > 0) {
+    // Amenities filter
+    if (advancedFilters.amenities && advancedFilters.amenities.length > 0) {
       filtered = filtered.filter(property => 
         advancedFilters.amenities.every((amenity: string) => 
           property.amenities?.includes(amenity)
         )
       );
+      console.log(`After amenities filter: ${filtered.length} properties`);
     }
 
-    if (advancedFilters.bedrooms) {
+    // Bedrooms filter
+    if (advancedFilters.bedrooms && advancedFilters.bedrooms > 0) {
       filtered = filtered.filter(property => property.bedrooms >= advancedFilters.bedrooms);
+      console.log(`After bedrooms filter: ${filtered.length} properties`);
     }
 
-    if (advancedFilters.bathrooms) {
+    // Bathrooms filter
+    if (advancedFilters.bathrooms && advancedFilters.bathrooms > 0) {
       filtered = filtered.filter(property => property.bathrooms >= advancedFilters.bathrooms);
+      console.log(`After bathrooms filter: ${filtered.length} properties`);
     }
 
     console.log(`Final filtered properties: ${filtered.length}`);
@@ -261,43 +269,10 @@ const Index = () => {
   const handleSearch = useCallback((filters: SearchFilters) => {
     console.log('Search triggered with filters:', filters);
     setSearchFilters(filters);
-    saveSearchPreferences(filters);
   }, []);
 
-  const handleAdvancedFilters = useCallback((filters: AdvancedFilters) => {
-    setAdvancedFilters(filters);
-    setShowAdvancedFilters(false);
-  }, []);
-
-  const saveSearchPreferences = async (filters: SearchFilters) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        const searchDataForStorage = {
-          location: filters.location,
-          checkIn: filters.checkIn?.toISOString(),
-          checkOut: filters.checkOut?.toISOString(),
-          guests: filters.guests,
-          bookingType: filters.bookingType,
-          flexibleOption: filters.flexibleOption,
-          duration: filters.duration,
-          propertyType: filters.propertyType,
-          priceRange: filters.priceRange,
-          amenities: filters.amenities,
-        };
-
-        await supabase
-          .from('search_preferences')
-          .insert({
-            user_id: user.id,
-            destination: filters.location,
-            search_data: searchDataForStorage,
-          });
-      }
-    } catch (error) {
-      console.error('Error saving search preferences:', error);
-    }
+  const handleAdvancedFilters = (newFilters: any) => {
+    setAdvancedFilters(newFilters);
   };
 
   // Enhanced loading state
@@ -440,14 +415,7 @@ const Index = () => {
                         setSearchFilters({
                           location: '',
                           guests: 1,
-                          bookingType: 'flexible' as BookingType,
-                        });
-                        setAdvancedFilters({
-                          priceRange: [0, 10000],
-                          propertyTypes: [],
-                          amenities: [],
-                          bedrooms: 0,
-                          bathrooms: 0,
+                          bookingType: 'daily' as BookingType,
                         });
                       }}
                       variant="outline"
@@ -464,11 +432,9 @@ const Index = () => {
         {/* Advanced Filters Modal */}
         {showAdvancedFilters && (
           <VenvlAdvancedFilters
-            initialFilters={advancedFilters}
-            minPrice={priceBounds.min}
-            maxPrice={priceBounds.max}
             onFiltersChange={handleAdvancedFilters}
             onClose={() => setShowAdvancedFilters(false)}
+            initialFilters={advancedFilters}
           />
         )}
       </main>

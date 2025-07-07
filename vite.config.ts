@@ -21,12 +21,30 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html'),
-        guest: path.resolve(__dirname, 'guest.html'),
-        host: path.resolve(__dirname, 'host.html'),
-        admin: path.resolve(__dirname, 'admin.html'),
-      },
+      output: {
+        manualChunks: {
+          // Core vendors (always needed)
+          'vendor-core': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          
+          // UI vendors (commonly used)
+          'vendor-ui': [
+            '@radix-ui/react-dialog', 
+            '@radix-ui/react-dropdown-menu', 
+            '@radix-ui/react-popover',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-select'
+          ],
+          
+          // Feature-specific chunks (lazy loaded)
+          'vendor-forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-date': ['date-fns', 'react-day-picker'],
+        }
+      }
     },
+    chunkSizeWarningLimit: 1000,
+    sourcemap: mode === 'development',
   },
 }));

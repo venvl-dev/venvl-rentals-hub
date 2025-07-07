@@ -140,4 +140,12 @@
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
+
+  .border-3 {
+    border-width: 3px;
+  }
+  
+  .hover\:scale-102:hover {
+    transform: scale(1.02);
+  }
 }

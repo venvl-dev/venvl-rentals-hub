@@ -1,5 +1,4 @@
-
-import { Toaster } from "@/components/ui/sonner";
+﻿import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -8,22 +7,20 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { Suspense, lazy } from "react";
 
-// Public pages (loaded immediately)
+// Public pages (loaded immediately for fast initial load)
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import PropertyListing from "./pages/PropertyListing";
 import NotFound from "./pages/NotFound";
-import Calendar from "./pages/Calendar";
 
-// Lazy-loaded guest pages
+// Lazy-loaded components (code splitting)
 const GuestSignup = lazy(() => import("./pages/guest/GuestSignup"));
 const GuestBookings = lazy(() => import("./pages/guest/GuestBookings"));
 
-// Lazy-loaded host pages
 const HostSignup = lazy(() => import("./pages/host/HostSignup"));
 const HostDashboard = lazy(() => import("./pages/host/HostDashboard"));
+const Calendar = lazy(() => import("./pages/Calendar"));
 
-// Lazy-loaded admin pages
 const SuperAdminLogin = lazy(() => import("./pages/admin/SuperAdminLogin"));
 const AdminPanel = lazy(() => import("./pages/admin/AdminPanel"));
 const SystemSetup = lazy(() => import("./pages/admin/SystemSetup"));
@@ -33,13 +30,12 @@ const DataSeeding = lazy(() => import("./pages/admin/DataSeeding"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
       retry: 1,
     },
   },
 });
 
-// Loading fallback component
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="text-center">
@@ -58,80 +54,107 @@ function App() {
           <AuthProvider>
             <BrowserRouter>
               <Suspense fallback={<PageLoader />}>
-              <Routes>
-              {/* Public routes */}
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/super-admin/login" element={<SuperAdminLogin />} />
-              <Route path="/host/signup" element={<HostSignup />} />
-              <Route path="/guest/signup" element={<GuestSignup />} />
-              <Route path="/property/:id" element={<PropertyListing />} />
-              
-              {/* Protected routes */}
-              <Route 
-                path="/host/dashboard" 
-                element={
-                  <ProtectedRoute allowedRoles={['host']}>
-                    <HostDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/guest/bookings" 
-                element={
-                  <ProtectedRoute allowedRoles={['guest']}>
-                    <GuestBookings />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/calendar" 
-                element={
-                  <ProtectedRoute allowedRoles={['host', 'super_admin']}>
-                    <Calendar />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/admin/panel" 
-                element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <AdminPanel />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Development/Testing routes - require authentication but no specific role */}
-              <Route 
-                path="/system-setup" 
-                element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <SystemSetup />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/create-test-users" 
-                element={
-                  <ProtectedRoute allowedRoles={['super_admin']}>
-                    <CreateTestUsers />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/data-seeding" 
-                element={
-                  <ProtectedRoute>
-                    <DataSeeding />
-                  </ProtectedRoute>
-                } 
-              />
-              
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </AuthProvider>
+                <Routes>
+                  {/* === PUBLIC ROUTES === */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/property/:id" element={<PropertyListing />} />
+                  
+                  {/* === GUEST ROUTES (domain.com/guest/*) === */}
+                  <Route path="/guest/signup" element={<GuestSignup />} />
+                  <Route 
+                    path="/guest/bookings" 
+                    element={
+                      <ProtectedRoute allowedRoles={["guest"]}>
+                        <GuestBookings />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* === HOST ROUTES (domain.com/host/*) === */}
+                  <Route path="/host/signup" element={<HostSignup />} />
+                  <Route 
+                    path="/host" 
+                    element={
+                      <ProtectedRoute allowedRoles={["host"]}>
+                        <HostDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/host/dashboard" 
+                    element={
+                      <ProtectedRoute allowedRoles={["host"]}>
+                        <HostDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/host/calendar" 
+                    element={
+                      <ProtectedRoute allowedRoles={["host", "super_admin"]}>
+                        <Calendar />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* === ADMIN ROUTES (domain.com/admin/*) === */}
+                  <Route path="/admin/login" element={<SuperAdminLogin />} />
+                  <Route 
+                    path="/admin" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <AdminPanel />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/panel" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <AdminPanel />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/system-setup" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <SystemSetup />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/users" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <CreateTestUsers />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/data-seeding" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <DataSeeding />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* === LEGACY ROUTES (for backwards compatibility) === */}
+                  <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+                  <Route path="/calendar" element={
+                    <ProtectedRoute allowedRoles={["host", "super_admin"]}>
+                      <Calendar />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* === 404 === */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </BrowserRouter>
+          </AuthProvider>
         </TooltipProvider>
       </LanguageProvider>
     </QueryClientProvider>
