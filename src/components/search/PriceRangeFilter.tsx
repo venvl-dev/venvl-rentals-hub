@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { usePriceRange } from '@/hooks/usePriceRange';
 
 interface PriceRangeFilterProps {
@@ -109,7 +109,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
   const getCurrencyLabel = () => {
     switch (bookingType) {
       case 'daily': return 'per night';
-      case 'monthly': return 'per month (daily avg)';
+      case 'monthly': return 'per month';
       default: return 'per night';
     }
   };
@@ -149,7 +149,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
             EGP {priceRange.min.toLocaleString()} - EGP {priceRange.max.toLocaleString()}
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            Based on {bookingType === 'monthly' ? 'monthly prices (daily average)' : 'daily prices'}
+            Based on {bookingType === 'monthly' ? 'monthly prices' : 'daily prices'}
           </div>
         </div>
       </div>

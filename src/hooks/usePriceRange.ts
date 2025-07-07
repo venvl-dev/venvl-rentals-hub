@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PriceRange {
@@ -39,12 +39,12 @@ export const usePriceRange = (bookingType?: 'daily' | 'monthly') => {
             const dailyPrice = property.daily_price || property.price_per_night;
             if (dailyPrice > 0) prices.push(dailyPrice);
           } else if (bookingType === 'monthly') {
-            // For monthly booking, use monthly_price (convert to daily equivalent for comparison)
+            // For monthly booking, use monthly_price directly (show actual monthly prices, not daily average)
             if (property.monthly_price > 0) {
-              prices.push(Math.round(property.monthly_price / 30));
+              prices.push(property.monthly_price);
             }
           } else {
-            // Default: include all available prices
+            // Default: include all available prices (convert monthly to daily for comparison)
             if (property.price_per_night > 0) prices.push(property.price_per_night);
             if (property.daily_price > 0) prices.push(property.daily_price);
             if (property.monthly_price > 0) prices.push(Math.round(property.monthly_price / 30));
