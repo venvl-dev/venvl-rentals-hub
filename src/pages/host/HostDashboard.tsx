@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,7 +16,7 @@ import HostStats from '@/components/host/HostStats';
 import HostCalendar from '@/components/calendar/HostCalendar';
 import SimplePropertyTest from '@/components/host/SimplePropertyTest';
 import { Property } from '@/types/property';
-import { cleanAmenityIds } from '@/lib/amenitiesUtils';
+import useHostProperties from '@/hooks/useHostProperties';
 import {
   getRentalType,
   getDailyPrice,
@@ -28,8 +28,11 @@ import {
 const HostDashboard = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    data: properties = [],
+    isLoading: loading,
+    refetch: refetchProperties,
+  } = useHostProperties(user?.id);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [isFixingAmenities, setIsFixingAmenities] = useState(false);
   const [activeTab, setActiveTab] = useState(() =>
@@ -40,77 +43,10 @@ const HostDashboard = () => {
     localStorage.setItem('hostDashboardTab', activeTab);
   }, [activeTab]);
 
-  useEffect(() => {
-    if (!authLoading && user) {
-      fetchProperties();
-    }
-  }, [authLoading, user?.id]);
-
-  const fetchProperties = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data: user } = await supabase.auth.getUser();
-      
-      if (!user.user) {
-        navigate('/auth');
-        return;
-      }
-
-      // Complete query - fetch ALL Property fields for proper editing
-      const { data, error } = await supabase
-        .from('properties')
-        .select(`
-          id,
-          title,
-          description,
-          address,
-          city,
-          state,
-          country,
-          postal_code,
-          property_type,
-          rental_type,
-          bedrooms,
-          bathrooms,
-          max_guests,
-          price_per_night,
-          daily_price,
-          monthly_price,
-          min_nights,
-          min_months,
-          images,
-          amenities,
-          is_active,
-          approval_status,
-          blocked_dates,
-          booking_types,
-          created_at,
-          updated_at,
-          host_id
-        `)
-        .eq('host_id', user.user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (error) throw error;
-      if (data) {
-        data.forEach(p => {
-          p.amenities = cleanAmenityIds(p.amenities || []);
-        });
-      }
-      setProperties(data || []);
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-      toast.error('Failed to load properties');
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
   const handlePropertySave = useCallback(() => {
     setEditingProperty(null);
-    fetchProperties();
-  }, [fetchProperties]);
+    refetchProperties();
+  }, [refetchProperties]);
 
   const handleEdit = useCallback((property: Property) => {
     setEditingProperty(property);
@@ -127,13 +63,13 @@ const HostDashboard = () => {
 
       if (error) throw error;
       
-      fetchProperties();
+      refetchProperties();
       toast.success('Property deleted successfully');
     } catch (error) {
       console.error('Error deleting property:', error);
       toast.error('Failed to delete property');
     }
-  }, [fetchProperties]);
+  }, [refetchProperties]);
 
   const togglePropertyStatus = useCallback(async (propertyId: string, currentStatus: boolean) => {
     try {
@@ -144,13 +80,13 @@ const HostDashboard = () => {
 
       if (error) throw error;
       
-      fetchProperties();
+      refetchProperties();
       toast.success(`Property ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
     } catch (error) {
       console.error('Error updating property status:', error);
       toast.error('Failed to update property status');
     }
-  }, [fetchProperties]);
+  }, [refetchProperties]);
 
   const fixAmenities = useCallback(async () => {
     setIsFixingAmenities(true);
@@ -222,7 +158,7 @@ const HostDashboard = () => {
       }
 
       // Refresh properties list
-      await fetchProperties();
+      await refetchProperties();
       
       toast.success('Amenities fixed successfully! All properties updated.');
       if (process.env.NODE_ENV !== 'production') {
@@ -234,7 +170,7 @@ const HostDashboard = () => {
     } finally {
       setIsFixingAmenities(false);
     }
-  }, [fetchProperties]);
+  }, [refetchProperties]);
 
   const getStatusColor = useMemo(() => (status: string) => {
     switch (status) {
@@ -275,7 +211,7 @@ const HostDashboard = () => {
     );
   }, []);
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div>
         <Header />
