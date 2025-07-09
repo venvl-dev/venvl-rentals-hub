@@ -38,7 +38,7 @@ const HostDashboard = () => {
     if (!authLoading && user) {
       fetchProperties();
     }
-  }, [authLoading, user]);
+  }, [authLoading, user?.id]);
 
   const fetchProperties = useCallback(async () => {
     try {
