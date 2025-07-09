@@ -32,6 +32,7 @@ const HostDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [isFixingAmenities, setIsFixingAmenities] = useState(false);
+  const [activeTab, setActiveTab] = useState('properties');
 
   useEffect(() => {
     if (!authLoading && user) {
@@ -316,7 +317,7 @@ const HostDashboard = () => {
           </Button>
         </div>
 
-        <Tabs defaultValue="properties" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 rounded-2xl bg-gray-100 p-2">
             <TabsTrigger value="properties" className="flex items-center gap-2 rounded-xl">
               <Home className="h-4 w-4" />
