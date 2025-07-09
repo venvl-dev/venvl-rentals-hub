@@ -32,7 +32,13 @@ const HostDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [isFixingAmenities, setIsFixingAmenities] = useState(false);
-  const [activeTab, setActiveTab] = useState('properties');
+  const [activeTab, setActiveTab] = useState(() =>
+    localStorage.getItem('hostDashboardTab') || 'properties'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('hostDashboardTab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     if (!authLoading && user) {
