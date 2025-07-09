@@ -25,6 +25,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false);
           break;
         case 'SIGNED_OUT':
+          if (user) {
+            localStorage.removeItem(`user_role_${user.id}`);
+          }
           setSession(null);
           setUser(null);
           setLoading(false);
