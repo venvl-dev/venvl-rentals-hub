@@ -27,7 +27,7 @@ const ProtectedRoute = ({
   useEffect(() => {
     if (authLoading) return;
     checkAuth();
-  }, [authLoading, user]);
+  }, [authLoading, user?.id]);
 
   const checkAuth = async () => {
     setLoading(true);
@@ -48,20 +48,25 @@ const ProtectedRoute = ({
         return;
       }
 
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user!.id)
-        .single();
+      const roleKey = `user_role_${user!.id}`;
+      let role = localStorage.getItem(roleKey);
+      if (!role) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user!.id)
+          .single();
 
-      if (profileError) {
-        console.error('Profile error:', profileError);
-        toast.error('Unable to verify user permissions');
-        navigate('/');
-        return;
+        if (profileError) {
+          console.error('Profile error:', profileError);
+          toast.error('Unable to verify user permissions');
+          navigate('/');
+          return;
+        }
+
+        role = profile?.role || 'guest';
+        localStorage.setItem(roleKey, role);
       }
-
-      const role = profile?.role || 'guest';
       setUserRole(role);
 
       // Check if user has required role
