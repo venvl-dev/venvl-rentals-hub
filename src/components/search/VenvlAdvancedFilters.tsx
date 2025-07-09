@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { X, SlidersHorizontal, Home, Calendar, Clock } from 'lucide-react';
+import { X, SlidersHorizontal, Home, Calendar, Clock, Building, Building2, Castle, Warehouse, Tent, TreePine } from 'lucide-react';
 import { AMENITIES_LIST } from '@/lib/amenitiesUtils';
 import PriceRangeFilter from './PriceRangeFilter';
 import { usePriceRange } from '@/hooks/usePriceRange';
@@ -55,12 +55,12 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   ];
 
   const propertyTypes = [
-    { id: 'apartment', label: 'Apartment', icon: Home },
+    { id: 'apartment', label: 'Apartment', icon: Building },
     { id: 'house', label: 'House', icon: Home },
-    { id: 'villa', label: 'Villa', icon: Home },
-    { id: 'studio', label: 'Studio', icon: Home },
-    { id: 'cabin', label: 'Cabin', icon: Home },
-    { id: 'loft', label: 'Loft', icon: Home },
+    { id: 'villa', label: 'Villa', icon: Castle },
+    { id: 'studio', label: 'Studio', icon: Building2 },
+    { id: 'cabin', label: 'Cabin', icon: TreePine },
+    { id: 'loft', label: 'Loft', icon: Warehouse },
   ];
 
   const amenities = AMENITIES_LIST; // Show all amenities

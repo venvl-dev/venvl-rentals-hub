@@ -547,6 +547,13 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_price_range: {
+        Args: { booking_type_param?: string; price_column?: string }
+        Returns: {
+          min_price: number
+          max_price: number
+        }[]
+      }
       initialize_default_setup: {
         Args: Record<PropertyKey, never>
         Returns: string
