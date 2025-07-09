@@ -43,9 +43,8 @@ const HostDashboard = () => {
   const fetchProperties = useCallback(async () => {
     try {
       setLoading(true);
-      const { data: user } = await supabase.auth.getUser();
-      
-      if (!user.user) {
+
+      if (!user) {
         navigate('/auth');
         return;
       }
@@ -82,7 +81,7 @@ const HostDashboard = () => {
           updated_at,
           host_id
         `)
-        .eq('host_id', user.user.id)
+        .eq('host_id', user.id)
         .order('created_at', { ascending: false })
         .limit(20);
 
@@ -99,7 +98,7 @@ const HostDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, user]);
 
   const handlePropertySave = useCallback(() => {
     setEditingProperty(null);
