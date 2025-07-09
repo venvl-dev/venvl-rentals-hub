@@ -5,12 +5,14 @@ interface PriceRangeFilterProps {
   value: [number, number];
   onChange: (value: [number, number]) => void;
   bookingType?: 'daily' | 'monthly';
+  currency?: string;
 }
 
 const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({ 
   value, 
   onChange, 
-  bookingType = 'daily'
+  bookingType = 'daily',
+  currency = 'EGP'
 }) => {
   const { priceRange, loading } = usePriceRange(bookingType);
   const [localMin, setLocalMin] = useState(value[0].toString());
@@ -27,7 +29,6 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
   // Auto-update price range when booking type changes or data loads
   useEffect(() => {
     if (!loading && priceRange.min > 0) {
-      console.log(`Price range updated for ${bookingType}:`, priceRange);
       onChange([priceRange.min, priceRange.max]);
     }
   }, [loading, priceRange.min, priceRange.max, bookingType, onChange]);
@@ -106,6 +107,44 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
     document.addEventListener('mouseup', handleMouseUp);
   }, [priceRange.min, priceRange.max, value, onChange]);
 
+  const handleTouchStart = useCallback((type: 'min' | 'max') => (e: React.TouchEvent) => {
+    e.preventDefault();
+    setIsDragging(type);
+    
+    const startX = e.touches[0].clientX;
+    const startValue = type === 'min' ? value[0] : value[1];
+    const sliderWidth = sliderRef.current?.getBoundingClientRect().width || 300;
+    
+    const handleTouchMove = (e: TouchEvent) => {
+      const deltaX = e.touches[0].clientX - startX;
+      const deltaPercent = (deltaX / sliderWidth) * 100;
+      const deltaValue = (deltaPercent / 100) * (priceRange.max - priceRange.min);
+      
+      if (type === 'min') {
+        const newValue = Math.max(
+          priceRange.min,
+          Math.min(startValue + deltaValue, value[1] - 10)
+        );
+        onChange([Math.round(newValue), value[1]]);
+      } else {
+        const newValue = Math.min(
+          priceRange.max,
+          Math.max(startValue + deltaValue, value[0] + 10)
+        );
+        onChange([value[0], Math.round(newValue)]);
+      }
+    };
+    
+    const handleTouchEnd = () => {
+      setIsDragging(null);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+    
+    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchend', handleTouchEnd);
+  }, [priceRange.min, priceRange.max, value, onChange]);
+
   const getCurrencyLabel = () => {
     switch (bookingType) {
       case 'daily': return 'per night';
@@ -146,7 +185,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
         <div className="text-center">
           <div className="text-sm text-gray-600 mb-2">Price range for {bookingType} stay</div>
           <div className="text-2xl font-bold text-gray-900">
-            EGP {priceRange.min.toLocaleString()} - EGP {priceRange.max.toLocaleString()}
+            {currency} {priceRange.min.toLocaleString()} - {currency} {priceRange.max.toLocaleString()}
           </div>
           <div className="text-xs text-gray-500 mt-1">
             Based on {bookingType === 'monthly' ? 'monthly prices' : 'daily prices'}
@@ -160,7 +199,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
           <label className="text-sm font-medium text-gray-700">Minimum</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">
-              EGP
+              {currency}
             </span>
             <input
               type="text"
@@ -177,7 +216,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
           <label className="text-sm font-medium text-gray-700">Maximum</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">
-              EGP
+              {currency}
             </span>
             <input
               type="text"
@@ -217,6 +256,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
             }`}
             style={{ left: `${minPosition}%`, top: '50%' }}
             onMouseDown={handleMouseDown('min')}
+            onTouchStart={handleTouchStart('min')}
           />
           
           {/* Max Thumb */}
@@ -226,13 +266,14 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
             }`}
             style={{ left: `${maxPosition}%`, top: '50%' }}
             onMouseDown={handleMouseDown('max')}
+            onTouchStart={handleTouchStart('max')}
           />
         </div>
         
         {/* Price Labels */}
         <div className="flex justify-between text-sm text-gray-500">
-          <span>EGP {priceRange.min.toLocaleString()}</span>
-          <span>EGP {priceRange.max.toLocaleString()}+</span>
+          <span>{currency} {priceRange.min.toLocaleString()}</span>
+          <span>{currency} {priceRange.max.toLocaleString()}+</span>
         </div>
       </div>
 
@@ -242,7 +283,7 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
           <span className="text-sm opacity-80">Selected range</span>
           <div className="text-right">
             <div className="text-lg font-bold">
-              EGP {value[0].toLocaleString()} - EGP {value[1].toLocaleString()}
+              {currency} {value[0].toLocaleString()} - {currency} {value[1].toLocaleString()}
             </div>
             <div className="text-xs opacity-70">
               {getCurrencyLabel()}

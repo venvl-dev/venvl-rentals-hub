@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import PropertyCard from '@/components/PropertyCard';
 import VenvlSearchPill from '@/components/search/VenvlSearchPill';
-import VenvlAdvancedFilters from '@/components/search/VenvlAdvancedFilters';
+import VenvlAdvancedFilters, { AdvancedFilters } from '@/components/search/VenvlAdvancedFilters';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
@@ -75,7 +75,7 @@ const Index = () => {
     guests: 1,
     bookingType: 'daily' as BookingType,
   });
-  const [advancedFilters, setAdvancedFilters] = useState<any>({
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
     priceRange: null,
     propertyTypes: null,
     amenities: null,
@@ -180,7 +180,6 @@ const Index = () => {
     }
     
     let filtered = [...properties];
-    console.log('Starting with properties:', filtered.length);
 
     // Location filter
     if (searchFilters.location) {
@@ -189,13 +188,11 @@ const Index = () => {
         property.state?.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
         property.country?.toLowerCase().includes(searchFilters.location.toLowerCase())
       );
-      console.log(`After location filter: ${filtered.length} properties`);
     }
 
     // Guest capacity filter
     if (searchFilters.guests > 1) {
       filtered = filtered.filter(property => property.max_guests >= searchFilters.guests);
-      console.log(`After guest filter: ${filtered.length} properties`);
     }
 
     // Booking type filter - Use the advanced filter if set, otherwise use search filter
@@ -204,14 +201,13 @@ const Index = () => {
       filtered = filtered.filter(property => {
         return matchesSearchCriteria(
           property as PropertyRentalData, 
-          activeBookingType,
+          activeBookingType as BookingType,
           advancedFilters.priceRange ? { 
             min: advancedFilters.priceRange[0], 
             max: advancedFilters.priceRange[1] 
           } : undefined
         );
       });
-      console.log(`After booking type filter (${activeBookingType}): ${filtered.length} properties`);
     }
 
     // Advanced filters - Price Range
@@ -229,49 +225,42 @@ const Index = () => {
         if (!price) return false;
         return price >= advancedFilters.priceRange[0] && price <= advancedFilters.priceRange[1];
       });
-      console.log(`After price range filter: ${filtered.length} properties`);
     }
 
     // Property types filter
     if (advancedFilters.propertyTypes && advancedFilters.propertyTypes.length > 0) {
       filtered = filtered.filter(property => 
-        advancedFilters.propertyTypes.includes(property.property_type)
+        advancedFilters.propertyTypes!.includes(property.property_type)
       );
-      console.log(`After property types filter: ${filtered.length} properties`);
     }
 
     // Amenities filter
     if (advancedFilters.amenities && advancedFilters.amenities.length > 0) {
       filtered = filtered.filter(property => 
-        advancedFilters.amenities.every((amenity: string) => 
+        advancedFilters.amenities!.every((amenity: string) => 
           property.amenities?.includes(amenity)
         )
       );
-      console.log(`After amenities filter: ${filtered.length} properties`);
     }
 
     // Bedrooms filter
     if (advancedFilters.bedrooms && advancedFilters.bedrooms > 0) {
-      filtered = filtered.filter(property => property.bedrooms >= advancedFilters.bedrooms);
-      console.log(`After bedrooms filter: ${filtered.length} properties`);
+      filtered = filtered.filter(property => property.bedrooms >= advancedFilters.bedrooms!);
     }
 
     // Bathrooms filter
     if (advancedFilters.bathrooms && advancedFilters.bathrooms > 0) {
-      filtered = filtered.filter(property => property.bathrooms >= advancedFilters.bathrooms);
-      console.log(`After bathrooms filter: ${filtered.length} properties`);
+      filtered = filtered.filter(property => property.bathrooms >= advancedFilters.bathrooms!);
     }
 
-    console.log(`Final filtered properties: ${filtered.length}`);
     setFilteredProperties(filtered);
   }, [properties, searchFilters, advancedFilters]);
 
   const handleSearch = useCallback((filters: SearchFilters) => {
-    console.log('Search triggered with filters:', filters);
     setSearchFilters(filters);
   }, []);
 
-  const handleAdvancedFilters = (newFilters: any) => {
+  const handleAdvancedFilters = (newFilters: AdvancedFilters) => {
     setAdvancedFilters(newFilters);
   };
 

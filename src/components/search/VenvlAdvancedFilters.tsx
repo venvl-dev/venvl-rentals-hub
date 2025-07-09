@@ -6,7 +6,7 @@ import { AMENITIES_LIST } from '@/lib/amenitiesUtils';
 import PriceRangeFilter from './PriceRangeFilter';
 import { usePriceRange } from '@/hooks/usePriceRange';
 
-interface AdvancedFilters {
+export interface AdvancedFilters {
   priceRange?: [number, number] | null;
   propertyTypes?: string[] | null;
   amenities?: string[] | null;
@@ -63,7 +63,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
     { id: 'loft', label: 'Loft', icon: Home },
   ];
 
-  const amenities = AMENITIES_LIST.slice(0, 12); // Show top 12 amenities
+  const amenities = AMENITIES_LIST; // Show all amenities
 
   const togglePropertyType = (type: string) => {
     setSelectedPropertyTypes(prev => 
@@ -180,6 +180,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
                 value={priceRange}
                 onChange={setPriceRange}
                 bookingType={bookingType as 'daily' | 'monthly'}
+                currency="EGP"
               />
 
               {/* Property Types */}
@@ -250,33 +251,35 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
                 </div>
               </div>
 
-              {/* Top Amenities */}
+              {/* All Amenities */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Popular Amenities</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {amenities.map((amenity) => (
-                    <button
-                      key={amenity.id}
-                      onClick={() => toggleAmenity(amenity.id)}
-                      className={`p-3 rounded-xl border-2 transition-all duration-200 transform hover:scale-102 ${
-                        selectedAmenities.includes(amenity.id)
-                          ? 'border-black bg-black text-white shadow-lg'
-                          : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow-md'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {(() => {
-                          const IconComponent = amenity.icon;
-                          return IconComponent ? (
-                            <IconComponent className="h-4 w-4" />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full bg-current opacity-60" />
-                          );
-                        })()}
-                        <span className="font-medium text-sm">{amenity.name}</span>
-                      </div>
-                    </button>
-                  ))}
+                <h3 className="text-lg font-semibold text-gray-900">Amenities</h3>
+                <div className="max-h-60 overflow-y-auto">
+                  <div className="grid grid-cols-2 gap-3">
+                    {amenities.map((amenity) => (
+                      <button
+                        key={amenity.id}
+                        onClick={() => toggleAmenity(amenity.id)}
+                        className={`p-3 rounded-xl border-2 transition-all duration-200 transform hover:scale-102 ${
+                          selectedAmenities.includes(amenity.id)
+                            ? 'border-black bg-black text-white shadow-lg'
+                            : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow-md'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          {(() => {
+                            const IconComponent = amenity.icon;
+                            return IconComponent ? (
+                              <IconComponent className="h-4 w-4" />
+                            ) : (
+                              <div className="w-4 h-4 rounded-full bg-current opacity-60" />
+                            );
+                          })()}
+                          <span className="font-medium text-sm">{amenity.name}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             </CardContent>
