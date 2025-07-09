@@ -180,19 +180,6 @@ const PriceRangeFilter: React.FC<PriceRangeFilterProps> = ({
         <span className="text-sm text-gray-500 font-medium">{getCurrencyLabel()}</span>
       </div>
 
-      {/* Price Range Display */}
-      <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4">
-        <div className="text-center">
-          <div className="text-sm text-gray-600 mb-2">Price range for {bookingType} stay</div>
-          <div className="text-2xl font-bold text-gray-900">
-            {currency} {priceRange.min.toLocaleString()} - {currency} {priceRange.max.toLocaleString()}
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            Based on {bookingType === 'monthly' ? 'monthly prices' : 'daily prices'}
-          </div>
-        </div>
-      </div>
-
       {/* Input Fields */}
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
