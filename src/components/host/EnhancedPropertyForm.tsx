@@ -371,7 +371,14 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       if (property) {
         if (process.env.NODE_ENV !== 'production') {
           console.log('🔄 Updating existing property...');
+          console.log('🔄 Property ID:', property.id);
         }
+        
+        if (!property.id) {
+          console.error('❌ Property ID is missing for update operation');
+          throw new Error('Property ID is required for updates');
+        }
+        
         // Remove fields that shouldn't be updated
         const updateData = { ...propertyData };
         delete updateData.host_id; // Don't update host_id on edit
