@@ -82,12 +82,15 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
   // Handle image error with fallback
   const handleError = useCallback(async () => {
+    console.warn('Image failed to load (likely CORS):', currentSrc);
     setIsError(true);
     setIsLoaded(false);
     
     // Try fallback if available and not already using it
     if (fallbackSrc && currentSrc !== fallbackSrc) {
+      console.log('Using fallback image:', fallbackSrc);
       setCurrentSrc(fallbackSrc);
+      setIsError(false); // Reset error state when using fallback
       return;
     }
     

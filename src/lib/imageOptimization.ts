@@ -19,20 +19,44 @@ class ImageCache {
     // Create loading promise
     const loadingPromise = new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
       
-      img.onload = () => {
-        this.addToCache(src, img);
-        this.loadingPromises.delete(src);
-        resolve(img);
+      // Try with CORS first, fallback without CORS if it fails
+      const tryLoadWithCors = () => {
+        img.crossOrigin = 'anonymous';
+        
+        img.onload = () => {
+          this.addToCache(src, img);
+          this.loadingPromises.delete(src);
+          resolve(img);
+        };
+        
+        img.onerror = () => {
+          // CORS failed, try without CORS
+          tryLoadWithoutCors();
+        };
+        
+        img.src = src;
       };
       
-      img.onerror = () => {
-        this.loadingPromises.delete(src);
-        reject(new Error(`Failed to load image: ${src}`));
+      const tryLoadWithoutCors = () => {
+        const imgNoCors = new Image();
+        
+        imgNoCors.onload = () => {
+          this.addToCache(src, imgNoCors);
+          this.loadingPromises.delete(src);
+          resolve(imgNoCors);
+        };
+        
+        imgNoCors.onerror = () => {
+          this.loadingPromises.delete(src);
+          reject(new Error(`Failed to load image: ${src}`));
+        };
+        
+        imgNoCors.src = src;
       };
       
-      img.src = src;
+      // Start with CORS attempt
+      tryLoadWithCors();
     });
 
     this.loadingPromises.set(src, loadingPromise);
