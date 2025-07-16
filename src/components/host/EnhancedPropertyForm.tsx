@@ -344,16 +344,17 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         console.log('🚀 Amenities being saved:', propertyData.amenities);
       }
 
-      // Only include relevant price fields based on rental type (don't set null values)
+      // Only include relevant price fields based on rental type
+      // NOTE: price_per_night is required by database so we always set it
       if (rentalType === 'daily') {
         propertyData.price_per_night = data.price_per_night;
         propertyData.daily_price = data.price_per_night;
         propertyData.min_nights = data.min_nights;
-        // Don't include monthly fields for daily-only properties
       } else if (rentalType === 'monthly') {
         propertyData.monthly_price = data.monthly_price;
         propertyData.min_months = data.min_months;
-        // Don't include daily fields for monthly-only properties
+        // Set price_per_night to monthly rate / 30 for database requirement
+        propertyData.price_per_night = Math.round(data.monthly_price / 30);
       } else if (rentalType === 'both') {
         // Include both price types for flexible properties
         propertyData.price_per_night = data.price_per_night;
