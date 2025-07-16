@@ -225,7 +225,7 @@ const HostDashboard = () => {
     );
   }
 
-  if (editingProperty !== null) {
+  if (editingProperty) {
     return (
       <div>
         <Header />
@@ -251,7 +251,7 @@ const HostDashboard = () => {
             <p className="text-gray-600 mt-2">Manage your properties and bookings</p>
           </div>
           <Button 
-            onClick={() => setEditingProperty(null)} 
+            onClick={() => setEditingProperty({} as Property)} 
             className="flex items-center gap-2 bg-black text-white hover:bg-gray-800 rounded-2xl px-6 py-3"
           >
             <Plus className="h-4 w-4" />
@@ -291,7 +291,7 @@ const HostDashboard = () => {
                   <h3 className="text-xl font-semibold mb-2">No properties yet</h3>
                   <p className="text-gray-600 mb-4">Start by adding your first property to begin hosting</p>
                   <Button 
-                    onClick={() => setEditingProperty(null)}
+                    onClick={() => setEditingProperty({} as Property)}
                     className="bg-black text-white hover:bg-gray-800 rounded-2xl"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -384,7 +384,7 @@ const HostDashboard = () => {
                   <h3 className="text-xl font-semibold mb-2">No properties to display</h3>
                   <p className="text-gray-600 mb-4">Add properties to view their booking calendars</p>
                   <Button 
-                    onClick={() => setEditingProperty(null)}
+                    onClick={() => setEditingProperty({} as Property)}
                     className="bg-black text-white hover:bg-gray-800 rounded-2xl"
                   >
                     <Plus className="h-4 w-4 mr-2" />
