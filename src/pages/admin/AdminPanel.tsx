@@ -346,7 +346,17 @@ const AdminPanel = () => {
                                 </Button>
                               </>
                             )}
-                            <Button variant="outline" size="sm">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                // TODO: Implement property details view
+                                toast({
+                                  title: "Property Details",
+                                  description: `Viewing details for ${property.title}`,
+                                });
+                              }}
+                            >
                               {t('admin.viewDetails')}
                             </Button>
                           </div>
