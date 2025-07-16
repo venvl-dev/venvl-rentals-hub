@@ -225,7 +225,11 @@ const HostDashboard = () => {
     );
   }
 
+  console.log('Current editingProperty state:', editingProperty);
+  console.log('Should show form?', !!editingProperty);
+  
   if (editingProperty) {
+    console.log('Rendering EnhancedPropertyForm with property:', editingProperty);
     return (
       <div>
         <Header />
@@ -251,7 +255,11 @@ const HostDashboard = () => {
             <p className="text-gray-600 mt-2">Manage your properties and bookings</p>
           </div>
           <Button 
-            onClick={() => setEditingProperty({} as Property)} 
+            onClick={() => {
+              console.log('Add New Property button clicked');
+              setEditingProperty({} as Property);
+              console.log('editingProperty set to:', {});
+            }} 
             className="flex items-center gap-2 bg-black text-white hover:bg-gray-800 rounded-2xl px-6 py-3"
           >
             <Plus className="h-4 w-4" />
