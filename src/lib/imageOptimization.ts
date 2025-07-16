@@ -129,7 +129,17 @@ export function optimizeImageUrl(
     return url;
   }
 
-  // For external URLs, add optimization parameters
+  // Check if this is a CORS-problematic domain (like Pinterest)
+  const corsProblematicDomains = ['i.pinimg.com', 'pinterest.com'];
+  const urlObj = new URL(url);
+  
+  if (corsProblematicDomains.some(domain => urlObj.hostname.includes(domain))) {
+    // Use our image proxy for CORS-problematic domains
+    const proxyUrl = `https://xhzgistgvcbmcfczcrib.supabase.co/functions/v1/image-proxy?url=${encodeURIComponent(url)}`;
+    return proxyUrl;
+  }
+
+  // For other external URLs, add optimization parameters
   const separator = url.includes('?') ? '&' : '?';
   const params = new URLSearchParams();
 
