@@ -24,14 +24,22 @@ class ImageCache {
       const tryLoadWithCors = () => {
         img.crossOrigin = 'anonymous';
         
-        img.onload = () => {
-          this.addToCache(src, img);
-          this.loadingPromises.delete(src);
-          resolve(img);
+        img.onload = async () => {
+          try {
+            await img.decode(); // Wait for decoding to complete
+            this.addToCache(src, img);
+            this.loadingPromises.delete(src);
+            resolve(img);
+          } catch (decodeError) {
+            // Decoding failed after successful load, try without CORS
+            console.error('Image decode failed with CORS:', decodeError);
+            tryLoadWithoutCors();
+          }
         };
         
         img.onerror = () => {
-          // CORS failed, try without CORS
+          // Network error with CORS, try without CORS
+          console.error('Image network error with CORS');
           tryLoadWithoutCors();
         };
         
@@ -41,13 +49,23 @@ class ImageCache {
       const tryLoadWithoutCors = () => {
         const imgNoCors = new Image();
         
-        imgNoCors.onload = () => {
-          this.addToCache(src, imgNoCors);
-          this.loadingPromises.delete(src);
-          resolve(imgNoCors);
+        imgNoCors.onload = async () => {
+          try {
+            await imgNoCors.decode(); // Wait for decoding to complete
+            this.addToCache(src, imgNoCors);
+            this.loadingPromises.delete(src);
+            resolve(imgNoCors);
+          } catch (decodeError) {
+            // Decoding failed without CORS, finally reject
+            console.error('Image decode failed without CORS:', decodeError);
+            this.loadingPromises.delete(src);
+            reject(new Error(`Failed to load and decode image: ${src}`));
+          }
         };
         
         imgNoCors.onerror = () => {
+          // Network error without CORS, finally reject
+          console.error('Image network error without CORS');
           this.loadingPromises.delete(src);
           reject(new Error(`Failed to load image: ${src}`));
         };
