@@ -9,6 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "vitest",
     "test-amenities": "node scripts/test-new-amenities.js",
     "migrate-amenities": "node scripts/migrate-to-new-amenities.js"
   },
@@ -83,6 +84,9 @@
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "vitest": "^1.4.0",
+    "jsdom": "^24.0.0",
+    "@testing-library/react": "^14.1.2"
   }
 }
