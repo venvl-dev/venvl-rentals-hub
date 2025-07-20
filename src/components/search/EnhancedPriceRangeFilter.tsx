@@ -22,17 +22,13 @@ const EnhancedPriceRangeFilter: React.FC<EnhancedPriceRangeFilterProps> = ({
   const { priceRange: dbPriceRange, loading } = usePriceRange(bookingType);
   const [localMin, setLocalMin] = useState(value[0].toString());
   const [localMax, setLocalMax] = useState(value[1].toString());
-  const [isInitialized, setIsInitialized] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
 
   // Initialize local inputs when value changes
   useEffect(() => {
     setLocalMin(value[0].toString());
     setLocalMax(value[1].toString());
-    if (!loading && dbPriceRange.min > 0) {
-      setIsInitialized(true);
-    }
-  }, [value, loading, dbPriceRange.min]);
+  }, [value]);
 
   const debouncedOnChange = useCallback((newValue: [number, number]) => {
     if (debounceRef.current) {

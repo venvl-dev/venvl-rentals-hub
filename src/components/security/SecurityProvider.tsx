@@ -12,12 +12,10 @@ const SecurityContext = createContext<SecurityContextType | undefined>(undefined
 
 export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     if (user) {
       logSecurityEvent('session_started', 'authentication', user.id, true);
-      setIsInitialized(true);
     }
   }, [user]);
 
