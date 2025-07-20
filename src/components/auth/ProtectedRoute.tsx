@@ -59,34 +59,40 @@ const ProtectedRoute = ({
       const roleKey = `user_role_${user!.id}`;
       let role = localStorage.getItem(roleKey);
       
-      if (!role) {
-        try {
-          // Create a query function for the secure API
-          const queryFunction = async () => {
-            const { data, error } = await import('@/integrations/supabase/client').then(module => 
-              module.supabase.from('profiles').select('role').eq('id', user!.id).single()
-            );
-            if (error) throw error;
-            return data;
-          };
+      // Always fetch fresh role data to avoid cache issues
+      try {
+        // Create a query function for the secure API
+        const queryFunction = async () => {
+          const { data, error } = await import('@/integrations/supabase/client').then(module => 
+            module.supabase.from('profiles').select('role').eq('id', user!.id).single()
+          );
+          if (error) throw error;
+          return data;
+        };
 
-          const profile = await secureProfileQuery.execute(queryFunction);
+        const profile = await secureProfileQuery.execute(queryFunction);
 
-          if (!profile) {
-            console.error('Failed to verify user permissions for user:', user!.id);
-            toast.error('Unable to verify user permissions');
-            navigate('/');
-            return;
-          }
-
-          role = (profile as any)?.role || 'guest';
-          localStorage.setItem(roleKey, role);
-        } catch (error) {
-          console.error('Profile fetch error for user:', user!.id, error);
-          toast.error('Unable to fetch user profile');
+        if (!profile) {
+          console.error('Failed to verify user permissions for user:', user!.id);
+          toast.error('Unable to verify user permissions');
           navigate('/');
           return;
         }
+
+        const freshRole = (profile as any)?.role || 'guest';
+        
+        // Update cache if role has changed
+        if (role !== freshRole) {
+          console.log('Role updated from cache:', role, 'to fresh:', freshRole);
+          localStorage.setItem(roleKey, freshRole);
+        }
+        
+        role = freshRole;
+      } catch (error) {
+        console.error('Profile fetch error for user:', user!.id, error);
+        toast.error('Unable to fetch user profile');
+        navigate('/');
+        return;
       }
       
       setUserRole(role);
