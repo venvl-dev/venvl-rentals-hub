@@ -23,8 +23,11 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
     bookingType as 'daily' | 'monthly'
   );
   
-  // Initialize state with default values
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  // Initialize state with proper defaults
+  const [priceRange, setPriceRange] = useState<[number, number]>(() => {
+    // Use initial filters if available, otherwise use sensible defaults
+    return initialFilters.priceRange || [0, 10000];
+  });
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>(
     initialFilters.propertyTypes || []
   );
@@ -41,8 +44,15 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
       const hasInitialPriceRange = initialFilters.priceRange && 
                                   initialFilters.priceRange[0] >= dbPriceRange.min && 
                                   initialFilters.priceRange[1] <= dbPriceRange.max;
-      const initialRange: [number, number] = hasInitialPriceRange ? initialFilters.priceRange! : [dbPriceRange.min, dbPriceRange.max];
-      setPriceRange(initialRange);
+      const newRange: [number, number] = hasInitialPriceRange ? initialFilters.priceRange! : [dbPriceRange.min, dbPriceRange.max];
+      
+      // Only update if the range is actually different to prevent unnecessary re-renders
+      setPriceRange(prevRange => {
+        if (prevRange[0] !== newRange[0] || prevRange[1] !== newRange[1]) {
+          return newRange;
+        }
+        return prevRange;
+      });
     }
   }, [priceLoading, dbPriceRange.min, dbPriceRange.max, bookingType]);
 
