@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import React from 'react';
 import { usePriceRange } from './usePriceRange';
 
 export interface SearchFilters {
@@ -59,12 +60,22 @@ export const useFilterStore = () => {
       
       // If booking type changed, reset price range to new range
       if (filters.bookingType && filters.bookingType !== prev.bookingType) {
-        updated.priceRange = null; // Will be set by useEffect when new price range loads
+        updated.priceRange = null; // Will be set to new range when price data loads
       }
       
       return updated;
     });
   }, []);
+
+  // Auto-sync price range when dbPriceRange loads and no custom range is set
+  const syncPriceRange = useCallback(() => {
+    if (!priceLoading && dbPriceRange && dbPriceRange.min > 0 && !advancedFilters.priceRange) {
+      setAdvancedFilters(prev => ({
+        ...prev,
+        priceRange: [dbPriceRange.min, dbPriceRange.max]
+      }));
+    }
+  }, [priceLoading, dbPriceRange, advancedFilters.priceRange]);
 
   // Clear all filters
   const clearAllFilters = useCallback(() => {
@@ -127,6 +138,11 @@ export const useFilterStore = () => {
     return count;
   }, [searchFilters, advancedFilters, priceLoading, dbPriceRange]);
 
+  // Auto-sync price range when data loads
+  React.useEffect(() => {
+    syncPriceRange();
+  }, [syncPriceRange]);
+
   return {
     // State
     searchFilters,
@@ -140,6 +156,7 @@ export const useFilterStore = () => {
     updateAdvancedFilters,
     clearAllFilters,
     clearAdvancedFilters,
+    syncPriceRange,
     
     // Computed
     getCombinedFilters,

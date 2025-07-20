@@ -34,13 +34,14 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   const [bedrooms, setBedrooms] = useState<number | null>(initialFilters.bedrooms || null);
   const [bathrooms, setBathrooms] = useState<number | null>(initialFilters.bathrooms || null);
 
-  // Update price range when database data is loaded
+  // Update price range when database data is loaded or booking type changes
   useEffect(() => {
     if (!priceLoading && dbPriceRange.min > 0) {
+      // Use initial filters if available, otherwise use full range
       const initialRange = initialFilters.priceRange || [dbPriceRange.min, dbPriceRange.max];
       setPriceRange(initialRange);
     }
-  }, [priceLoading, dbPriceRange, initialFilters.priceRange]);
+  }, [priceLoading, dbPriceRange, initialFilters.priceRange, bookingType]);
 
   const bookingTypes = [
     { id: 'daily', label: 'Daily Stay', icon: Calendar },

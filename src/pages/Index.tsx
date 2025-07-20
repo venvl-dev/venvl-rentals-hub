@@ -60,8 +60,17 @@ const Index = () => {
     clearAllFilters,
     hasActiveFilters,
     getActiveFilterCount,
-    getCombinedFilters
+    getCombinedFilters,
+    syncPriceRange,
+    priceLoading
   } = useFilterStore();
+
+  // Ensure price range syncs when component mounts
+  useEffect(() => {
+    if (!priceLoading) {
+      syncPriceRange();
+    }
+  }, [priceLoading, syncPriceRange]);
 
   // Use authentication-aware image preloading
   const { user, isLoading: authLoading, imagesPreloaded, preloadImages, refreshImages } = useAuthImagePreload();

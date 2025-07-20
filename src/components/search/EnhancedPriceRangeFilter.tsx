@@ -65,6 +65,9 @@ const EnhancedPriceRangeFilter: React.FC<EnhancedPriceRangeFilterProps> = ({
 
   const handleMinInputChange = useCallback((inputValue: string) => {
     setLocalMin(inputValue);
+    // Allow typing intermediate values, validate on blur
+    if (inputValue === '') return;
+    
     const numValue = parseInt(inputValue) || dbPriceRange.min;
     const clampedValue = Math.max(dbPriceRange.min, Math.min(numValue, value[1] - 10));
     debouncedOnChange([clampedValue, value[1]]);
@@ -72,6 +75,9 @@ const EnhancedPriceRangeFilter: React.FC<EnhancedPriceRangeFilterProps> = ({
 
   const handleMaxInputChange = useCallback((inputValue: string) => {
     setLocalMax(inputValue);
+    // Allow typing intermediate values, validate on blur
+    if (inputValue === '') return;
+    
     const numValue = parseInt(inputValue) || dbPriceRange.max;
     const clampedValue = Math.min(dbPriceRange.max, Math.max(numValue, value[0] + 10));
     debouncedOnChange([value[0], clampedValue]);
@@ -151,6 +157,7 @@ const EnhancedPriceRangeFilter: React.FC<EnhancedPriceRangeFilterProps> = ({
               placeholder={dbPriceRange.min.toString()}
               min={dbPriceRange.min}
               max={dbPriceRange.max}
+              maxLength={10}
             />
           </div>
         </div>
@@ -173,6 +180,7 @@ const EnhancedPriceRangeFilter: React.FC<EnhancedPriceRangeFilterProps> = ({
               placeholder={dbPriceRange.max.toString()}
               min={dbPriceRange.min}
               max={dbPriceRange.max}
+              maxLength={10}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">
               +
