@@ -25,34 +25,14 @@ const EnhancedPriceRangeFilter: React.FC<EnhancedPriceRangeFilterProps> = ({
   const [isInitialized, setIsInitialized] = useState(false);
   const debounceRef = useRef<NodeJS.Timeout>();
 
-  // Initialize price range when database data loads
+  // Initialize local inputs when value changes
   useEffect(() => {
-    if (!loading && dbPriceRange.min > 0 && !isInitialized) {
-      const initialRange: [number, number] = [dbPriceRange.min, dbPriceRange.max];
-      onChange(initialRange);
-      setLocalMin(initialRange[0].toString());
-      setLocalMax(initialRange[1].toString());
+    setLocalMin(value[0].toString());
+    setLocalMax(value[1].toString());
+    if (!loading && dbPriceRange.min > 0) {
       setIsInitialized(true);
     }
-  }, [loading, dbPriceRange, isInitialized, onChange]);
-
-  // Sync local inputs with prop values
-  useEffect(() => {
-    if (isInitialized) {
-      setLocalMin(value[0].toString());
-      setLocalMax(value[1].toString());
-    }
-  }, [value, isInitialized]);
-
-  // Reset when booking type changes
-  useEffect(() => {
-    if (isInitialized && !loading && dbPriceRange.min > 0) {
-      const newRange: [number, number] = [dbPriceRange.min, dbPriceRange.max];
-      onChange(newRange);
-      setLocalMin(newRange[0].toString());
-      setLocalMax(newRange[1].toString());
-    }
-  }, [bookingType, dbPriceRange, loading, onChange, isInitialized]);
+  }, [value, loading, dbPriceRange.min]);
 
   const debouncedOnChange = useCallback((newValue: [number, number]) => {
     if (debounceRef.current) {

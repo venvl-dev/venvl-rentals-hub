@@ -37,11 +37,14 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   // Update price range when database data is loaded or booking type changes
   useEffect(() => {
     if (!priceLoading && dbPriceRange.min > 0) {
-      // Use initial filters if available, otherwise use full range
-      const initialRange = initialFilters.priceRange || [dbPriceRange.min, dbPriceRange.max];
+      // Check if we have initial filters for this specific price range, otherwise use full range
+      const hasInitialPriceRange = initialFilters.priceRange && 
+                                  initialFilters.priceRange[0] >= dbPriceRange.min && 
+                                  initialFilters.priceRange[1] <= dbPriceRange.max;
+      const initialRange: [number, number] = hasInitialPriceRange ? initialFilters.priceRange! : [dbPriceRange.min, dbPriceRange.max];
       setPriceRange(initialRange);
     }
-  }, [priceLoading, dbPriceRange, initialFilters.priceRange, bookingType]);
+  }, [priceLoading, dbPriceRange.min, dbPriceRange.max, bookingType]);
 
   const bookingTypes = [
     { id: 'daily', label: 'Daily Stay', icon: Calendar },
