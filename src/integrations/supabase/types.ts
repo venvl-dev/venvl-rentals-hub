@@ -18,23 +18,65 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string | null
+          display_order: number | null
           icon: string | null
           id: string
+          is_active: boolean | null
           name: string
         }
         Insert: {
           category?: string | null
           created_at?: string | null
+          display_order?: number | null
           icon?: string | null
           id?: string
+          is_active?: boolean | null
           name: string
         }
         Update: {
           category?: string | null
           created_at?: string | null
+          display_order?: number | null
           icon?: string | null
           id?: string
+          is_active?: boolean | null
           name?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          id: string
+          ip_address: unknown | null
+          metadata: Json | null
+          resource_id: string | null
+          resource_type: string | null
+          timestamp: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          id?: string
+          ip_address?: unknown | null
+          metadata?: Json | null
+          resource_id?: string | null
+          resource_type?: string | null
+          timestamp?: string | null
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -186,6 +228,36 @@ export type Database = {
           title?: string
           type?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          category: string
+          created_at: string | null
+          description: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: Json
         }
         Relationships: []
       }
@@ -421,6 +493,36 @@ export type Database = {
           },
         ]
       }
+      property_types: {
+        Row: {
+          created_at: string | null
+          display_order: number | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_order?: number | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           action_type: string
@@ -631,6 +733,15 @@ export type Database = {
       initialize_default_setup: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      log_admin_action: {
+        Args: {
+          p_action: string
+          p_resource_type?: string
+          p_resource_id?: string
+          p_metadata?: Json
+        }
+        Returns: undefined
       }
       log_security_event: {
         Args: {

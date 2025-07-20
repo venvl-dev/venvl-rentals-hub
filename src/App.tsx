@@ -27,6 +27,13 @@ const SystemSetup = lazy(() => import("./pages/admin/SystemSetup"));
 const CreateTestUsers = lazy(() => import("./pages/admin/CreateTestUsers"));
 const DataSeeding = lazy(() => import("./pages/admin/DataSeeding"));
 
+// New Admin Dashboard Pages
+const Settings = lazy(() => import("./pages/admin/Settings"));
+const MetaManager = lazy(() => import("./pages/admin/MetaManager"));
+const Users = lazy(() => import("./pages/admin/Users"));
+const Roles = lazy(() => import("./pages/admin/Roles"));
+const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -125,7 +132,7 @@ function App() {
                     } 
                   />
                   <Route 
-                    path="/admin/users" 
+                    path="/admin/test-users" 
                     element={
                       <ProtectedRoute allowedRoles={["super_admin"]}>
                         <CreateTestUsers />
@@ -137,6 +144,48 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={["super_admin"]}>
                         <DataSeeding />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  {/* New Admin Dashboard Routes */}
+                  <Route 
+                    path="/admin/settings" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <Settings />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/meta" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <MetaManager />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/users" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <Users />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/roles" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <Roles />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/audit" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <AuditLogs />
                       </ProtectedRoute>
                     } 
                   />
