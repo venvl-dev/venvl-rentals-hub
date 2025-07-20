@@ -421,33 +421,6 @@ export type Database = {
           },
         ]
       }
-      rate_limits: {
-        Row: {
-          action_type: string
-          attempt_count: number | null
-          created_at: string | null
-          id: string
-          user_id: string | null
-          window_start: string | null
-        }
-        Insert: {
-          action_type: string
-          attempt_count?: number | null
-          created_at?: string | null
-          id?: string
-          user_id?: string | null
-          window_start?: string | null
-        }
-        Update: {
-          action_type?: string
-          attempt_count?: number | null
-          created_at?: string | null
-          id?: string
-          user_id?: string | null
-          window_start?: string | null
-        }
-        Relationships: []
-      }
       reviews: {
         Row: {
           booking_id: string
@@ -544,45 +517,6 @@ export type Database = {
         }
         Relationships: []
       }
-      security_audit_log: {
-        Row: {
-          action: string
-          created_at: string | null
-          error_message: string | null
-          id: string
-          ip_address: unknown | null
-          resource_id: string | null
-          resource_type: string | null
-          success: boolean | null
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          action: string
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          ip_address?: unknown | null
-          resource_id?: string | null
-          resource_type?: string | null
-          success?: boolean | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          action?: string
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          ip_address?: unknown | null
-          resource_id?: string | null
-          resource_type?: string | null
-          success?: boolean | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
@@ -605,14 +539,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      decrypt_sensitive_data: {
-        Args: { encrypted_data: string; key_name?: string }
-        Returns: string
-      }
-      encrypt_sensitive_data: {
-        Args: { data: string; key_name?: string }
-        Returns: string
-      }
       generate_booking_reference: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -631,16 +557,6 @@ export type Database = {
       initialize_default_setup: {
         Args: Record<PropertyKey, never>
         Returns: string
-      }
-      log_security_event: {
-        Args: {
-          p_action: string
-          p_resource_type?: string
-          p_resource_id?: string
-          p_success?: boolean
-          p_error_message?: string
-        }
-        Returns: undefined
       }
       seed_sample_bookings_and_reviews: {
         Args: { guest_user_id: string }
@@ -667,14 +583,6 @@ export type Database = {
       }
       user_has_permission: {
         Args: { user_id: string; permission: string }
-        Returns: boolean
-      }
-      validate_input: {
-        Args: { input_text: string; max_length?: number }
-        Returns: string
-      }
-      validate_password_strength: {
-        Args: { password: string }
         Returns: boolean
       }
     }

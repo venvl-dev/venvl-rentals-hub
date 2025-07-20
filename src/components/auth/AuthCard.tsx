@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,9 +8,6 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2, AlertCircle } from 'lucide-react';
-import { validateEmail, validatePasswordStrength, validateInput } from '@/lib/security';
-import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
-import { logSecurityEvent } from '@/lib/security';
 
 export type AuthRole = 'guest' | 'host' | 'super_admin';
 
@@ -84,67 +81,37 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     }
   };
 
-  // Enhanced client-side validation with security
-  const validateForm = useCallback((): boolean => {
+  // Client-side validation
+  const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
-    try {
-      // Email validation with security checks
-      if (!formData.email.trim()) {
-        newErrors.email = 'Email is required';
-      } else {
-        const cleanEmail = validateInput(formData.email, 254); // RFC 5321 limit
-        if (!validateEmail(cleanEmail)) {
-          newErrors.email = 'Please enter a valid email address';
-        }
-      }
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
 
-      // Enhanced password validation
-      if (!formData.password) {
-        newErrors.password = 'Password is required';
-      } else {
-        if (mode === 'signup') {
-          const passwordValidation = validatePasswordStrength(formData.password);
-          if (!passwordValidation.isValid) {
-            newErrors.password = passwordValidation.errors[0];
-          }
-        } else if (formData.password.length < 6) {
-          newErrors.password = 'Password must be at least 6 characters';
-        }
-      }
+    // Password validation
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
 
-      // Signup-specific validation with sanitization
-      if (mode === 'signup') {
-        try {
-          if (!formData.firstName.trim()) {
-            newErrors.firstName = 'First name is required';
-          } else {
-            validateInput(formData.firstName, 50);
-          }
-          
-          if (!formData.lastName.trim()) {
-            newErrors.lastName = 'Last name is required';
-          } else {
-            validateInput(formData.lastName, 50);
-          }
-        } catch (inputError: any) {
-          if (inputError.message.includes('First name')) {
-            newErrors.firstName = inputError.message;
-          } else if (inputError.message.includes('Last name')) {
-            newErrors.lastName = inputError.message;
-          } else {
-            newErrors.general = 'Invalid input detected. Please check your entries.';
-          }
-        }
+    // Signup-specific validation
+    if (mode === 'signup') {
+      if (!formData.firstName.trim()) {
+        newErrors.firstName = 'First name is required';
       }
-    } catch (error) {
-      newErrors.general = 'Form validation error. Please try again.';
-      logSecurityEvent('form_validation_error', 'authentication', undefined, false, (error as Error).message);
+      if (!formData.lastName.trim()) {
+        newErrors.lastName = 'Last name is required';
+      }
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData, mode]);
+  };
 
   // Check for duplicate email during signup
   const checkEmailExists = async (email: string): Promise<boolean> => {
@@ -177,12 +144,6 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     setLoading(true);
     setErrors({});
 
-    // Add timeout to prevent indefinite loading
-    const timeoutId = setTimeout(() => {
-      setLoading(false);
-      setErrors({ general: 'Sign in timed out. Please check your connection and try again.' });
-    }, 30000); // 30 second timeout
-
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email.trim().toLowerCase(),
@@ -211,48 +172,11 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
         .from('profiles')
         .select('role, first_name, last_name')
         .eq('id', data.user.id)
-        .maybeSingle();
+        .single();
 
-      if (profileError) {
+      if (profileError || !profile) {
         console.error('Error fetching profile:', profileError);
-        setErrors({ general: 'Unable to load user profile. Please try again or contact support.' });
-        return;
-      }
-
-      if (!profile) {
-        console.warn('Profile not found for user, creating default profile');
-        // Create a profile if it doesn't exist
-        const { error: createProfileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email,
-            first_name: formData.firstName || '',
-            last_name: formData.lastName || '',
-            role: 'guest'
-          });
-        
-        if (createProfileError) {
-          console.error('Error creating profile:', createProfileError);
-          setErrors({ general: 'Unable to create user profile. Please contact support.' });
-          return;
-        }
-
-        // Fetch the newly created profile
-        const { data: newProfile, error: newProfileError } = await supabase
-          .from('profiles')
-          .select('role, first_name, last_name')
-          .eq('id', data.user.id)
-          .maybeSingle();
-
-        if (newProfileError || !newProfile) {
-          console.error('Error fetching newly created profile:', newProfileError);
-          setErrors({ general: 'Profile creation failed. Please contact support.' });
-          return;
-        }
-
-        toast.success(`Welcome, ${newProfile.first_name || 'User'}!`);
-        redirectByRole(newProfile.role as AuthRole);
+        setErrors({ general: 'Unable to load user profile. Please contact support.' });
         return;
       }
 
@@ -262,7 +186,6 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
       console.error('Unexpected sign in error:', error);
       setErrors({ general: 'An unexpected error occurred during sign in. Please try again.' });
     } finally {
-      clearTimeout(timeoutId);
       setLoading(false);
     }
   };
@@ -384,9 +307,9 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
 
   const fillTestAccount = (type: AuthRole) => {
     const accounts = {
-      guest: { email: 'guest@venvl.com', password: 'DemoGuest2024$Secure' },
-      host: { email: 'host@venvl.com', password: 'DemoHost2024$Secure' },
-      super_admin: { email: 'superadmin@venvl.com', password: 'DemoAdmin2024$Secure' }
+      guest: { email: 'guest@venvl.com', password: 'Guest123!' },
+      host: { email: 'host@venvl.com', password: 'Host123!' },
+      super_admin: { email: 'superadmin@venvl.com', password: 'SuperAdmin123!' }
     };
     
     setFormData(prev => ({
@@ -655,7 +578,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                 >
                   <div className="flex justify-between">
                     <span className="font-medium">Guest Account:</span>
-                    <span>guest@venvl.com / DemoGuest2024$Secure</span>
+                    <span>guest@venvl.com / Guest123!</span>
                   </div>
                 </button>
                 <button
@@ -666,7 +589,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                 >
                   <div className="flex justify-between">
                     <span className="font-medium">Host Account:</span>
-                    <span>host@venvl.com / DemoHost2024$Secure</span>
+                    <span>host@venvl.com / Host123!</span>
                   </div>
                 </button>
                 <button
@@ -677,7 +600,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                 >
                   <div className="flex justify-between">
                     <span className="font-medium">Super Admin Account:</span>
-                    <span>superadmin@venvl.com / DemoAdmin2024$Secure</span>
+                    <span>superadmin@venvl.com / SuperAdmin123!</span>
                   </div>
                 </button>
               </div>

@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
 import {
   Menu, 
   Search, 
@@ -41,14 +40,7 @@ const Header = () => {
             .single();
           setUserRole(profile?.role || null);
         } catch (error) {
-          handleError(
-            new CustomError(
-              'Error fetching user role',
-              ErrorCodes.AUTH_UNAUTHORIZED,
-              'low'
-            ),
-            { error }
-          );
+          console.error('Error fetching user role:', error);
           setUserRole(null);
         }
       } else {
@@ -64,28 +56,14 @@ const Header = () => {
       const { error } = await supabase.auth.signOut();
 
       if (error) {
-        handleError(
-          new CustomError(
-            'Sign out error',
-            ErrorCodes.AUTH_UNAUTHORIZED,
-            'medium'
-          ),
-          { error }
-        );
+        console.error('Sign out error:', error);
         toast.error('Error signing out: ' + error.message);
       } else {
         toast.success('Signed out successfully');
         navigate('/');
       }
     } catch (error) {
-      handleError(
-        new CustomError(
-          'Unexpected sign out error',
-          ErrorCodes.SYSTEM_DATABASE_ERROR,
-          'high'
-        ),
-        { error }
-      );
+      console.error('Unexpected sign out error:', error);
       toast.error('Error signing out');
       navigate('/');
     }

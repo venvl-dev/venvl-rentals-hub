@@ -111,7 +111,7 @@ const AdminPanel = () => {
 
   const loadAdminData = async () => {
     try {
-      // Load stats with secure queries
+      // Load stats
       const [usersCount, propertiesCount, bookingsData] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('properties').select('*', { count: 'exact', head: true }),

@@ -1,11 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
-import { useSecureQuery } from '@/hooks/useSecureApi';
-import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
-import { logSecurityEvent } from '@/lib/security';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -31,17 +29,10 @@ const ProtectedRoute = ({
     checkAuth();
   }, [authLoading, user?.id]);
 
-  // Secure profile query hook
-  const secureProfileQuery = useSecureQuery('profiles');
-
   const checkAuth = async () => {
     setLoading(true);
     try {
-      // Log access attempt
-      await logSecurityEvent('route_access_attempt', 'authentication', user?.id, true);
-
       if (!user && requireAuth) {
-        await logSecurityEvent('unauthorized_access_attempt', 'authentication', undefined, false, 'No user session');
         toast.error('Please sign in to access this page');
         navigate(redirectTo);
         return;
@@ -59,58 +50,30 @@ const ProtectedRoute = ({
 
       const roleKey = `user_role_${user!.id}`;
       let role = localStorage.getItem(roleKey);
-      
       if (!role) {
-        try {
-          // Create a query function for the secure API
-          const queryFunction = async () => {
-            const { data, error } = await import('@/integrations/supabase/client').then(module => 
-              module.supabase.from('profiles').select('role').eq('id', user!.id).single()
-            );
-            if (error) throw error;
-            return data;
-          };
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user!.id)
+          .single();
 
-          const profile = await secureProfileQuery.execute(queryFunction);
-
-          if (!profile) {
-            await handleError(
-              new CustomError(
-                'Failed to verify user permissions',
-                ErrorCodes.AUTH_UNAUTHORIZED,
-                'high',
-                'Unable to verify user permissions'
-              ),
-              { userId: user!.id }
-            );
-            navigate('/');
-            return;
-          }
-
-          role = (profile as any)?.role || 'guest';
-          localStorage.setItem(roleKey, role);
-        } catch (error) {
-          await handleError(
-            new CustomError(
-              'Profile fetch error',
-              ErrorCodes.AUTH_UNAUTHORIZED,
-              'high'
-            ),
-            { userId: user!.id, error }
-          );
+        if (profileError) {
+          console.error('Profile error:', profileError);
+          toast.error('Unable to verify user permissions');
           navigate('/');
           return;
         }
+
+        role = profile?.role || 'guest';
+        localStorage.setItem(roleKey, role);
       }
-      
       setUserRole(role);
 
       // Check if user has required role
       if (allowedRoles.includes(role)) {
-        await logSecurityEvent('authorized_access', 'authentication', user!.id, true, `Role: ${role}`);
         setAuthorized(true);
       } else {
-        await logSecurityEvent('unauthorized_access_attempt', 'authentication', user!.id, false, `Required: ${allowedRoles.join(', ')}, User has: ${role}`);
+        console.log(`Access denied. User role: ${role}, Required: ${allowedRoles.join(', ')}`);
         toast.error('You do not have permission to access this page');
         
         // Redirect based on user role
@@ -128,14 +91,8 @@ const ProtectedRoute = ({
         }
       }
     } catch (error) {
-      await handleError(
-        new CustomError(
-          'Authentication check failed',
-          ErrorCodes.VALIDATION_INVALID_FORMAT,
-          'high'
-        ),
-        { error, userId: user?.id }
-      );
+      console.error('Auth check error:', error);
+      toast.error('Authentication error occurred');
       navigate(redirectTo);
     } finally {
       setLoading(false);
