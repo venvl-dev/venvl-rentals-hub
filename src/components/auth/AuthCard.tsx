@@ -384,9 +384,9 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
 
   const fillTestAccount = (type: AuthRole) => {
     const accounts = {
-      guest: { email: 'guest@venvl.com', password: 'Guest123!' },
-      host: { email: 'host@venvl.com', password: 'Host123!' },
-      super_admin: { email: 'superadmin@venvl.com', password: 'SuperAdmin123!' }
+      guest: { email: 'guest@venvl.com', password: 'DemoGuest2024$Secure' },
+      host: { email: 'host@venvl.com', password: 'DemoHost2024$Secure' },
+      super_admin: { email: 'superadmin@venvl.com', password: 'DemoAdmin2024$Secure' }
     };
     
     setFormData(prev => ({
@@ -655,7 +655,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                 >
                   <div className="flex justify-between">
                     <span className="font-medium">Guest Account:</span>
-                    <span>guest@venvl.com / Guest123!</span>
+                    <span>guest@venvl.com / DemoGuest2024$Secure</span>
                   </div>
                 </button>
                 <button
@@ -666,7 +666,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                 >
                   <div className="flex justify-between">
                     <span className="font-medium">Host Account:</span>
-                    <span>host@venvl.com / Host123!</span>
+                    <span>host@venvl.com / DemoHost2024$Secure</span>
                   </div>
                 </button>
                 <button
@@ -677,7 +677,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                 >
                   <div className="flex justify-between">
                     <span className="font-medium">Super Admin Account:</span>
-                    <span>superadmin@venvl.com / SuperAdmin123!</span>
+                    <span>superadmin@venvl.com / DemoAdmin2024$Secure</span>
                   </div>
                 </button>
               </div>
