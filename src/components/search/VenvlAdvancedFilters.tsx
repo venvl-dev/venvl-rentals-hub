@@ -28,6 +28,14 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
     // Use initial filters if available, otherwise use sensible defaults
     return initialFilters.priceRange || [0, 10000];
   });
+  const [rangeReady, setRangeReady] = useState(false);
+
+  // Reset readiness while loading new price data
+  useEffect(() => {
+    if (priceLoading) {
+      setRangeReady(false);
+    }
+  }, [priceLoading]);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>(
     initialFilters.propertyTypes || []
   );
@@ -41,11 +49,14 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   useEffect(() => {
     if (!priceLoading && dbPriceRange.min > 0) {
       // Check if we have initial filters for this specific price range, otherwise use full range
-      const hasInitialPriceRange = initialFilters.priceRange && 
-                                  initialFilters.priceRange[0] >= dbPriceRange.min && 
-                                  initialFilters.priceRange[1] <= dbPriceRange.max;
-      const newRange: [number, number] = hasInitialPriceRange ? initialFilters.priceRange! : [dbPriceRange.min, dbPriceRange.max];
-      
+      const hasInitialPriceRange =
+        initialFilters.priceRange &&
+        initialFilters.priceRange[0] >= dbPriceRange.min &&
+        initialFilters.priceRange[1] <= dbPriceRange.max;
+      const newRange: [number, number] = hasInitialPriceRange
+        ? (initialFilters.priceRange as [number, number])
+        : [dbPriceRange.min, dbPriceRange.max];
+
       // Only update if the range is actually different to prevent unnecessary re-renders
       setPriceRange(prevRange => {
         if (prevRange[0] !== newRange[0] || prevRange[1] !== newRange[1]) {
@@ -53,8 +64,10 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
         }
         return prevRange;
       });
+
+      setRangeReady(true);
     }
-  }, [priceLoading, dbPriceRange.min, dbPriceRange.max, bookingType]);
+  }, [priceLoading, dbPriceRange.min, dbPriceRange.max, bookingType, initialFilters.priceRange]);
 
   const bookingTypes = [
     { id: 'daily', label: 'Daily Stay', icon: Calendar },
@@ -120,6 +133,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   const clearAllFilters = () => {
     if (!priceLoading) {
       setPriceRange([dbPriceRange.min, dbPriceRange.max]);
+      setRangeReady(true);
     }
     setSelectedPropertyTypes([]);
     setSelectedAmenities([]);
@@ -129,11 +143,11 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   };
 
   const hasActiveFilters = () => {
-    // Don't show active filters if price data isn't loaded yet
-    if (priceLoading || !dbPriceRange || dbPriceRange.min <= 0) {
+    // Avoid evaluating until the price range has been synced with the database
+    if (!rangeReady || priceLoading || !dbPriceRange || dbPriceRange.min <= 0) {
       return false;
     }
-    
+
     return (
       (priceRange[0] > dbPriceRange.min || priceRange[1] < dbPriceRange.max) ||
       selectedPropertyTypes.length > 0 ||
