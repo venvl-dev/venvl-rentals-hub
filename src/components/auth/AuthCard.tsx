@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,9 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2, AlertCircle } from 'lucide-react';
+import { validateEmail, validatePasswordStrength, validateInput } from '@/lib/security';
+import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
+import { logSecurityEvent } from '@/lib/security';
 
 export type AuthRole = 'guest' | 'host' | 'super_admin';
 
@@ -81,37 +84,67 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     }
   };
 
-  // Client-side validation
-  const validateForm = (): boolean => {
+  // Enhanced client-side validation with security
+  const validateForm = useCallback((): boolean => {
     const newErrors: FormErrors = {};
 
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email address';
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-
-    // Signup-specific validation
-    if (mode === 'signup') {
-      if (!formData.firstName.trim()) {
-        newErrors.firstName = 'First name is required';
+    try {
+      // Email validation with security checks
+      if (!formData.email.trim()) {
+        newErrors.email = 'Email is required';
+      } else {
+        const cleanEmail = validateInput(formData.email, 254); // RFC 5321 limit
+        if (!validateEmail(cleanEmail)) {
+          newErrors.email = 'Please enter a valid email address';
+        }
       }
-      if (!formData.lastName.trim()) {
-        newErrors.lastName = 'Last name is required';
+
+      // Enhanced password validation
+      if (!formData.password) {
+        newErrors.password = 'Password is required';
+      } else {
+        if (mode === 'signup') {
+          const passwordValidation = validatePasswordStrength(formData.password);
+          if (!passwordValidation.isValid) {
+            newErrors.password = passwordValidation.errors[0];
+          }
+        } else if (formData.password.length < 6) {
+          newErrors.password = 'Password must be at least 6 characters';
+        }
       }
+
+      // Signup-specific validation with sanitization
+      if (mode === 'signup') {
+        try {
+          if (!formData.firstName.trim()) {
+            newErrors.firstName = 'First name is required';
+          } else {
+            validateInput(formData.firstName, 50);
+          }
+          
+          if (!formData.lastName.trim()) {
+            newErrors.lastName = 'Last name is required';
+          } else {
+            validateInput(formData.lastName, 50);
+          }
+        } catch (inputError: any) {
+          if (inputError.message.includes('First name')) {
+            newErrors.firstName = inputError.message;
+          } else if (inputError.message.includes('Last name')) {
+            newErrors.lastName = inputError.message;
+          } else {
+            newErrors.general = 'Invalid input detected. Please check your entries.';
+          }
+        }
+      }
+    } catch (error) {
+      newErrors.general = 'Form validation error. Please try again.';
+      logSecurityEvent('form_validation_error', 'authentication', undefined, false, (error as Error).message);
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData, mode]);
 
   // Check for duplicate email during signup
   const checkEmailExists = async (email: string): Promise<boolean> => {
