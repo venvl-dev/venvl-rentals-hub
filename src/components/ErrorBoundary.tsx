@@ -1,5 +1,6 @@
 import React, { Component, ReactNode } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
 
 interface Props {
   children: ReactNode;
@@ -8,6 +9,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error?: Error;
+  errorId?: string;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
@@ -17,12 +19,38 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    const errorId = Date.now().toString(36);
+    return { hasError: true, error, errorId };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  async componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Application Error:', error, errorInfo);
+    
+    // Log error securely
+    try {
+      await handleError(
+        new CustomError(
+          'React Error Boundary caught an error',
+          ErrorCodes.SYSTEM_DATABASE_ERROR,
+          'critical',
+          'An unexpected error occurred. Our team has been notified.'
+        ),
+        { 
+          error: error.message,
+          stack: error.stack,
+          componentStack: errorInfo.componentStack,
+          errorId: this.state.errorId
+        },
+        false // Don't show toast, we'll handle UI here
+      );
+    } catch (loggingError) {
+      console.error('Failed to log error:', loggingError);
+    }
   }
+
+  handleRetry = () => {
+    this.setState({ hasError: false, error: undefined, errorId: undefined });
+  };
 
   render() {
     if (this.state.hasError) {
@@ -46,12 +74,25 @@ export class ErrorBoundary extends Component<Props, State> {
                 <li>Restart the development server</li>
               </ol>
             </div>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-            >
-              Retry
-            </button>
+            <div className="space-y-3">
+              <button 
+                onClick={this.handleRetry}
+                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              >
+                Try Again
+              </button>
+              <button 
+                onClick={() => window.location.href = '/'} 
+                className="w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 transition-colors"
+              >
+                Go to Homepage
+              </button>
+            </div>
+            {this.state.errorId && (
+              <p className="text-xs text-muted-foreground">
+                Error ID: {this.state.errorId}
+              </p>
+            )}
           </div>
         </div>
       );
