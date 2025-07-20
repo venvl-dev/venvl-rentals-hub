@@ -82,8 +82,7 @@ interface EnhancedPropertyFormProps {
 const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFormProps) => {
   // Fixed amenities synchronization: form now uses AMENITIES from amenitiesUtils.ts consistently
   if (process.env.NODE_ENV !== 'production') {
-    console.log('🔧 EnhancedPropertyForm - Initial property data:', property);
-    console.log('🔧 Property amenities received:', property?.amenities);
+    // Initialize form with property data
   }
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,7 +94,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   // Get current rental type for existing property or default for new property
   const initialRentalType = property ? getRentalType(property as PropertyRentalData) : 'daily';
   if (process.env.NODE_ENV !== 'production') {
-    console.log('🔧 Initial rental type:', initialRentalType);
+    // Set initial rental type
   }
 
   // Create dynamic schema based on current rental type
@@ -126,14 +125,14 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   });
 
   if (process.env.NODE_ENV !== 'production') {
-    console.log('🔧 Form default values - amenities:', property?.amenities || []);
+    // Set form default values with amenities
   }
 
   const watchedRentalType = form.watch('rental_type') as RentalType;
   const watchedAmenities = form.watch('amenities') || [];
   
   if (process.env.NODE_ENV !== 'production') {
-    console.log('🔧 Watched amenities:', watchedAmenities);
+    // Watch amenities changes
   }
 
   // Update schema when rental type changes
@@ -161,11 +160,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   // Update form when property changes (important for editing mode)
   useEffect(() => {
     if (property) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🔄 Property prop changed, updating form with:', property);
-        console.log('🔄 Amenities to load:', property.amenities);
-      }
-      
+      // Update form when property prop changes
       const formData = {
         title: property.title || '',
         description: property.description || '',
@@ -187,44 +182,18 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         images: property.images || [],
       };
       
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🔄 Form data to reset with:', formData);
-        console.log('🔄 Amenities in form data:', formData.amenities);
-      }
-      
       form.reset(formData);
       setImageUrls(property.images || []);
-      
-      // Verify form was updated
-      setTimeout(() => {
-        const currentAmenities = form.getValues('amenities');
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('🔄 Form amenities after reset:', currentAmenities);
-        }
-      }, 100);
     }
   }, [property, form]);
 
   const handleAmenityToggle = (amenity: string) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔧 Toggling amenity:', amenity);
-    }
     const currentAmenities = form.getValues('amenities') || [];
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔧 Current amenities before toggle:', currentAmenities);
-    }
-    
     const updated = currentAmenities.includes(amenity)
       ? currentAmenities.filter(a => a !== amenity)
       : [...currentAmenities, amenity];
     
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔧 Updated amenities after toggle:', updated);
-    }
     form.setValue('amenities', updated);
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔧 Form amenities after setValue:', form.getValues('amenities'));
-    }
   };
 
   const addImage = () => {
@@ -243,63 +212,44 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   };
 
   const onSubmit = async (data: PropertyFormData) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🚀 Starting form submission...');
-      console.log('🚀 Form data received:', data);
-      console.log('🚀 Amenities in form data:', data.amenities);
-      console.log('🚀 Is editing mode?', !!property);
-      console.log('🚀 Property ID for edit:', property?.id);
-    }
-    
     try {
       setIsSubmitting(true);
 
       const rentalType = data.rental_type as RentalType;
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🚀 Rental type:', rentalType);
-      }
       
       // Enhanced validation with detailed error messages
       if (rentalType === 'daily') {
         if (!data.price_per_night || data.price_per_night <= 0) {
-          console.error('❌ Daily price validation failed:', data.price_per_night);
           toast.error('Daily price is required and must be greater than 0 for daily rentals');
           return;
         }
         if (!data.min_nights || data.min_nights < 1) {
-          console.error('❌ Min nights validation failed:', data.min_nights);
           toast.error('Minimum nights must be at least 1 for daily rentals');
           return;
         }
       } else if (rentalType === 'monthly') {
         if (!data.monthly_price || data.monthly_price <= 0) {
-          console.error('❌ Monthly price validation failed:', data.monthly_price);
           toast.error('Monthly price is required and must be greater than 0 for monthly rentals');
           return;
         }
         if (!data.min_months || data.min_months < 1) {
-          console.error('❌ Min months validation failed:', data.min_months);
           toast.error('Minimum months must be at least 1 for monthly rentals');
           return;
         }
       } else if (rentalType === 'both') {
         if (!data.price_per_night || data.price_per_night <= 0) {
-          console.error('❌ Daily price validation failed for both:', data.price_per_night);
           toast.error('Daily price is required for flexible booking properties');
           return;
         }
         if (!data.monthly_price || data.monthly_price <= 0) {
-          console.error('❌ Monthly price validation failed for both:', data.monthly_price);
           toast.error('Monthly price is required for flexible booking properties');
           return;
         }
         if (!data.min_nights || data.min_nights < 1) {
-          console.error('❌ Min nights validation failed for both:', data.min_nights);
           toast.error('Minimum nights must be at least 1');
           return;
         }
         if (!data.min_months || data.min_months < 1) {
-          console.error('❌ Min months validation failed for both:', data.min_months);
           toast.error('Minimum months must be at least 1');
           return;
         }
@@ -307,11 +257,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.error('❌ User not authenticated');
         throw new Error('User not authenticated');
-      }
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('✅ User authenticated:', user.id);
       }
 
       // Prepare property data with only relevant price fields
@@ -339,11 +285,6 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         approval_status: 'pending'
       };
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🚀 Property data before price fields:', propertyData);
-        console.log('🚀 Amenities being saved:', propertyData.amenities);
-      }
-
       // Only include relevant price fields based on rental type
       // NOTE: price_per_night is required by database so we always set it
       if (rentalType === 'daily') {
@@ -364,25 +305,12 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         propertyData.min_months = data.min_months;
       }
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🚀 Final property data to save:', propertyData);
-      }
-
       // Save property with synchronized amenities data
       if (property && property.id) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('🔄 Updating existing property...');
-          console.log('🔄 Property ID:', property.id);
-        }
-        
         // Remove fields that shouldn't be updated
         const updateData = { ...propertyData };
         delete updateData.host_id; // Don't update host_id on edit
         delete updateData.approval_status; // Don't reset approval status on edit
-        
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('🔄 Update data being sent:', updateData);
-        }
         
         const { data: result, error } = await supabase
           .from('properties')
@@ -391,61 +319,28 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
           .select();
         
         if (error) {
-          console.error('❌ Update error details:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-            updateData: updateData
-          });
           throw new Error(`Update failed: ${error.message}`);
         }
         
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('✅ Property updated successfully:', result);
-        }
         toast.success('Property updated successfully!');
       } else {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('➕ Creating new property...');
-          console.log('➕ Insert data being sent:', propertyData);
-        }
-        
         const { data: result, error } = await supabase
           .from('properties')
           .insert(propertyData)
           .select();
         
         if (error) {
-          console.error('❌ Insert error details:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-            propertyData: propertyData
-          });
           throw new Error(`Insert failed: ${error.message}`);
         }
         
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('✅ Property created successfully:', result);
-        }
         toast.success('Property created successfully!');
       }
 
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('✅ Calling onSave callback...');
-      }
       onSave();
     } catch (error) {
-      console.error('❌ Error saving property:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save property';
-      console.error('❌ Error message for user:', errorMessage);
       toast.error(`Save failed: ${errorMessage}`);
     } finally {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🏁 Setting isSubmitting to false');
-      }
       setIsSubmitting(false);
     }
   };
