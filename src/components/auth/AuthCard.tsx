@@ -177,6 +177,12 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     setLoading(true);
     setErrors({});
 
+    // Add timeout to prevent indefinite loading
+    const timeoutId = setTimeout(() => {
+      setLoading(false);
+      setErrors({ general: 'Sign in timed out. Please check your connection and try again.' });
+    }, 30000); // 30 second timeout
+
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email.trim().toLowerCase(),
@@ -205,11 +211,48 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
         .from('profiles')
         .select('role, first_name, last_name')
         .eq('id', data.user.id)
-        .single();
+        .maybeSingle();
 
-      if (profileError || !profile) {
+      if (profileError) {
         console.error('Error fetching profile:', profileError);
-        setErrors({ general: 'Unable to load user profile. Please contact support.' });
+        setErrors({ general: 'Unable to load user profile. Please try again or contact support.' });
+        return;
+      }
+
+      if (!profile) {
+        console.warn('Profile not found for user, creating default profile');
+        // Create a profile if it doesn't exist
+        const { error: createProfileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: data.user.id,
+            email: data.user.email,
+            first_name: formData.firstName || '',
+            last_name: formData.lastName || '',
+            role: 'guest'
+          });
+        
+        if (createProfileError) {
+          console.error('Error creating profile:', createProfileError);
+          setErrors({ general: 'Unable to create user profile. Please contact support.' });
+          return;
+        }
+
+        // Fetch the newly created profile
+        const { data: newProfile, error: newProfileError } = await supabase
+          .from('profiles')
+          .select('role, first_name, last_name')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (newProfileError || !newProfile) {
+          console.error('Error fetching newly created profile:', newProfileError);
+          setErrors({ general: 'Profile creation failed. Please contact support.' });
+          return;
+        }
+
+        toast.success(`Welcome, ${newProfile.first_name || 'User'}!`);
+        redirectByRole(newProfile.role as AuthRole);
         return;
       }
 
@@ -219,6 +262,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
       console.error('Unexpected sign in error:', error);
       setErrors({ general: 'An unexpected error occurred during sign in. Please try again.' });
     } finally {
+      clearTimeout(timeoutId);
       setLoading(false);
     }
   };

@@ -70,21 +70,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        if (error) {
+          console.error('Error getting initial session:', error);
+          // Don't treat this as a fatal error - user might just not be logged in
+          setSession(null);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
         
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       } catch (error) {
-        await handleError(
-          new CustomError(
-            'Failed to retrieve session',
-            ErrorCodes.AUTH_SESSION_EXPIRED,
-            'medium'
-          ),
-          {},
-          false
-        );
+        console.error('Unexpected error during session check:', error);
+        // On network errors, assume user is not logged in rather than getting stuck
+        setSession(null);
+        setUser(null);
         setLoading(false);
       }
     };
