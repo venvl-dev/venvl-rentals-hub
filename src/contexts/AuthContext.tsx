@@ -1,8 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
-import { logSecurityEvent } from '@/lib/security';
 
 interface AuthContextType {
   user: User | null;
@@ -29,14 +27,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             // Log successful authentication
             if (session?.user && event === 'SIGNED_IN') {
-              await logSecurityEvent('user_signed_in', 'authentication', session.user.id, true);
+              console.log('User signed in:', session.user.id);
             }
             break;
             
           case 'SIGNED_OUT':
             if (user) {
               localStorage.removeItem(`user_role_${user.id}`);
-              await logSecurityEvent('user_signed_out', 'authentication', user.id, true);
+              console.log('User signed out:', user.id);
             }
             setSession(null);
             setUser(null);
@@ -51,19 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           default:
             break;
         }
-      } catch (error) {
-        await handleError(
-          new CustomError(
-            'Authentication state change error',
-            ErrorCodes.AUTH_SESSION_EXPIRED,
-            'high',
-            'Authentication error occurred. Please try logging in again.'
-          ),
-          { event, userId: session?.user?.id },
-          false // Don't show toast for auth state changes
-        );
-        setLoading(false);
-      }
+        } catch (error) {
+          console.error('Authentication state change error:', error);
+          setLoading(false);
+        }
     });
 
     // Initial session check

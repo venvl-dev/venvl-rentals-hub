@@ -4,8 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
 import { useSecureQuery } from '@/hooks/useSecureApi';
-import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
-import { logSecurityEvent } from '@/lib/security';
+// import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -38,10 +37,10 @@ const ProtectedRoute = ({
     setLoading(true);
     try {
       // Log access attempt
-      await logSecurityEvent('route_access_attempt', 'authentication', user?.id, true);
+      console.log('Route access attempt by user:', user?.id);
 
       if (!user && requireAuth) {
-        await logSecurityEvent('unauthorized_access_attempt', 'authentication', undefined, false, 'No user session');
+        console.log('Unauthorized access attempt - no user session');
         toast.error('Please sign in to access this page');
         navigate(redirectTo);
         return;
@@ -74,15 +73,8 @@ const ProtectedRoute = ({
           const profile = await secureProfileQuery.execute(queryFunction);
 
           if (!profile) {
-            await handleError(
-              new CustomError(
-                'Failed to verify user permissions',
-                ErrorCodes.AUTH_UNAUTHORIZED,
-                'high',
-                'Unable to verify user permissions'
-              ),
-              { userId: user!.id }
-            );
+            console.error('Failed to verify user permissions for user:', user!.id);
+            toast.error('Unable to verify user permissions');
             navigate('/');
             return;
           }
@@ -90,14 +82,8 @@ const ProtectedRoute = ({
           role = (profile as any)?.role || 'guest';
           localStorage.setItem(roleKey, role);
         } catch (error) {
-          await handleError(
-            new CustomError(
-              'Profile fetch error',
-              ErrorCodes.AUTH_UNAUTHORIZED,
-              'high'
-            ),
-            { userId: user!.id, error }
-          );
+          console.error('Profile fetch error for user:', user!.id, error);
+          toast.error('Unable to fetch user profile');
           navigate('/');
           return;
         }
@@ -107,10 +93,10 @@ const ProtectedRoute = ({
 
       // Check if user has required role
       if (allowedRoles.includes(role)) {
-        await logSecurityEvent('authorized_access', 'authentication', user!.id, true, `Role: ${role}`);
+        console.log('Authorized access for user:', user!.id, 'Role:', role);
         setAuthorized(true);
       } else {
-        await logSecurityEvent('unauthorized_access_attempt', 'authentication', user!.id, false, `Required: ${allowedRoles.join(', ')}, User has: ${role}`);
+        console.log('Unauthorized access attempt for user:', user!.id, 'Required:', allowedRoles.join(', '), 'User has:', role);
         toast.error('You do not have permission to access this page');
         
         // Redirect based on user role
@@ -128,14 +114,8 @@ const ProtectedRoute = ({
         }
       }
     } catch (error) {
-      await handleError(
-        new CustomError(
-          'Authentication check failed',
-          ErrorCodes.VALIDATION_INVALID_FORMAT,
-          'high'
-        ),
-        { error, userId: user?.id }
-      );
+      console.error('Authentication check failed for user:', user?.id, error);
+      toast.error('Authentication check failed');
       navigate(redirectTo);
     } finally {
       setLoading(false);

@@ -9,8 +9,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { validateEmail, validatePasswordStrength, validateInput } from '@/lib/security';
-import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
-import { logSecurityEvent } from '@/lib/security';
 
 export type AuthRole = 'guest' | 'host' | 'super_admin';
 
@@ -139,7 +137,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
       }
     } catch (error) {
       newErrors.general = 'Form validation error. Please try again.';
-      logSecurityEvent('form_validation_error', 'authentication', undefined, false, (error as Error).message);
+      console.error('Form validation error:', (error as Error).message);
     }
 
     setErrors(newErrors);
@@ -209,7 +207,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
       // Get user profile to determine role
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('role, first_name, last_name')
+        .select('role, first_name, last_name, email')
         .eq('id', data.user.id)
         .maybeSingle();
 
@@ -220,39 +218,8 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
       }
 
       if (!profile) {
-        console.warn('Profile not found for user, creating default profile');
-        // Create a profile if it doesn't exist
-        const { error: createProfileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            email: data.user.email,
-            first_name: formData.firstName || '',
-            last_name: formData.lastName || '',
-            role: 'guest'
-          });
-        
-        if (createProfileError) {
-          console.error('Error creating profile:', createProfileError);
-          setErrors({ general: 'Unable to create user profile. Please contact support.' });
-          return;
-        }
-
-        // Fetch the newly created profile
-        const { data: newProfile, error: newProfileError } = await supabase
-          .from('profiles')
-          .select('role, first_name, last_name')
-          .eq('id', data.user.id)
-          .maybeSingle();
-
-        if (newProfileError || !newProfile) {
-          console.error('Error fetching newly created profile:', newProfileError);
-          setErrors({ general: 'Profile creation failed. Please contact support.' });
-          return;
-        }
-
-        toast.success(`Welcome, ${newProfile.first_name || 'User'}!`);
-        redirectByRole(newProfile.role as AuthRole);
+        console.warn('Profile not found for user, this should not happen with the trigger in place');
+        setErrors({ general: 'User profile not found. Please contact support.' });
         return;
       }
 

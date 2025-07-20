@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Loader2 } from 'lucide-react';
 import { validateInput, sanitizeHtml } from '@/lib/security';
 import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
-import { useSecurity } from '@/components/security/SecurityProvider';
 
 interface FormField {
   name: string;
@@ -37,8 +36,6 @@ export const SecureForm: React.FC<SecureFormProps> = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [generalError, setGeneralError] = useState<string>('');
-  
-  const { checkAndLogAction } = useSecurity();
 
   const clearError = (fieldName: string) => {
     if (errors[fieldName]) {
@@ -120,13 +117,6 @@ export const SecureForm: React.FC<SecureFormProps> = ({
     setGeneralError('');
 
     try {
-      // Security check
-      const allowed = await checkAndLogAction('form_submission', 'form', title);
-      if (!allowed) {
-        setGeneralError('Action temporarily blocked. Please try again later.');
-        return;
-      }
-
       // Prepare clean data
       const cleanData: Record<string, any> = {};
       fields.forEach(field => {
