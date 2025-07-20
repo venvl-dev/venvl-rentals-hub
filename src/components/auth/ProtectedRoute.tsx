@@ -66,7 +66,7 @@ const ProtectedRoute = ({
         // Create a query function for the secure API
         const queryFunction = async () => {
           const { data, error } = await import('@/integrations/supabase/client').then(module => 
-            module.supabase.from('profiles').select('role').eq('id', user!.id).single()
+            module.supabase.from('profiles').select('role').eq('id', user!.id).maybeSingle()
           );
           if (error) throw error;
           return data;
