@@ -5,6 +5,8 @@ import { X, SlidersHorizontal, Home, Calendar, Clock, Building, Building2, Castl
 import { AMENITIES_LIST } from '@/lib/amenitiesUtils';
 import EnhancedPriceRangeFilter from './EnhancedPriceRangeFilter';
 import { usePriceRange } from '@/hooks/usePriceRange';
+import { sanitizeAdvancedFilters, validateAdvancedFilters } from '@/lib/filterValidation';
+import { toast } from 'sonner';
 
 import { AdvancedFilters } from '@/hooks/useFilterStore';
 
@@ -111,9 +113,21 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
       bathrooms: bathrooms,
       bookingType: bookingType && bookingType !== 'daily' ? bookingType : null,
     };
-    
-    console.log('Applying advanced filters:', filters);
-    onFiltersChange(filters);
+
+    const sanitized = sanitizeAdvancedFilters(filters);
+    const validation = validateAdvancedFilters(sanitized);
+
+    if (!validation.isValid) {
+      toast.error(validation.errors[0] || 'Invalid filters');
+      return;
+    }
+
+    if (validation.warnings.length > 0) {
+      toast(validation.warnings[0]);
+    }
+
+    console.log('Applying advanced filters:', sanitized);
+    onFiltersChange(sanitized);
     onClose();
   };
 
