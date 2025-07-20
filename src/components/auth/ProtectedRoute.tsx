@@ -57,9 +57,11 @@ const ProtectedRoute = ({
       }
 
       const roleKey = `user_role_${user!.id}`;
-      let role = localStorage.getItem(roleKey);
+      // Clear any cached role to ensure fresh fetch
+      localStorage.removeItem(roleKey);
       
       // Always fetch fresh role data to avoid cache issues
+      let role: string;
       try {
         // Create a query function for the secure API
         const queryFunction = async () => {
@@ -79,15 +81,11 @@ const ProtectedRoute = ({
           return;
         }
 
-        const freshRole = (profile as any)?.role || 'guest';
+        role = (profile as any)?.role || 'guest';
+        console.log('Fresh role fetched for user:', user!.id, 'Role:', role);
         
-        // Update cache if role has changed
-        if (role !== freshRole) {
-          console.log('Role updated from cache:', role, 'to fresh:', freshRole);
-          localStorage.setItem(roleKey, freshRole);
-        }
-        
-        role = freshRole;
+        // Update cache with fresh role
+        localStorage.setItem(roleKey, role);
       } catch (error) {
         console.error('Profile fetch error for user:', user!.id, error);
         toast.error('Unable to fetch user profile');
