@@ -3,20 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { X, SlidersHorizontal, Home, Calendar, Clock, Building, Building2, Castle, Warehouse, Tent, TreePine } from 'lucide-react';
 import { AMENITIES_LIST } from '@/lib/amenitiesUtils';
-import PriceRangeFilter from './PriceRangeFilter';
+import EnhancedPriceRangeFilter from './EnhancedPriceRangeFilter';
 import { usePriceRange } from '@/hooks/usePriceRange';
 
-export interface AdvancedFilters {
-  priceRange?: [number, number] | null;
-  propertyTypes?: string[] | null;
-  amenities?: string[] | null;
-  bedrooms?: number | null;
-  bathrooms?: number | null;
-  bookingType?: string | null;
-}
+import { AdvancedFilters } from '@/hooks/useFilterStore';
 
 interface FilterProps {
-  onFiltersChange: (filters: AdvancedFilters) => void;
+  onFiltersChange: (filters: Partial<AdvancedFilters>) => void;
   onClose: () => void;
   initialFilters?: Partial<AdvancedFilters>;
 }
@@ -176,7 +169,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
               </div>
 
               {/* Price Range */}
-              <PriceRangeFilter
+              <EnhancedPriceRangeFilter
                 value={priceRange}
                 onChange={setPriceRange}
                 bookingType={bookingType as 'daily' | 'monthly'}

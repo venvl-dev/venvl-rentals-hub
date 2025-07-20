@@ -9,21 +9,10 @@ import VenvlGuestPicker from './VenvlGuestPicker';
 import VenvlBookingTypeSelector from './VenvlBookingTypeSelector';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-interface SearchFilters {
-  location: string;
-  checkIn?: Date;
-  checkOut?: Date;
-  guests: number;
-  bookingType: 'daily' | 'monthly' | 'flexible';
-  flexibleOption?: string;
-  duration?: number;
-  propertyType?: string;
-  priceRange?: { min: number; max: number };
-  amenities?: string[];
-}
+import { SearchFilters } from '@/hooks/useFilterStore';
 
 interface VenvlSearchPillProps {
-  onSearch: (filters: SearchFilters) => void;
+  onSearch: (filters: Partial<SearchFilters>) => void;
   initialFilters?: Partial<SearchFilters>;
 }
 
@@ -38,9 +27,6 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
     bookingType: initialFilters?.bookingType || 'daily',
     flexibleOption: initialFilters?.flexibleOption,
     duration: initialFilters?.duration,
-    propertyType: initialFilters?.propertyType,
-    priceRange: initialFilters?.priceRange,
-    amenities: initialFilters?.amenities || [],
   });
 
   const handleSectionClick = (section: string) => {

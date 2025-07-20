@@ -1,25 +1,20 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import PropertyCard from '@/components/PropertyCard';
 import VenvlSearchPill from '@/components/search/VenvlSearchPill';
-import VenvlAdvancedFilters, { AdvancedFilters } from '@/components/search/VenvlAdvancedFilters';
+import VenvlAdvancedFilters from '@/components/search/VenvlAdvancedFilters';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Users, Bed, Bath, Search } from 'lucide-react';
-import { 
-  matchesSearchCriteria, 
-  type BookingType, 
-  type PropertyRentalData 
-} from '@/lib/rentalTypeUtils';
-import { getAmenitiesByCategory, cleanAmenityIds } from '@/lib/amenitiesUtils';
-import { preloadPropertyImages } from '@/lib/imageOptimization';
+import { Search, Filter } from 'lucide-react';
+import { cleanAmenityIds } from '@/lib/amenitiesUtils';
 import { useAuthImagePreload } from '@/hooks/useAuthImagePreload';
+import { useFilterStore } from '@/hooks/useFilterStore';
+import { usePropertyFiltering } from '@/hooks/usePropertyFiltering';
 import React from 'react';
 
 interface Property {
@@ -49,51 +44,34 @@ interface Property {
   blocked_dates?: string[];
 }
 
-interface SearchFilters {
-  location: string;
-  checkIn?: Date;
-  checkOut?: Date;
-  guests: number;
-  bookingType: BookingType;
-  flexibleOption?: string;
-  duration?: number;
-  propertyType?: string;
-  priceRange?: { min: number; max: number };
-  amenities?: string[];
-  bedrooms?: number;
-  bathrooms?: number;
-}
 
 const Index = () => {
   const navigate = useNavigate();
   const [properties, setProperties] = useState<Property[]>([]);
-  const [filteredProperties, setFilteredProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    location: '',
-    guests: 1,
-    bookingType: 'daily' as BookingType,
-  });
-  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({
-    priceRange: null,
-    propertyTypes: null,
-    amenities: null,
-    bedrooms: null,
-    bathrooms: null,
-    bookingType: null,
-  });
+  
+  // Use centralized filter store
+  const {
+    searchFilters,
+    advancedFilters,
+    updateSearchFilters,
+    updateAdvancedFilters,
+    clearAllFilters,
+    hasActiveFilters,
+    getActiveFilterCount,
+    getCombinedFilters
+  } = useFilterStore();
 
   // Use authentication-aware image preloading
   const { user, isLoading: authLoading, imagesPreloaded, preloadImages, refreshImages } = useAuthImagePreload();
 
+  // Use property filtering hook
+  const { filteredProperties, filteringStats } = usePropertyFiltering(properties, getCombinedFilters());
+
   useEffect(() => {
     fetchProperties();
   }, []);
-
-  useEffect(() => {
-    filterProperties();
-  }, [properties, searchFilters, advancedFilters]);
 
   // Preload images when properties change or user auth state changes
   useEffect(() => {
@@ -172,97 +150,17 @@ const Index = () => {
     }
   }, []);
 
-  const filterProperties = useCallback(() => {
-    // Skip filtering if properties haven't been loaded yet
-    if (!properties || properties.length === 0) {
-      setFilteredProperties([]);
-      return;
-    }
-    
-    let filtered = [...properties];
+  const handleSearch = useCallback((filters: any) => {
+    updateSearchFilters(filters);
+  }, [updateSearchFilters]);
 
-    // Location filter
-    if (searchFilters.location) {
-      filtered = filtered.filter(property => 
-        property.city?.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
-        property.state?.toLowerCase().includes(searchFilters.location.toLowerCase()) ||
-        property.country?.toLowerCase().includes(searchFilters.location.toLowerCase())
-      );
-    }
+  const handleAdvancedFilters = useCallback((newFilters: any) => {
+    updateAdvancedFilters(newFilters);
+  }, [updateAdvancedFilters]);
 
-    // Guest capacity filter
-    if (searchFilters.guests > 1) {
-      filtered = filtered.filter(property => property.max_guests >= searchFilters.guests);
-    }
-
-    // Booking type filter - Use the advanced filter if set, otherwise use search filter
-    const activeBookingType = advancedFilters.bookingType || searchFilters.bookingType;
-    if (activeBookingType && activeBookingType !== 'daily') {
-      filtered = filtered.filter(property => {
-        return matchesSearchCriteria(
-          property as PropertyRentalData, 
-          activeBookingType as BookingType,
-          advancedFilters.priceRange ? { 
-            min: advancedFilters.priceRange[0], 
-            max: advancedFilters.priceRange[1] 
-          } : undefined
-        );
-      });
-    }
-
-    // Advanced filters - Price Range
-    if (advancedFilters.priceRange && Array.isArray(advancedFilters.priceRange)) {
-      filtered = filtered.filter(property => {
-        // Use appropriate price based on booking type
-        let price = property.price_per_night; // default
-        
-        if (activeBookingType === 'daily') {
-          price = property.daily_price || property.price_per_night;
-        } else if (activeBookingType === 'monthly') {
-          price = property.monthly_price ? Math.round(property.monthly_price / 30) : property.price_per_night;
-        }
-        
-        if (!price) return false;
-        return price >= advancedFilters.priceRange[0] && price <= advancedFilters.priceRange[1];
-      });
-    }
-
-    // Property types filter
-    if (advancedFilters.propertyTypes && advancedFilters.propertyTypes.length > 0) {
-      filtered = filtered.filter(property => 
-        advancedFilters.propertyTypes!.includes(property.property_type)
-      );
-    }
-
-    // Amenities filter
-    if (advancedFilters.amenities && advancedFilters.amenities.length > 0) {
-      filtered = filtered.filter(property => 
-        advancedFilters.amenities!.every((amenity: string) => 
-          property.amenities?.includes(amenity)
-        )
-      );
-    }
-
-    // Bedrooms filter
-    if (advancedFilters.bedrooms && advancedFilters.bedrooms > 0) {
-      filtered = filtered.filter(property => property.bedrooms >= advancedFilters.bedrooms!);
-    }
-
-    // Bathrooms filter
-    if (advancedFilters.bathrooms && advancedFilters.bathrooms > 0) {
-      filtered = filtered.filter(property => property.bathrooms >= advancedFilters.bathrooms!);
-    }
-
-    setFilteredProperties(filtered);
-  }, [properties, searchFilters, advancedFilters]);
-
-  const handleSearch = useCallback((filters: SearchFilters) => {
-    setSearchFilters(filters);
-  }, []);
-
-  const handleAdvancedFilters = (newFilters: AdvancedFilters) => {
-    setAdvancedFilters(newFilters);
-  };
+  const handleClearFilters = useCallback(() => {
+    clearAllFilters();
+  }, [clearAllFilters]);
 
   // Enhanced loading state
   const isFullyLoaded = !loading && !authLoading && imagesPreloaded;
@@ -311,16 +209,31 @@ const Index = () => {
             >
               <VenvlSearchPill onSearch={handleSearch} initialFilters={searchFilters} />
               
-              {/* Advanced Filters Button */}
-              <div className="flex justify-center">
+              {/* Advanced Filters Button with Active Filter Count */}
+              <div className="flex justify-center gap-3">
                 <Button
                   variant="outline"
                   onClick={() => setShowAdvancedFilters(true)}
-                  className="flex items-center gap-2 rounded-full border-gray-300 hover:border-gray-400 bg-white shadow-sm"
+                  className="flex items-center gap-2 rounded-full border-gray-300 hover:border-gray-400 bg-white shadow-sm relative"
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                   Advanced filters
+                  {getActiveFilterCount() > 0 && (
+                    <Badge className="ml-1 bg-black text-white text-xs px-2 py-1 rounded-full">
+                      {getActiveFilterCount()}
+                    </Badge>
+                  )}
                 </Button>
+                
+                {hasActiveFilters() && (
+                  <Button
+                    variant="ghost"
+                    onClick={handleClearFilters}
+                    className="flex items-center gap-2 rounded-full text-gray-600 hover:text-gray-900"
+                  >
+                    Clear all
+                  </Button>
+                )}
               </div>
             </motion.div>
           </div>
@@ -361,14 +274,32 @@ const Index = () => {
                       {filteredProperties.length} propert{filteredProperties.length !== 1 ? 'ies' : 'y'} found
                     </h2>
                     
-
+                    {hasActiveFilters() && filteringStats.total > filteredProperties.length && (
+                      <Badge variant="outline" className="text-xs">
+                        {filteringStats.reduction}% filtered out
+                      </Badge>
+                    )}
                   </div>
                   
-                  {searchFilters.location && (
-                    <div className="text-sm sm:text-base text-gray-600">
-                      in {searchFilters.location}
-                    </div>
-                  )}
+                  <div className="flex items-center gap-4">
+                    {searchFilters.location && (
+                      <div className="text-sm sm:text-base text-gray-600">
+                        in {searchFilters.location}
+                      </div>
+                    )}
+                    
+                    {hasActiveFilters() && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClearFilters}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        <Filter className="h-4 w-4 mr-1" />
+                        Clear filters
+                      </Button>
+                    )}
+                  </div>
                 </motion.div>
 
                 {/* Properties Grid */}
@@ -400,13 +331,7 @@ const Index = () => {
                       Try adjusting your search criteria or filters
                     </p>
                     <Button
-                      onClick={() => {
-                        setSearchFilters({
-                          location: '',
-                          guests: 1,
-                          bookingType: 'daily' as BookingType,
-                        });
-                      }}
+                      onClick={handleClearFilters}
                       variant="outline"
                     >
                       Clear All Filters
