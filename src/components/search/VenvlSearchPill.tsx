@@ -34,17 +34,11 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
   };
 
   const handleSearch = () => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('VenvlSearchPill - handleSearch called with filters:', filters);
-    }
     onSearch(filters);
     setActiveSection(null);
   };
 
   const updateFilters = (newFilters: Partial<SearchFilters>) => {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('VenvlSearchPill - updateFilters called with:', newFilters);
-    }
     setFilters(prev => ({ ...prev, ...newFilters }));
   };
 
