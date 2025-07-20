@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { X, SlidersHorizontal, Home, Calendar, Clock, Building, Building2, Castle, Warehouse, Tent, TreePine } from 'lucide-react';
+import { X, SlidersHorizontal, Home, Calendar, Building, Building2, Castle, Warehouse, TreePine } from 'lucide-react';
 import { AMENITIES_LIST } from '@/lib/amenitiesUtils';
 import EnhancedPriceRangeFilter from './EnhancedPriceRangeFilter';
 import { usePriceRange } from '@/hooks/usePriceRange';
@@ -47,29 +47,13 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   const [bedrooms, setBedrooms] = useState<number | null>(initialFilters.bedrooms || null);
   const [bathrooms, setBathrooms] = useState<number | null>(initialFilters.bathrooms || null);
 
-  // Update price range when database data is loaded or booking type changes
+  // Update price range when booking type or db range changes
   useEffect(() => {
-    if (!priceLoading && dbPriceRange.min > 0) {
-      // Check if we have initial filters for this specific price range, otherwise use full range
-      const hasInitialPriceRange =
-        initialFilters.priceRange &&
-        initialFilters.priceRange[0] >= dbPriceRange.min &&
-        initialFilters.priceRange[1] <= dbPriceRange.max;
-      const newRange: [number, number] = hasInitialPriceRange
-        ? (initialFilters.priceRange as [number, number])
-        : [dbPriceRange.min, dbPriceRange.max];
-
-      // Only update if the range is actually different to prevent unnecessary re-renders
-      setPriceRange(prevRange => {
-        if (prevRange[0] !== newRange[0] || prevRange[1] !== newRange[1]) {
-          return newRange;
-        }
-        return prevRange;
-      });
-
+    if (!priceLoading && dbPriceRange) {
+      setPriceRange([dbPriceRange.min, dbPriceRange.max]);
       setRangeReady(true);
     }
-  }, [priceLoading, dbPriceRange.min, dbPriceRange.max, bookingType, initialFilters.priceRange]);
+  }, [dbPriceRange, priceLoading]);
 
   const bookingTypes = [
     { id: 'daily', label: 'Daily Stay', icon: Calendar },
@@ -103,66 +87,35 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
     );
   };
 
-  const handleApplyFilters = () => {
-    // Validate that we have proper price range data before applying filters
-    if (priceLoading || !dbPriceRange || dbPriceRange.min <= 0) {
-      console.warn('Cannot apply filters: price range not loaded');
-      return;
-    }
-
-    // Validate price range values
-    const validMinPrice = Math.max(priceRange[0], dbPriceRange.min);
-    const validMaxPrice = Math.min(priceRange[1], dbPriceRange.max);
-    const validPriceRange: [number, number] = [validMinPrice, validMaxPrice];
-    
-    // Check if this is effectively the default price range
-    const isDefaultPriceRange = validPriceRange[0] === dbPriceRange.min && validPriceRange[1] === dbPriceRange.max;
-    
-    const filters: AdvancedFilters = {
-      priceRange: isDefaultPriceRange ? null : validPriceRange,
-      propertyTypes: selectedPropertyTypes.length > 0 ? selectedPropertyTypes : null,
-      amenities: selectedAmenities.length > 0 ? selectedAmenities : null,
-      bedrooms: bedrooms,
-      bathrooms: bathrooms,
-      bookingType: bookingType && bookingType !== 'daily' ? bookingType : null,
+  const handleApply = () => {
+    const rawFilters: AdvancedFilters = {
+      bookingType,
+      priceRange,
+      propertyTypes: selectedPropertyTypes,
+      amenities: selectedAmenities,
+      bedrooms,
+      bathrooms
     };
 
-    const sanitized = sanitizeAdvancedFilters(filters);
-    const validation = validateAdvancedFilters(sanitized);
-
-    if (!validation.isValid) {
-      toast.error(validation.errors[0] || 'Invalid filters');
+    const result = validateAdvancedFilters(rawFilters);
+    if (!result.isValid) {
+      toast.error('Some filters are invalid. Please review them.');
       return;
     }
 
-    if (validation.warnings.length > 0) {
-      toast(validation.warnings[0]);
-    }
-
-    console.log('Applying advanced filters:', sanitized);
+    const sanitized = sanitizeAdvancedFilters(rawFilters);
     onFiltersChange(sanitized);
     onClose();
   };
 
-  const clearAllFilters = () => {
-    onFiltersChange({
-      priceRange: null,
-      propertyTypes: null,
-      amenities: null,
-      bedrooms: null,
-      bathrooms: null,
-      bookingType: null,
-    });
-
-    if (!priceLoading) {
-      setPriceRange([dbPriceRange.min, dbPriceRange.max]);
-      setRangeReady(true);
-    }
+  const resetFilters = () => {
+    setBookingType('daily');
+    setPriceRange([0, 10000]);
     setSelectedPropertyTypes([]);
     setSelectedAmenities([]);
     setBedrooms(null);
     setBathrooms(null);
-    setBookingType('daily');
+    onClose();
   };
 
   const hasActiveFilters = () => {
@@ -200,7 +153,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={onClose}
+                onClick={resetFilters}
                 className="h-12 w-12 p-0 rounded-full hover:bg-gray-200 transition-all duration-200 hover:scale-105"
               >
                 <X className="h-6 w-6" />
@@ -350,28 +303,19 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
             <div className="flex items-center justify-between gap-4">
               <Button
                 variant="ghost"
-                onClick={clearAllFilters}
+                onClick={resetFilters}
                 disabled={!hasActiveFilters()}
                 className="text-gray-600 hover:text-gray-900 font-medium px-6 py-3 rounded-xl transition-all duration-200 hover:bg-gray-200"
               >
-                Clear all
+                Reset
               </Button>
-              
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={onClose}
-                  className="px-8 py-3 border-gray-300 hover:border-gray-400 rounded-xl font-medium transition-all duration-200 hover:shadow-md"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleApplyFilters}
-                  className="bg-black text-white hover:bg-gray-800 px-10 py-3 font-medium rounded-xl transition-all duration-200 hover:shadow-lg transform hover:scale-105"
-                >
-                  Apply filters
-                </Button>
-              </div>
+
+              <Button
+                onClick={handleApply}
+                className="bg-black text-white hover:bg-gray-800 px-10 py-3 font-medium rounded-xl transition-all duration-200 hover:shadow-lg transform hover:scale-105"
+              >
+                Apply Filters
+              </Button>
             </div>
           </div>
         </Card>
