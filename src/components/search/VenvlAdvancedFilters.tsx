@@ -131,6 +131,15 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   };
 
   const clearAllFilters = () => {
+    onFiltersChange({
+      priceRange: null,
+      propertyTypes: null,
+      amenities: null,
+      bedrooms: null,
+      bathrooms: null,
+      bookingType: null,
+    });
+
     if (!priceLoading) {
       setPriceRange([dbPriceRange.min, dbPriceRange.max]);
       setRangeReady(true);
