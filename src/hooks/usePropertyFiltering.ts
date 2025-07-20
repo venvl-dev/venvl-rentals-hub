@@ -57,15 +57,14 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
 
     // Booking type filter - Use the advanced filter if set, otherwise use search filter
     const activeBookingType = advancedFilters.bookingType || filters.bookingType;
-    if (activeBookingType && activeBookingType !== 'daily') {
+    
+    // Always apply booking type filter, not just for non-daily types
+    if (activeBookingType) {
       filtered = filtered.filter(property => {
         return matchesSearchCriteria(
           property as PropertyRentalData, 
-          activeBookingType as BookingType,
-          advancedFilters.priceRange ? { 
-            min: advancedFilters.priceRange[0], 
-            max: advancedFilters.priceRange[1] 
-          } : undefined
+          activeBookingType as BookingType
+          // Don't pass price range here - it should be handled separately
         );
       });
     }
@@ -79,7 +78,8 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
         if (activeBookingType === 'daily') {
           price = property.daily_price || property.price_per_night;
         } else if (activeBookingType === 'monthly') {
-          price = property.monthly_price ? Math.round(property.monthly_price / 30) : property.price_per_night;
+          // For monthly filter, compare against actual monthly price, not daily equivalent
+          price = property.monthly_price || 0;
         }
         
         if (!price || price <= 0) return false;

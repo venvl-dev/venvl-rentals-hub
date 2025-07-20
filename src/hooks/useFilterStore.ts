@@ -92,7 +92,7 @@ export const useFilterStore = () => {
                             searchFilters.checkIn ||
                             searchFilters.checkOut;
 
-    const hasAdvancedFilters = !priceLoading && (
+    const hasAdvancedFilters = !priceLoading && dbPriceRange && (
       (advancedFilters.priceRange && 
        (advancedFilters.priceRange[0] > dbPriceRange.min || advancedFilters.priceRange[1] < dbPriceRange.max)) ||
       (advancedFilters.propertyTypes && advancedFilters.propertyTypes.length > 0) ||
@@ -114,7 +114,7 @@ export const useFilterStore = () => {
     if (searchFilters.checkIn) count++;
     if (searchFilters.checkOut) count++;
     
-    if (!priceLoading && advancedFilters.priceRange && 
+    if (!priceLoading && dbPriceRange && advancedFilters.priceRange && 
         (advancedFilters.priceRange[0] > dbPriceRange.min || advancedFilters.priceRange[1] < dbPriceRange.max)) {
       count++;
     }
