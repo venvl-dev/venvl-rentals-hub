@@ -21,7 +21,9 @@ export const usePriceRange = (bookingType?: 'daily' | 'monthly') => {
     const fetchPriceData = async () => {
       try {
         setLoading(true);
-        console.log('Fetching price range for booking type:', bookingType);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Fetching price range for booking type:', bookingType);
+        }
         
         // Use direct query instead of RPC for better reliability
         const { data, error } = await supabase
@@ -35,7 +37,9 @@ export const usePriceRange = (bookingType?: 'daily' | 'monthly') => {
           return;
         }
 
-        console.log('Fetched properties data:', data.length, 'properties');
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Fetched properties data:', data.length, 'properties');
+        }
 
         // Extract prices based on booking type
         const prices: number[] = [];
@@ -58,10 +62,14 @@ export const usePriceRange = (bookingType?: 'daily' | 'monthly') => {
           }
         });
 
-        console.log('Extracted prices:', prices);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Extracted prices:', prices);
+        }
 
         if (prices.length === 0) {
-          console.log('No prices found, using fallback range');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log('No prices found, using fallback range');
+          }
           setPriceRange({
             min: 0,
             max: 10000,
@@ -73,7 +81,9 @@ export const usePriceRange = (bookingType?: 'daily' | 'monthly') => {
         const min = Math.floor(Math.min(...prices));
         const max = Math.ceil(Math.max(...prices));
 
-        console.log('Calculated price range:', { min, max });
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('Calculated price range:', { min, max });
+        }
 
         if (mounted) {
           setPriceRange({

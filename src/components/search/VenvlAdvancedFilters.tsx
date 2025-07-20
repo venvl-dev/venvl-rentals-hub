@@ -112,7 +112,10 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
       bookingType: bookingType && bookingType !== 'daily' ? bookingType : null,
     };
     
-    console.log('Applying advanced filters:', filters);
+    // Log applied filters in development for debugging
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Applying advanced filters:', filters);
+    }
     onFiltersChange(filters);
     onClose();
   };
