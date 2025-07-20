@@ -89,7 +89,7 @@ const EnhancedPriceRangeFilter: React.FC<EnhancedPriceRangeFilterProps> = ({
     return price.toLocaleString();
   };
 
-  if (loading) {
+  if (loading || !dbPriceRange || dbPriceRange.min <= 0) {
     return (
       <div className={`space-y-4 ${className}`}>
         <div className="flex items-center justify-between">
@@ -103,10 +103,6 @@ const EnhancedPriceRangeFilter: React.FC<EnhancedPriceRangeFilterProps> = ({
         <div className="animate-pulse bg-gray-200 h-6 rounded-lg"></div>
       </div>
     );
-  }
-
-  if (!isInitialized) {
-    return null;
   }
 
   return (

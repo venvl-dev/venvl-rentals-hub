@@ -89,17 +89,30 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   };
 
   const handleApplyFilters = () => {
-    const isDefaultPriceRange = priceRange[0] === dbPriceRange.min && priceRange[1] === dbPriceRange.max;
+    // Validate that we have proper price range data before applying filters
+    if (priceLoading || !dbPriceRange || dbPriceRange.min <= 0) {
+      console.warn('Cannot apply filters: price range not loaded');
+      return;
+    }
+
+    // Validate price range values
+    const validMinPrice = Math.max(priceRange[0], dbPriceRange.min);
+    const validMaxPrice = Math.min(priceRange[1], dbPriceRange.max);
+    const validPriceRange: [number, number] = [validMinPrice, validMaxPrice];
+    
+    // Check if this is effectively the default price range
+    const isDefaultPriceRange = validPriceRange[0] === dbPriceRange.min && validPriceRange[1] === dbPriceRange.max;
     
     const filters: AdvancedFilters = {
-      priceRange: isDefaultPriceRange ? null : priceRange,
+      priceRange: isDefaultPriceRange ? null : validPriceRange,
       propertyTypes: selectedPropertyTypes.length > 0 ? selectedPropertyTypes : null,
       amenities: selectedAmenities.length > 0 ? selectedAmenities : null,
       bedrooms: bedrooms,
       bathrooms: bathrooms,
-      bookingType: bookingType === 'daily' ? null : bookingType,
+      bookingType: bookingType && bookingType !== 'daily' ? bookingType : null,
     };
     
+    console.log('Applying advanced filters:', filters);
     onFiltersChange(filters);
     onClose();
   };
@@ -116,7 +129,10 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   };
 
   const hasActiveFilters = () => {
-    if (priceLoading) return false;
+    // Don't show active filters if price data isn't loaded yet
+    if (priceLoading || !dbPriceRange || dbPriceRange.min <= 0) {
+      return false;
+    }
     
     return (
       (priceRange[0] > dbPriceRange.min || priceRange[1] < dbPriceRange.max) ||
@@ -124,7 +140,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
       selectedAmenities.length > 0 ||
       bedrooms !== null ||
       bathrooms !== null ||
-      bookingType !== 'daily'
+      (bookingType && bookingType !== 'daily')
     );
   };
 
