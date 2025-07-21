@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useAdminQueryClient } from '@/hooks/useAdminQueryClient';
 import { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import { 
@@ -66,7 +67,7 @@ interface UserStats {
 }
 
 const EnhancedUsersPage = () => {
-  const queryClient = useQueryClient();
+  const { queryClient, invalidateAdminQueries } = useAdminQueryClient();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState('all');
 
@@ -102,7 +103,7 @@ const EnhancedUsersPage = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      invalidateAdminQueries([['admin-users']]);
       toast.success('User role updated successfully');
     },
     onError: (error) => {
@@ -129,7 +130,7 @@ const EnhancedUsersPage = () => {
       });
     },
     onSuccess: (_, { disable }) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      invalidateAdminQueries([['admin-users']]);
       toast.success(`User ${disable ? 'deactivated' : 'activated'} successfully`);
     },
     onError: (error) => {

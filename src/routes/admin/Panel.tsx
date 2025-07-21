@@ -18,7 +18,8 @@ import {
   Eye,
   FileText
 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import AdminLayout from '@/components/admin/AdminLayout';
 
 interface DashboardStats {
   totalUsers: number;
@@ -39,7 +40,6 @@ interface RecentActivity {
 }
 
 const SuperAdminPanel = () => {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -115,11 +115,7 @@ const SuperAdminPanel = () => {
 
     } catch (error) {
       console.error('Error loading dashboard data:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard data",
-        variant: "destructive",
-      });
+      toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -127,19 +123,20 @@ const SuperAdminPanel = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading dashboard...</div>
-      </div>
+      <AdminLayout title="Dashboard">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-lg">Loading dashboard...</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+    <AdminLayout title="Super Admin Dashboard">
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Super Admin Dashboard</h1>
-            <p className="text-muted-foreground mt-2">VENVL Rentals Hub Management Panel</p>
+            <p className="text-muted-foreground">VENVL Rentals Hub Management Panel</p>
           </div>
           <Badge variant="secondary" className="flex items-center space-x-1">
             <Shield className="h-4 w-4" />
@@ -363,7 +360,7 @@ const SuperAdminPanel = () => {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

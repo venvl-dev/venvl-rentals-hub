@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { 
   FileText, 
   Search, 
@@ -68,7 +69,6 @@ interface LogStats {
 }
 
 const AuditLogsPage = () => {
-  const { toast } = useToast();
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [securityLogs, setSecurityLogs] = useState<SecurityLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<(AuditLog | SecurityLog)[]>([]);
@@ -150,11 +150,7 @@ const AuditLogsPage = () => {
 
     } catch (error) {
       console.error('Error loading logs:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load audit logs",
-        variant: "destructive",
-      });
+      toast.error('Failed to load audit logs');
     } finally {
       setLoading(false);
     }
@@ -280,20 +276,20 @@ const AuditLogsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading audit logs...</div>
-      </div>
+      <AdminLayout title="Audit Logs">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-lg">Loading audit logs...</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <AdminLayout title="Audit Logs">
+      <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Audit Logs</h1>
-          <p className="text-muted-foreground mt-2">Monitor system activities and security events</p>
+          <p className="text-muted-foreground">Monitor system activities and security events</p>
         </div>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -577,7 +573,8 @@ const AuditLogsPage = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

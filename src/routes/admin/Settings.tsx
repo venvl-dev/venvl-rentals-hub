@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { 
   Settings, 
   Save, 
@@ -56,7 +57,6 @@ interface PlatformSettings {
 }
 
 const GlobalSettings = () => {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<PlatformSettings>({
@@ -105,11 +105,7 @@ const GlobalSettings = () => {
       setSettings(prev => ({ ...prev, ...settingsObject }));
     } catch (error) {
       console.error('Error loading settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load platform settings",
-        variant: "destructive",
-      });
+      toast.error('Failed to load platform settings');
     } finally {
       setLoading(false);
     }
@@ -143,17 +139,10 @@ const GlobalSettings = () => {
         p_metadata: { updated_keys: Object.keys(settings) }
       });
 
-      toast({
-        title: "Success",
-        description: "Platform settings saved successfully",
-      });
+      toast.success('Platform settings saved successfully');
     } catch (error) {
       console.error('Error saving settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save platform settings",
-        variant: "destructive",
-      });
+      toast.error('Failed to save platform settings');
     } finally {
       setSaving(false);
     }
@@ -186,24 +175,26 @@ const GlobalSettings = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading settings...</div>
-      </div>
+      <AdminLayout title="Global Settings">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-lg">Loading settings...</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Global Settings</h1>
-          <p className="text-muted-foreground mt-2">Configure platform-wide settings and preferences</p>
+    <AdminLayout title="Global Settings">
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-muted-foreground">Configure platform-wide settings and preferences</p>
+          </div>
+          <Button onClick={saveSettings} disabled={saving}>
+            <Save className="h-4 w-4 mr-2" />
+            {saving ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
-        <Button onClick={saveSettings} disabled={saving}>
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? 'Saving...' : 'Save Changes'}
-        </Button>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* General Settings */}
@@ -499,7 +490,8 @@ const GlobalSettings = () => {
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

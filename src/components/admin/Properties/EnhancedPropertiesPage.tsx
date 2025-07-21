@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { useAdminQueryClient } from '@/hooks/useAdminQueryClient';
 import { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
 import { 
@@ -87,7 +88,7 @@ interface PropertyStats {
 }
 
 const EnhancedPropertiesPage = () => {
-  const queryClient = useQueryClient();
+  const { queryClient, invalidateAdminQueries } = useAdminQueryClient();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [activeTab, setActiveTab] = useState('all');
 
@@ -130,7 +131,7 @@ const EnhancedPropertiesPage = () => {
       });
     },
     onSuccess: (_, { status }) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      invalidateAdminQueries([['admin-properties']]);
       toast.success(`Property ${status} successfully`);
     },
     onError: (error) => {
@@ -157,7 +158,7 @@ const EnhancedPropertiesPage = () => {
       });
     },
     onSuccess: (_, { isActive }) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+      invalidateAdminQueries([['admin-properties']]);
       toast.success(`Property ${!isActive ? 'activated' : 'archived'} successfully`);
     },
     onError: (error) => {

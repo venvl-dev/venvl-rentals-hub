@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { 
   Shield, 
   AlertTriangle, 
@@ -66,7 +67,6 @@ interface ModerationStats {
 }
 
 const ContentModeration = () => {
-  const { toast } = useToast();
   const [reports, setReports] = useState<ModerationReport[]>([]);
   const [filteredReports, setFilteredReports] = useState<ModerationReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,11 +124,7 @@ const ContentModeration = () => {
       calculateStats(data || []);
     } catch (error) {
       console.error('Error loading moderation reports:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load moderation reports",
-        variant: "destructive",
-      });
+      toast.error('Failed to load moderation reports');
     } finally {
       setLoading(false);
     }
@@ -203,19 +199,12 @@ const ContentModeration = () => {
         p_metadata: { status, resolution, notes }
       });
 
-      toast({
-        title: "Success",
-        description: `Report ${status} successfully`,
-      });
+      toast.success(`Report ${status} successfully`);
 
       loadReports();
     } catch (error) {
       console.error('Error updating report status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update report status",
-        variant: "destructive",
-      });
+      toast.error('Failed to update report status');
     }
   };
 
@@ -277,20 +266,20 @@ const ContentModeration = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading moderation reports...</div>
-      </div>
+      <AdminLayout title="Content Moderation">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-lg">Loading moderation reports...</div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <AdminLayout title="Content Moderation">
+      <div className="p-6 space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Content Moderation</h1>
-          <p className="text-muted-foreground mt-2">Review and manage reported content and users</p>
+          <p className="text-muted-foreground">Review and manage reported content and users</p>
         </div>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -601,7 +590,8 @@ const ContentModeration = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 
