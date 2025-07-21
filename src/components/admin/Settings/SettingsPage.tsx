@@ -72,7 +72,16 @@ const SettingsPage = () => {
   const handleTestEmail = async () => {
     setTestingEmail(true);
     try {
-      // This would integrate with your email service
+      const { error } = await supabase.functions.invoke('send-email', {
+        body: {
+          to: getSettingValue('admin_notification_email') || getSettingValue('contact_email'),
+          subject: 'Test Email',
+          text: 'This is a test email from VENVL.',
+        },
+      });
+
+      if (error) throw error;
+
       toast.success('Test email sent successfully');
     } catch (error) {
       toast.error('Failed to send test email');
@@ -271,6 +280,16 @@ const SettingsPage = () => {
                     type="password"
                     value={getSettingValue('smtp_pass') || ''}
                     onChange={(e) => handleSettingUpdate('smtp_pass', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="admin-email">Admin Notification Email</Label>
+                  <Input
+                    id="admin-email"
+                    type="email"
+                    value={getSettingValue('admin_notification_email') || ''}
+                    onChange={(e) => handleSettingUpdate('admin_notification_email', e.target.value)}
+                    placeholder="admin@venvl.com"
                   />
                 </div>
                 
