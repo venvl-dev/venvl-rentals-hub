@@ -41,9 +41,16 @@ const SettingsPage = () => {
   // Update setting mutation
   const updateSettingMutation = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: any }) => {
+      let finalValue = value;
+      if (key === 'smtp_pass' && value) {
+        const { data: encrypted, error: encErr } = await supabase.rpc('encrypt_sensitive_data', { data: value });
+        if (encErr) throw encErr;
+        finalValue = encrypted;
+      }
+
       const { error } = await supabase
         .from('platform_settings')
-        .update({ value, updated_at: new Date().toISOString() })
+        .update({ value: finalValue, updated_at: new Date().toISOString() })
         .eq('key', key);
       
       if (error) throw error;
@@ -275,7 +282,7 @@ const SettingsPage = () => {
                   <Input
                     id="smtp-pass"
                     type="password"
-                    value={getSettingValue('smtp_pass') || ''}
+                    value={''}
                     onChange={(e) => handleSettingUpdate('smtp_pass', e.target.value)}
                   />
                 </div>

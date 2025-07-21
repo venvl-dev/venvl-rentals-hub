@@ -34,6 +34,12 @@ Before running the application, you **MUST** set up your environment variables:
    - Enter your SMTP credentials and an admin notification address.
    - Click **Send Test Email** to verify the configuration.
 
+The `smtp_pass` value is encrypted before being stored in the database using the
+`encrypt_sensitive_data` function defined in Supabase. When SMTP settings are
+fetched via the `get-smtp-settings` edge function, the password is decrypted on
+the server with `decrypt_sensitive_data` so it never travels or is stored in
+plain text.
+
 **Without these environment variables, the application will display an error screen with setup instructions.**
 
 ## Role-Based Architecture
