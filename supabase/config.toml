@@ -64,3 +64,6 @@ verify_jwt = false
 
 [functions.get-smtp-settings]
 verify_jwt = true
+
+[functions.generate-verify-link]
+verify_jwt = false

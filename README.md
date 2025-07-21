@@ -34,6 +34,7 @@ Before running the application, you **MUST** set up your environment variables:
    - Open the Admin portal and navigate to **Settings > Email**.
    - Enter your SMTP credentials and an admin notification address.
    - Click **Send Test Email** to verify the configuration.
+   - New accounts will receive a verification email via these settings.
 
 **Without these environment variables, the application will display an error screen with setup instructions.**
 

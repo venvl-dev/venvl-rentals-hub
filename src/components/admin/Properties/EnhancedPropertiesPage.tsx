@@ -50,6 +50,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataTable } from '@/components/ui/data-table';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '../AdminLayout';
+import { sendEmail } from '@/lib/email';
 
 interface Property {
   id: string;
@@ -115,7 +116,7 @@ const EnhancedPropertiesPage = () => {
 
   // Update property status mutation
   const updatePropertyStatusMutation = useMutation({
-    mutationFn: async ({ propertyId, status }: { propertyId: string; status: 'approved' | 'rejected' }) => {
+    mutationFn: async ({ propertyId, status }: { propertyId: string; status: 'approved' | 'rejected'; hostEmail?: string }) => {
       const { error } = await supabase
         .from('properties')
         .update({ approval_status: status })
@@ -130,9 +131,20 @@ const EnhancedPropertiesPage = () => {
         p_metadata: { status }
       });
     },
-    onSuccess: (_, { status }) => {
+    onSuccess: async (_, { status, hostEmail }) => {
       invalidateAdminQueries([['admin-properties']]);
       toast.success(`Property ${status} successfully`);
+      if (hostEmail) {
+        try {
+          await sendEmail({
+            to: hostEmail,
+            subject: `Your property was ${status}`,
+            text: `Your property has been ${status} by the admin team.`,
+          });
+        } catch (err) {
+          console.error('Failed to send property status email', err);
+        }
+      }
     },
     onError: (error) => {
       toast.error('Failed to update property status');
@@ -142,7 +154,7 @@ const EnhancedPropertiesPage = () => {
 
   // Toggle property active status mutation
   const togglePropertyActiveMutation = useMutation({
-    mutationFn: async ({ propertyId, isActive }: { propertyId: string; isActive: boolean }) => {
+    mutationFn: async ({ propertyId, isActive }: { propertyId: string; isActive: boolean; hostEmail?: string }) => {
       const { error } = await supabase
         .from('properties')
         .update({ is_active: !isActive })
@@ -157,9 +169,21 @@ const EnhancedPropertiesPage = () => {
         p_metadata: { is_active: !isActive }
       });
     },
-    onSuccess: (_, { isActive }) => {
+    onSuccess: async (_, { isActive, hostEmail }) => {
       invalidateAdminQueries([['admin-properties']]);
       toast.success(`Property ${!isActive ? 'activated' : 'archived'} successfully`);
+      if (hostEmail) {
+        const statusText = !isActive ? 'activated' : 'archived';
+        try {
+          await sendEmail({
+            to: hostEmail,
+            subject: `Property ${statusText}`,
+            text: `Your property has been ${statusText} by the admin team.`,
+          });
+        } catch (err) {
+          console.error('Failed to send property toggle email', err);
+        }
+      }
     },
     onError: (error) => {
       toast.error('Failed to update property status');
@@ -327,9 +351,10 @@ const EnhancedPropertiesPage = () => {
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => updatePropertyStatusMutation.mutate({ 
-                      propertyId: property.id, 
-                      status: 'approved' 
+                    onClick={() => updatePropertyStatusMutation.mutate({
+                      propertyId: property.id,
+                      status: 'approved',
+                      hostEmail: property.profiles?.email
                     })}
                     className="text-green-600"
                   >
@@ -337,9 +362,10 @@ const EnhancedPropertiesPage = () => {
                     Approve
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => updatePropertyStatusMutation.mutate({ 
-                      propertyId: property.id, 
-                      status: 'rejected' 
+                    onClick={() => updatePropertyStatusMutation.mutate({
+                      propertyId: property.id,
+                      status: 'rejected',
+                      hostEmail: property.profiles?.email
                     })}
                     className="text-red-600"
                   >
@@ -374,9 +400,10 @@ const EnhancedPropertiesPage = () => {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => togglePropertyActiveMutation.mutate({ 
-                        propertyId: property.id, 
-                        isActive: property.is_active 
+                      onClick={() => togglePropertyActiveMutation.mutate({
+                        propertyId: property.id,
+                        isActive: property.is_active,
+                        hostEmail: property.profiles?.email
                       })}
                     >
                       {property.is_active ? 'Archive' : 'Unarchive'}
@@ -586,9 +613,10 @@ const EnhancedPropertiesPage = () => {
                   <div className="flex space-x-2 pt-4">
                     <Button
                       onClick={() => {
-                        updatePropertyStatusMutation.mutate({ 
-                          propertyId: selectedProperty.id, 
-                          status: 'approved' 
+                        updatePropertyStatusMutation.mutate({
+                          propertyId: selectedProperty.id,
+                          status: 'approved',
+                          hostEmail: selectedProperty.profiles?.email
                         });
                         setSelectedProperty(null);
                       }}
@@ -600,9 +628,10 @@ const EnhancedPropertiesPage = () => {
                     <Button
                       variant="destructive"
                       onClick={() => {
-                        updatePropertyStatusMutation.mutate({ 
-                          propertyId: selectedProperty.id, 
-                          status: 'rejected' 
+                        updatePropertyStatusMutation.mutate({
+                          propertyId: selectedProperty.id,
+                          status: 'rejected',
+                          hostEmail: selectedProperty.profiles?.email
                         });
                         setSelectedProperty(null);
                       }}

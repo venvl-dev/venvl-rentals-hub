@@ -9,6 +9,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, Building2, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { validateEmail, validatePasswordStrength, validateInput } from '@/lib/security';
+import { sendEmail } from '@/lib/email';
 
 export type AuthRole = 'guest' | 'host' | 'super_admin';
 
@@ -323,6 +324,22 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
       }
 
       console.log('User profile created successfully');
+
+      // Send verification email using custom SMTP
+      try {
+        const { data: linkData } = await supabase.functions.invoke('generate-verify-link', {
+          body: { email: data.user.email },
+        });
+        const verifyLink = (linkData as any)?.link;
+
+        await sendEmail({
+          to: data.user.email,
+          subject: 'Verify your email',
+          text: `Welcome to VENVL! Please verify your email by clicking the link below:\n${verifyLink}`,
+        });
+      } catch (err) {
+        console.error('Failed to send verification email', err);
+      }
 
       // Handle email confirmation flow
       if (data.user && !data.user.email_confirmed_at) {
