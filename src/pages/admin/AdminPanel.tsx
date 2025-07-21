@@ -84,9 +84,13 @@ const AdminPanel = () => {
         .eq('id', session.user.id)
         .single();
 
-      if (profileError) throw profileError;
+      let role = profileData?.role || null;
 
-      const role = profileData?.role;
+      if (profileError || !role) {
+        console.warn('Profile fetch failed for user', session.user.id, '- falling back to user metadata');
+        role = (session.user.user_metadata as any)?.role || null;
+      }
+
       setUserRole(role);
 
       // Updated to only allow super_admin

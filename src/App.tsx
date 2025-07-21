@@ -80,21 +80,21 @@ function App() {
                   
                   {/* === HOST ROUTES (domain.com/host/*) === */}
                   <Route path="/host/signup" element={<HostSignup />} />
-                  <Route 
-                    path="/host" 
+                  <Route
+                    path="/host"
                     element={
-                      <ProtectedRoute allowedRoles={["host"]}>
+                      <ProtectedRoute allowedRoles={["host", "super_admin"]}>
                         <HostDashboard />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
-                  <Route 
-                    path="/host/dashboard" 
+                  <Route
+                    path="/host/dashboard"
                     element={
-                      <ProtectedRoute allowedRoles={["host"]}>
+                      <ProtectedRoute allowedRoles={["host", "super_admin"]}>
                         <HostDashboard />
                       </ProtectedRoute>
-                    } 
+                    }
                   />
                   <Route 
                     path="/host/calendar" 
