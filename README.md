@@ -18,6 +18,10 @@ Before running the application, you **MUST** set up your environment variables:
 2. **Add your Supabase credentials to the `.env` file:**
    - `VITE_SUPABASE_URL`: Your Supabase project URL
    - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+   - `SMTP_HOST`: SMTP server host
+   - `SMTP_PORT`: SMTP server port (e.g. 465)
+   - `SMTP_USER`: Username for sending emails
+   - `SMTP_PASS`: Password for the SMTP user
 
 3. **Find these values in your Supabase project dashboard:**
    - Go to Settings > API in your Supabase dashboard
