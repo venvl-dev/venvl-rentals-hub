@@ -45,7 +45,7 @@ serve(async (req) => {
         .select('key, value')
         .in('key', ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass']);
 
-      data?.forEach((row: { key: string; value: any }) => {
+      for (const row of data ?? []) {
         switch (row.key) {
           case 'smtp_host':
             host = row.value as string;
@@ -56,11 +56,13 @@ serve(async (req) => {
           case 'smtp_user':
             user = row.value as string;
             break;
-          case 'smtp_pass':
-            pass = row.value as string;
+          case 'smtp_pass': {
+            const { data: decrypted } = await supabase.rpc('decrypt_sensitive_data', { encrypted_data: row.value as string });
+            pass = decrypted as string;
             break;
+          }
         }
-      });
+      }
     }
 
     if (!host || !user || !pass) {
