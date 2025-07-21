@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { X, SlidersHorizontal, Home, Calendar, Building, Building2, Castle, Warehouse, TreePine } from 'lucide-react';
@@ -31,6 +31,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
     return initialFilters.priceRange || [0, 10000];
   });
   const [rangeReady, setRangeReady] = useState(false);
+  const prevBookingType = useRef(bookingType);
 
   // Reset readiness while loading new price data
   useEffect(() => {
@@ -50,10 +51,14 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
   // Update price range when booking type or db range changes
   useEffect(() => {
     if (!priceLoading && dbPriceRange) {
-      setPriceRange([dbPriceRange.min, dbPriceRange.max]);
+      const bookingTypeChanged = prevBookingType.current !== bookingType;
+      if (initialFilters.priceRange == null || bookingTypeChanged) {
+        setPriceRange([dbPriceRange.min, dbPriceRange.max]);
+      }
+      prevBookingType.current = bookingType;
       setRangeReady(true);
     }
-  }, [dbPriceRange, priceLoading]);
+  }, [dbPriceRange, priceLoading, bookingType, initialFilters.priceRange]);
 
   const bookingTypes = [
     { id: 'daily', label: 'Daily Stay', icon: Calendar },
