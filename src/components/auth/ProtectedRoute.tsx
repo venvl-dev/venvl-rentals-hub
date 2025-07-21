@@ -59,13 +59,13 @@ const ProtectedRoute = ({
       const roleKey = `user_role_${user!.id}`;
       // Clear any cached role to ensure fresh fetch
       localStorage.removeItem(roleKey);
-      
+
       // Always fetch fresh role data to avoid cache issues
-      let role: string;
+      let role: string | null = null;
       try {
         // Create a query function for the secure API
         const queryFunction = async () => {
-          const { data, error } = await import('@/integrations/supabase/client').then(module => 
+          const { data, error } = await import('@/integrations/supabase/client').then(module =>
             module.supabase.from('profiles').select('role').eq('id', user!.id).maybeSingle()
           );
           if (error) throw error;
@@ -74,16 +74,17 @@ const ProtectedRoute = ({
 
         const profile = await secureProfileQuery.execute(queryFunction);
 
-        if (!profile) {
-          console.error('Failed to verify user permissions for user:', user!.id);
-          toast.error('Unable to verify user permissions');
-          navigate('/');
-          return;
+        if (profile) {
+          role = (profile as any)?.role || null;
         }
 
-        role = (profile as any)?.role || 'guest';
-        console.log('Fresh role fetched for user:', user!.id, 'Role:', role);
-        
+        if (!role) {
+          console.warn('Profile not found for user:', user!.id, '- falling back to user metadata');
+          role = (user as any)?.user_metadata?.role || 'guest';
+        }
+
+        console.log('Role resolved for user:', user!.id, 'Role:', role);
+
         // Update cache with fresh role
         localStorage.setItem(roleKey, role);
       } catch (error) {
@@ -96,7 +97,7 @@ const ProtectedRoute = ({
       setUserRole(role);
 
       // Check if user has required role
-      if (allowedRoles.includes(role)) {
+      if (role && allowedRoles.includes(role)) {
         console.log('Authorized access for user:', user!.id, 'Role:', role);
         setAuthorized(true);
       } else {
