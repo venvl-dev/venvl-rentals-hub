@@ -153,7 +153,7 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={resetFilters}
+                onClick={onClose}
                 className="h-12 w-12 p-0 rounded-full hover:bg-gray-200 transition-all duration-200 hover:scale-105"
               >
                 <X className="h-6 w-6" />
