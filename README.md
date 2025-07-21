@@ -22,6 +22,7 @@ Before running the application, you **MUST** set up your environment variables:
    - `SMTP_PORT`: SMTP server port (e.g. 465)
    - `SMTP_USER`: Username for sending emails
    - `SMTP_PASS`: Password for the SMTP user
+   - `SMTP_SECURE`: `true` to use TLS
 
 3. **Find these values in your Supabase project dashboard:**
    - Go to Settings > API in your Supabase dashboard

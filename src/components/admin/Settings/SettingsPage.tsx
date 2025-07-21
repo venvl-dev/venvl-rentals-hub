@@ -1,5 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +14,8 @@ import { Separator } from '@/components/ui/separator';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '../AdminLayout';
 import { Loader2, TestTube } from 'lucide-react';
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 
 interface Setting {
   id: string;
@@ -20,9 +25,41 @@ interface Setting {
   description: string;
 }
 
+const emailSchema = z.object({
+  smtp_host: z.string().nonempty('Host required'),
+  smtp_port: z.coerce.number().min(1),
+  smtp_user: z.string().nonempty('User required'),
+  smtp_pass: z.string().optional(),
+  smtp_secure: z.boolean().default(true)
+});
+
+type EmailFormValues = z.infer<typeof emailSchema>;
+
 const SettingsPage = () => {
   const queryClient = useQueryClient();
   const [testingEmail, setTestingEmail] = useState(false);
+  const [authorized, setAuthorized] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setAuthorized(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      if (error || data?.role !== 'super_admin') {
+        setAuthorized(false);
+      } else {
+        setAuthorized(true);
+      }
+    };
+    checkRole();
+  }, []);
 
   // Fetch settings
   const { data: settings, isLoading } = useQuery({
@@ -36,7 +73,48 @@ const SettingsPage = () => {
       if (error) throw error;
       return data as Setting[];
     },
+    enabled: authorized === true,
   });
+
+  const { data: smtpSettings } = useQuery({
+    queryKey: ['smtp-settings'],
+    queryFn: async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('get-smtp-settings', {
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      if (error) throw error;
+      return data as Partial<EmailFormValues>;
+    },
+    enabled: authorized === true,
+  });
+
+  const emailForm = useForm<EmailFormValues>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: {
+      smtp_host: '',
+      smtp_port: 465,
+      smtp_user: '',
+      smtp_pass: '',
+      smtp_secure: true,
+    },
+  });
+
+  useEffect(() => {
+    if (smtpSettings) {
+      emailForm.reset({
+        smtp_host: smtpSettings.smtp_host || '',
+        smtp_port: smtpSettings.smtp_port || 465,
+        smtp_user: smtpSettings.smtp_user || '',
+        smtp_pass: '',
+        smtp_secure: smtpSettings.smtp_secure ?? true,
+      });
+    }
+  }, [smtpSettings]);
+
+  const onSubmitEmail = (values: EmailFormValues) => {
+    saveEmailSettings.mutate(values);
+  };
 
   // Update setting mutation
   const updateSettingMutation = useMutation({
@@ -76,6 +154,39 @@ const SettingsPage = () => {
     updateSettingMutation.mutate({ key, value });
   };
 
+  const saveEmailSettings = useMutation({
+    mutationFn: async (values: EmailFormValues) => {
+      const updates: { key: string; value: any }[] = [
+        { key: 'smtp_host', value: values.smtp_host },
+        { key: 'smtp_port', value: values.smtp_port },
+        { key: 'smtp_user', value: values.smtp_user },
+        { key: 'smtp_secure', value: values.smtp_secure },
+      ];
+      if (values.smtp_pass) {
+        const { data: encrypted, error: encErr } = await supabase.rpc('encrypt_sensitive_data', { data: values.smtp_pass });
+        if (encErr) throw encErr;
+        updates.push({ key: 'smtp_pass', value: encrypted });
+      }
+
+      const { error } = await supabase
+        .from('platform_settings')
+        .upsert(updates.map(u => ({ ...u, updated_at: new Date().toISOString() })), { onConflict: 'key' });
+
+      if (error) throw error;
+
+      await supabase.rpc('log_admin_action', {
+        p_action: 'update_smtp_settings',
+        p_resource_type: 'platform_settings',
+        p_metadata: { keys: updates.map(u => u.key) }
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['smtp-settings'] });
+      toast.success('SMTP settings saved');
+    },
+    onError: () => toast.error('Failed to save SMTP settings'),
+  });
+
   const handleTestEmail = async () => {
     setTestingEmail(true);
     try {
@@ -94,6 +205,12 @@ const SettingsPage = () => {
 
       if (error) throw error;
 
+      await supabase.rpc('log_admin_action', {
+        p_action: 'send_test_email',
+        p_resource_type: 'email',
+        p_metadata: {}
+      });
+
       toast.success('Test email sent successfully');
     } catch (error) {
       toast.error('Failed to send test email');
@@ -108,11 +225,24 @@ const SettingsPage = () => {
     return setting?.value;
   };
 
-  if (isLoading) {
+  if (authorized === null || isLoading) {
     return (
       <AdminLayout title="Platform Settings">
         <div className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (!authorized) {
+    return (
+      <AdminLayout title="Platform Settings">
+        <div className="p-6">
+          <Alert variant="destructive">
+            <AlertTitle>Access Denied</AlertTitle>
+            <AlertDescription>You must be a super admin to manage settings.</AlertDescription>
+          </Alert>
         </div>
       </AdminLayout>
     );
@@ -250,74 +380,102 @@ const SettingsPage = () => {
           <TabsContent value="email" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Email Configuration</CardTitle>
+                <CardTitle>Email Settings</CardTitle>
                 <CardDescription>
                   Configure SMTP settings for email notifications
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-host">SMTP Host</Label>
-                  <Input
-                    id="smtp-host"
-                    value={getSettingValue('smtp_host') || ''}
-                    onChange={(e) => handleSettingUpdate('smtp_host', e.target.value)}
-                    placeholder="smtp.example.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-port">SMTP Port</Label>
-                  <Input
-                    id="smtp-port"
-                    type="number"
-                    value={getSettingValue('smtp_port') || 587}
-                    onChange={(e) => handleSettingUpdate('smtp_port', parseInt(e.target.value))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-user">SMTP Username</Label>
-                  <Input
-                    id="smtp-user"
-                    value={getSettingValue('smtp_user') || ''}
-                    onChange={(e) => handleSettingUpdate('smtp_user', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="smtp-pass">SMTP Password</Label>
-                  <Input
-                    id="smtp-pass"
-                    type="password"
-                    value={''}
-                    onChange={(e) => handleSettingUpdate('smtp_pass', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-email">Admin Notification Email</Label>
-                  <Input
-                    id="admin-email"
-                    type="email"
-                    value={getSettingValue('admin_notification_email') || ''}
-                    onChange={(e) => handleSettingUpdate('admin_notification_email', e.target.value)}
-                    placeholder="admin@venvl.com"
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    onClick={handleTestEmail}
-                    disabled={testingEmail}
-                    variant="outline"
-                  >
-                    {testingEmail ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : (
-                      <TestTube className="h-4 w-4 mr-2" />
-                    )}
-                    Send Test Email
-                  </Button>
-                </div>
+              <CardContent>
+                <Form {...emailForm}>
+                  <form onSubmit={emailForm.handleSubmit(onSubmitEmail)} className="space-y-4">
+                    <FormField
+                      control={emailForm.control}
+                      name="smtp_host"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SMTP Host</FormLabel>
+                          <FormControl>
+                            <Input placeholder="smtp.example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={emailForm.control}
+                      name="smtp_port"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SMTP Port</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={emailForm.control}
+                      name="smtp_user"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SMTP Username</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={emailForm.control}
+                      name="smtp_pass"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>SMTP Password</FormLabel>
+                          <FormControl>
+                            <Input type="password" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={emailForm.control}
+                      name="smtp_secure"
+                      render={({ field }) => (
+                        <FormItem className="flex items-center justify-between">
+                          <FormLabel>Use TLS</FormLabel>
+                          <FormControl>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <div className="flex items-center space-x-2 pt-2">
+                      <Button type="submit" disabled={saveEmailSettings.isPending}>
+                        {saveEmailSettings.isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          'Save'
+                        )}
+                      </Button>
+                      <Button
+                        onClick={handleTestEmail}
+                        disabled={testingEmail}
+                        type="button"
+                        variant="outline"
+                      >
+                        {testingEmail ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : (
+                          <TestTube className="h-4 w-4 mr-2" />
+                        )}
+                        Send Test Email
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
           </TabsContent>
