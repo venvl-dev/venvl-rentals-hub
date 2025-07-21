@@ -27,6 +27,7 @@ const Slider = React.forwardRef<
       {thumbs.map((_, i) => (
         <SliderPrimitive.Thumb
           key={i}
+          aria-label={i === 0 ? "Minimum price" : "Maximum price"}
           className="block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
         />
       ))}
