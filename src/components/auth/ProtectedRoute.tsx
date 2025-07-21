@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
-import { useSecureQuery } from '@/hooks/useSecureApi';
 // import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
 
 interface ProtectedRouteProps {
@@ -30,8 +29,6 @@ const ProtectedRoute = ({
     checkAuth();
   }, [authLoading, user?.id]);
 
-  // Secure profile query hook
-  const secureProfileQuery = useSecureQuery('profiles');
 
   const checkAuth = async () => {
     setLoading(true);
@@ -63,24 +60,19 @@ const ProtectedRoute = ({
       // Always fetch fresh role data to avoid cache issues
       let role: string | null = null;
       try {
-        // Create a query function for the secure API
-        const queryFunction = async () => {
-          const { data, error } = await import('@/integrations/supabase/client').then(module =>
-            module.supabase.from('profiles').select('role').eq('id', user!.id).maybeSingle()
-          );
-          if (error) throw error;
-          return data;
-        };
+        const { supabase } = await import('@/integrations/supabase/client');
 
-        const profile = await secureProfileQuery.execute(queryFunction);
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user!.id)
+          .maybeSingle();
 
-        if (profile) {
-          role = (profile as any)?.role || null;
-        }
-
-        if (!role) {
-          console.warn('Profile not found for user:', user!.id, '- falling back to user metadata');
+        if (profileError) {
+          console.warn('Profile fetch failed for user:', user!.id, '- falling back to user metadata');
           role = (user as any)?.user_metadata?.role || 'guest';
+        } else {
+          role = (profileData as any)?.role || (user as any)?.user_metadata?.role || 'guest';
         }
 
         console.log('Role resolved for user:', user!.id, 'Role:', role);
