@@ -115,6 +115,14 @@ const VenvlAdvancedFilters = ({ onFiltersChange, onClose, initialFilters = {} }:
     setSelectedAmenities([]);
     setBedrooms(null);
     setBathrooms(null);
+    onFiltersChange({
+      priceRange: null,
+      propertyTypes: null,
+      amenities: null,
+      bedrooms: null,
+      bathrooms: null,
+      bookingType: null,
+    });
     onClose();
   };
 
