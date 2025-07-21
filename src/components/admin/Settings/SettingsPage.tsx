@@ -191,12 +191,34 @@ const SettingsPage = () => {
     setTestingEmail(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      
+      // Get current user's email for test
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('id', session?.user?.id)
+        .single();
+
+      const testEmail = profile?.email || session?.user?.email || getSettingValue('admin_notification_email') || getSettingValue('contact_email');
+      
+      if (!testEmail) {
+        toast.error('No email address found for test');
+        return;
+      }
 
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
-          to: getSettingValue('admin_notification_email') || getSettingValue('contact_email'),
-          subject: 'Test Email',
-          text: 'This is a test email from VENVL.',
+          to: testEmail,
+          subject: 'VENVL Test Email',
+          html: `
+            <h2>VENVL Test Email</h2>
+            <p>This is a test email from the VENVL platform.</p>
+            <p>Your SMTP configuration is working correctly!</p>
+            <p>Sent at: ${new Date().toLocaleString()}</p>
+            <hr>
+            <p><small>VENVL Admin Panel</small></p>
+          `,
+          text: 'This is a test email from VENVL platform. Your SMTP configuration is working correctly!',
         },
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
@@ -208,11 +230,12 @@ const SettingsPage = () => {
       await supabase.rpc('log_admin_action', {
         p_action: 'send_test_email',
         p_resource_type: 'email',
-        p_metadata: {}
+        p_metadata: { recipient: testEmail }
       });
 
-      toast.success('Test email sent successfully');
+      toast.success(`Test email sent successfully to ${testEmail}`);
     } catch (error) {
+      console.error('Test email error:', error);
       toast.error('Failed to send test email');
     } finally {
       setTestingEmail(false);
