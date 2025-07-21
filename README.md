@@ -29,6 +29,11 @@ Before running the application, you **MUST** set up your environment variables:
 
 4. **Restart the development server after creating the `.env` file**
 
+5. **Configure SMTP in the admin portal**
+   - Open the Admin portal and navigate to **Settings > Email**.
+   - Enter your SMTP credentials and an admin notification address.
+   - Click **Send Test Email** to verify the configuration.
+
 **Without these environment variables, the application will display an error screen with setup instructions.**
 
 ## Role-Based Architecture
