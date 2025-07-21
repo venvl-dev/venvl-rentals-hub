@@ -90,9 +90,6 @@ const SettingsPage = () => {
     }
   };
 
-  const getSettingsByCategory = (category: string) => {
-    return settings?.filter(setting => setting.category === category) || [];
-  };
 
   const getSettingValue = (key: string) => {
     const setting = settings?.find(s => s.key === key);
