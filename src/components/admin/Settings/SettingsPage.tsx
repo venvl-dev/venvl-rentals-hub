@@ -72,11 +72,16 @@ const SettingsPage = () => {
   const handleTestEmail = async () => {
     setTestingEmail(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+
       const { error } = await supabase.functions.invoke('send-email', {
         body: {
           to: getSettingValue('admin_notification_email') || getSettingValue('contact_email'),
           subject: 'Test Email',
           text: 'This is a test email from VENVL.',
+        },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
         },
       });
 
