@@ -8,9 +8,12 @@ import {
   Shield, 
   FileText,
   Home,
-  ChevronLeft
+  ChevronLeft,
+  Building,
+  TrendingUp,
+  AlertTriangle
 } from 'lucide-react';
-import Header from '@/components/Header';
+import AdminHeader from '@/components/admin/AdminHeader';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -27,35 +30,40 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
       icon: Home,
     },
     {
-      label: 'Settings',
-      href: '/admin/settings',
-      icon: Settings,
-    },
-    {
-      label: 'Meta Manager',
-      href: '/admin/meta',
-      icon: Database,
-    },
-    {
       label: 'Users',
       href: '/admin/users',
       icon: Users,
     },
     {
-      label: 'Roles',
-      href: '/admin/roles',
-      icon: Shield,
+      label: 'Properties',
+      href: '/admin/properties',
+      icon: Building,
+    },
+    {
+      label: 'Analytics',
+      href: '/admin/analytics',
+      icon: TrendingUp,
+    },
+    {
+      label: 'Moderation',
+      href: '/admin/moderation',
+      icon: AlertTriangle,
+    },
+    {
+      label: 'Settings',
+      href: '/admin/settings',
+      icon: Settings,
     },
     {
       label: 'Audit Logs',
-      href: '/admin/audit',
+      href: '/admin/logs',
       icon: FileText,
     },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <AdminHeader />
       
       <div className="flex">
         {/* Sidebar */}
