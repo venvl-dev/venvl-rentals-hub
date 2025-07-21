@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import PropertyCard from '@/components/PropertyCard';
 import VenvlSearchPill from '@/components/search/VenvlSearchPill';
-import VenvlAdvancedFilters from '@/components/search/VenvlAdvancedFilters';
+import NewAdvancedFilters from '@/components/search/NewAdvancedFilters';
+import FilterBadgeDisplay from '@/components/search/FilterBadgeDisplay';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
@@ -62,7 +63,8 @@ const Index = () => {
     getActiveFilterCount,
     getCombinedFilters,
     syncPriceRange,
-    priceLoading
+    priceLoading,
+    dbPriceRange
   } = useFilterStore();
 
   // Ensure price range syncs when component mounts
@@ -167,6 +169,24 @@ const Index = () => {
     updateAdvancedFilters(newFilters);
   }, [updateAdvancedFilters]);
 
+  const handleRemoveFilter = useCallback((filterKey: keyof typeof advancedFilters, value?: string) => {
+    const updates: any = {};
+    
+    if (filterKey === 'propertyTypes' && value) {
+      const currentTypes = advancedFilters.propertyTypes || [];
+      updates.propertyTypes = currentTypes.filter(type => type !== value);
+      if (updates.propertyTypes.length === 0) updates.propertyTypes = null;
+    } else if (filterKey === 'amenities' && value) {
+      const currentAmenities = advancedFilters.amenities || [];
+      updates.amenities = currentAmenities.filter(amenity => amenity !== value);
+      if (updates.amenities.length === 0) updates.amenities = null;
+    } else {
+      updates[filterKey] = null;
+    }
+    
+    updateAdvancedFilters(updates);
+  }, [advancedFilters, updateAdvancedFilters]);
+
   const handleClearFilters = useCallback(() => {
     clearAllFilters();
   }, [clearAllFilters]);
@@ -244,6 +264,22 @@ const Index = () => {
                   </Button>
                 )}
               </div>
+              
+              {/* Active Filter Badges */}
+              {hasActiveFilters() && (
+                <motion.div
+                  className="max-w-4xl mx-auto px-2 sm:px-4"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <FilterBadgeDisplay
+                    advancedFilters={advancedFilters}
+                    onRemoveFilter={handleRemoveFilter}
+                    dbPriceRange={dbPriceRange}
+                  />
+                </motion.div>
+              )}
             </motion.div>
           </div>
         </section>
@@ -353,13 +389,12 @@ const Index = () => {
         </section>
 
         {/* Advanced Filters Modal */}
-        {showAdvancedFilters && (
-          <VenvlAdvancedFilters
-            onFiltersChange={handleAdvancedFilters}
-            onClose={() => setShowAdvancedFilters(false)}
-            initialFilters={advancedFilters}
-          />
-        )}
+        <NewAdvancedFilters
+          isOpen={showAdvancedFilters}
+          onClose={() => setShowAdvancedFilters(false)}
+          onApply={handleAdvancedFilters}
+          initialFilters={advancedFilters}
+        />
       </main>
     </div>
   );
