@@ -43,6 +43,8 @@ const PropertyTypeManagement = lazy(() => import("./routes/admin/PropertyTypes")
 const AnalyticsDashboard = lazy(() => import("./routes/admin/Analytics"));
 const GlobalSettings = lazy(() => import("./routes/admin/Settings"));
 const AuditLogsPage = lazy(() => import("./routes/admin/Logs"));
+const RevenueManagement = lazy(() => import("./routes/admin/Revenue"));
+const ContentModeration = lazy(() => import("./routes/admin/Moderation"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -170,6 +172,22 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={["super_admin"]}>
                         <AnalyticsDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/revenue" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <RevenueManagement />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/moderation" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <ContentModeration />
                       </ProtectedRoute>
                     } 
                   />

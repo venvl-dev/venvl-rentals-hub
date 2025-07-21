@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message_type: string | null
+          parent_message_id: string | null
+          priority: string | null
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+          subject: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          parent_message_id?: string | null
+          priority?: string | null
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+          subject: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          parent_message_id?: string | null
+          priority?: string | null
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "admin_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       amenities: {
         Row: {
           category: string | null
@@ -41,6 +91,89 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+        }
+        Relationships: []
+      }
+      approval_requests: {
+        Row: {
+          approval_history: Json | null
+          created_at: string | null
+          current_step: number | null
+          entity_id: string
+          entity_type: string
+          id: string
+          request_data: Json
+          requested_by: string
+          status: string | null
+          updated_at: string | null
+          workflow_id: string
+        }
+        Insert: {
+          approval_history?: Json | null
+          created_at?: string | null
+          current_step?: number | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          request_data: Json
+          requested_by: string
+          status?: string | null
+          updated_at?: string | null
+          workflow_id: string
+        }
+        Update: {
+          approval_history?: Json | null
+          created_at?: string | null
+          current_step?: number | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          request_data?: Json
+          requested_by?: string
+          status?: string | null
+          updated_at?: string | null
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "approval_requests_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "approval_workflows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      approval_workflows: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          entity_type: string
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+          workflow_name: string
+          workflow_steps: Json
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          entity_type: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          workflow_name: string
+          workflow_steps: Json
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          entity_type?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          workflow_name?: string
+          workflow_steps?: Json
         }
         Relationships: []
       }
@@ -201,6 +334,202 @@ export type Database = {
           },
         ]
       }
+      custom_roles: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_system_role: boolean | null
+          name: string
+          permissions: Json
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_system_role?: boolean | null
+          name: string
+          permissions?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_system_role?: boolean | null
+          name?: string
+          permissions?: Json
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      dynamic_forms: {
+        Row: {
+          conditional_logic: Json | null
+          created_at: string | null
+          created_by: string | null
+          form_name: string
+          form_schema: Json
+          form_type: string
+          id: string
+          is_active: boolean | null
+          updated_at: string | null
+          validation_rules: Json | null
+          version: number | null
+        }
+        Insert: {
+          conditional_logic?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          form_name: string
+          form_schema: Json
+          form_type: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          validation_rules?: Json | null
+          version?: number | null
+        }
+        Update: {
+          conditional_logic?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          form_name?: string
+          form_schema?: Json
+          form_type?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string | null
+          validation_rules?: Json | null
+          version?: number | null
+        }
+        Relationships: []
+      }
+      managed_locations: {
+        Row: {
+          average_price: number | null
+          boundaries: Json | null
+          center_lat: number | null
+          center_lng: number | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          name: string
+          parent_location_id: string | null
+          properties_count: number | null
+          type: string
+          updated_at: string | null
+          zoom_level: number | null
+        }
+        Insert: {
+          average_price?: number | null
+          boundaries?: Json | null
+          center_lat?: number | null
+          center_lng?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name: string
+          parent_location_id?: string | null
+          properties_count?: number | null
+          type: string
+          updated_at?: string | null
+          zoom_level?: number | null
+        }
+        Update: {
+          average_price?: number | null
+          boundaries?: Json | null
+          center_lat?: number | null
+          center_lng?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string
+          parent_location_id?: string | null
+          properties_count?: number | null
+          type?: string
+          updated_at?: string | null
+          zoom_level?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "managed_locations_parent_location_id_fkey"
+            columns: ["parent_location_id"]
+            isOneToOne: false
+            referencedRelation: "managed_locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      moderation_reports: {
+        Row: {
+          created_at: string | null
+          description: string
+          evidence_urls: string[] | null
+          id: string
+          moderator_id: string | null
+          moderator_notes: string | null
+          priority: string | null
+          report_type: string
+          reported_property_id: string | null
+          reported_user_id: string | null
+          reporter_id: string | null
+          resolution: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          evidence_urls?: string[] | null
+          id?: string
+          moderator_id?: string | null
+          moderator_notes?: string | null
+          priority?: string | null
+          report_type: string
+          reported_property_id?: string | null
+          reported_user_id?: string | null
+          reporter_id?: string | null
+          resolution?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          evidence_urls?: string[] | null
+          id?: string
+          moderator_id?: string | null
+          moderator_notes?: string | null
+          priority?: string | null
+          report_type?: string
+          reported_property_id?: string | null
+          reported_user_id?: string | null
+          reporter_id?: string | null
+          resolution?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderation_reports_reported_property_id_fkey"
+            columns: ["reported_property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string | null
@@ -291,6 +620,66 @@ export type Database = {
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           updated_at?: string
+        }
+        Relationships: []
+      }
+      promotions: {
+        Row: {
+          code: string
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          discount_type: string
+          discount_value: number
+          end_date: string
+          id: string
+          is_active: boolean | null
+          min_booking_amount: number | null
+          name: string
+          start_date: string
+          target_criteria: Json | null
+          target_type: string | null
+          updated_at: string | null
+          usage_count: number | null
+          usage_limit: number | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_type: string
+          discount_value: number
+          end_date: string
+          id?: string
+          is_active?: boolean | null
+          min_booking_amount?: number | null
+          name: string
+          start_date: string
+          target_criteria?: Json | null
+          target_type?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+          usage_limit?: number | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          discount_type?: string
+          discount_value?: number
+          end_date?: string
+          id?: string
+          is_active?: boolean | null
+          min_booking_amount?: number | null
+          name?: string
+          start_date?: string
+          target_criteria?: Json | null
+          target_type?: string | null
+          updated_at?: string | null
+          usage_count?: number | null
+          usage_limit?: number | null
         }
         Relationships: []
       }
@@ -550,6 +939,102 @@ export type Database = {
         }
         Relationships: []
       }
+      real_time_notifications: {
+        Row: {
+          channel: string | null
+          created_at: string | null
+          data: Json | null
+          expires_at: string | null
+          id: string
+          is_read: boolean | null
+          is_sent: boolean | null
+          message: string
+          notification_type: string
+          priority: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string | null
+          created_at?: string | null
+          data?: Json | null
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          is_sent?: boolean | null
+          message: string
+          notification_type: string
+          priority?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          channel?: string | null
+          created_at?: string | null
+          data?: Json | null
+          expires_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          is_sent?: boolean | null
+          message?: string
+          notification_type?: string
+          priority?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      revenue_reports: {
+        Row: {
+          breakdown_by_city: Json | null
+          breakdown_by_host: Json | null
+          breakdown_by_property_type: Json | null
+          commission_earned: number | null
+          date_from: string
+          date_to: string
+          generated_at: string | null
+          generated_by: string | null
+          id: string
+          report_type: string
+          total_bookings: number | null
+          total_revenue: number | null
+          unique_guests: number | null
+          unique_hosts: number | null
+        }
+        Insert: {
+          breakdown_by_city?: Json | null
+          breakdown_by_host?: Json | null
+          breakdown_by_property_type?: Json | null
+          commission_earned?: number | null
+          date_from: string
+          date_to: string
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          report_type: string
+          total_bookings?: number | null
+          total_revenue?: number | null
+          unique_guests?: number | null
+          unique_hosts?: number | null
+        }
+        Update: {
+          breakdown_by_city?: Json | null
+          breakdown_by_host?: Json | null
+          breakdown_by_property_type?: Json | null
+          commission_earned?: number | null
+          date_from?: string
+          date_to?: string
+          generated_at?: string | null
+          generated_by?: string | null
+          id?: string
+          report_type?: string
+          total_bookings?: number | null
+          total_revenue?: number | null
+          unique_guests?: number | null
+          unique_hosts?: number | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           booking_id: string
@@ -682,6 +1167,36 @@ export type Database = {
           success?: boolean | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_permissions: {
+        Row: {
+          expires_at: string | null
+          granted_at: string | null
+          granted_by: string | null
+          id: string
+          permission_key: string
+          permission_value: boolean | null
+          user_id: string
+        }
+        Insert: {
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          permission_key: string
+          permission_value?: boolean | null
+          user_id: string
+        }
+        Update: {
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: string | null
+          id?: string
+          permission_key?: string
+          permission_value?: boolean | null
+          user_id?: string
         }
         Relationships: []
       }
