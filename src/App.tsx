@@ -34,6 +34,13 @@ const Users = lazy(() => import("./pages/admin/Users"));
 const Roles = lazy(() => import("./pages/admin/Roles"));
 const AuditLogs = lazy(() => import("./pages/admin/AuditLogs"));
 
+// Super Admin Routes
+const SuperAdminPanel = lazy(() => import("./routes/admin/Panel"));
+const UserManagement = lazy(() => import("./routes/admin/Users"));
+const PropertyManagement = lazy(() => import("./routes/admin/Properties"));
+const AmenityManagement = lazy(() => import("./routes/admin/Amenities"));
+const PropertyTypeManagement = lazy(() => import("./routes/admin/PropertyTypes"));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -111,7 +118,7 @@ function App() {
                     path="/admin" 
                     element={
                       <ProtectedRoute allowedRoles={["super_admin"]}>
-                        <AdminPanel />
+                        <SuperAdminPanel />
                       </ProtectedRoute>
                     } 
                   />
@@ -119,7 +126,39 @@ function App() {
                     path="/admin/panel" 
                     element={
                       <ProtectedRoute allowedRoles={["super_admin"]}>
-                        <AdminPanel />
+                        <SuperAdminPanel />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/users" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <UserManagement />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/properties" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <PropertyManagement />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/amenities" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <AmenityManagement />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/property-types" 
+                    element={
+                      <ProtectedRoute allowedRoles={["super_admin"]}>
+                        <PropertyTypeManagement />
                       </ProtectedRoute>
                     } 
                   />
