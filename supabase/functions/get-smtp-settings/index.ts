@@ -17,22 +17,41 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
+    const authHeader = req.headers.get('authorization') || '';
+    const jwt = authHeader.replace('Bearer ', '');
+
+    const { data: { user }, error: userError } = await supabase.auth.getUser(jwt);
+
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || profile?.role !== 'super_admin') {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+      );
+    }
+
     const { data, error } = await supabase
       .from('platform_settings')
       .select('key, value')
-      .in('key', ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass']);
+      .in('key', ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_secure']);
 
     if (error) throw error;
 
     const settings: Record<string, any> = {};
     for (const row of data ?? []) {
-      if (row.key === 'smtp_pass') {
-        const { data: decrypted, error: decErr } = await supabase.rpc('decrypt_sensitive_data', { encrypted_data: row.value as string });
-        if (decErr) throw decErr;
-        settings[row.key] = decrypted;
-      } else {
-        settings[row.key] = row.value;
-      }
+      settings[row.key] = row.value;
     }
 
     return new Response(JSON.stringify(settings), {

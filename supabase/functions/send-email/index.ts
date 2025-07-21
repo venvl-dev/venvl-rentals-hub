@@ -62,8 +62,11 @@ serve(async (req) => {
     let port = Number(Deno.env.get("SMTP_PORT") || 0);
     let user = Deno.env.get("SMTP_USER") || "";
     let pass = Deno.env.get("SMTP_PASS") || "";
+    let secure: boolean | null = Deno.env.get("SMTP_SECURE")
+      ? Deno.env.get("SMTP_SECURE") === "true"
+      : null;
 
-    if (!host || !user) {
+    if (!host || !user || secure === null) {
       const supabase = createClient(
         Deno.env.get('SUPABASE_URL') ?? '',
         Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -72,7 +75,7 @@ serve(async (req) => {
       const { data } = await supabase
         .from('platform_settings')
         .select('key, value')
-        .in('key', ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass']);
+        .in('key', ['smtp_host', 'smtp_port', 'smtp_user', 'smtp_pass', 'smtp_secure']);
 
       for (const row of data ?? []) {
         switch (row.key) {
@@ -90,6 +93,9 @@ serve(async (req) => {
             pass = decrypted as string;
             break;
           }
+          case 'smtp_secure':
+            secure = String(row.value) === 'true' || row.value === true;
+            break;
         }
       }
     }
@@ -102,14 +108,24 @@ serve(async (req) => {
     }
 
     if (!port) port = 465;
+    if (secure === null) secure = true;
 
     const client = new SmtpClient();
-    await client.connectTLS({
-      hostname: host,
-      port,
-      username: user,
-      password: pass,
-    });
+    if (secure) {
+      await client.connectTLS({
+        hostname: host,
+        port,
+        username: user,
+        password: pass,
+      });
+    } else {
+      await client.connect({
+        hostname: host,
+        port,
+        username: user,
+        password: pass,
+      });
+    }
 
     await client.send({
       from: user,
