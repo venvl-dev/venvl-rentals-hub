@@ -62,17 +62,9 @@ const Index = () => {
     hasActiveFilters,
     getActiveFilterCount,
     getCombinedFilters,
-    syncPriceRange,
     priceLoading,
     dbPriceRange
   } = useFilterStore();
-
-  // Ensure price range syncs when component mounts
-  useEffect(() => {
-    if (!priceLoading) {
-      syncPriceRange();
-    }
-  }, [priceLoading, syncPriceRange]);
 
   // Use authentication-aware image preloading
   const { user, isLoading: authLoading, imagesPreloaded, preloadImages, refreshImages } = useAuthImagePreload();
@@ -247,14 +239,14 @@ const Index = () => {
                 >
                   <SlidersHorizontal className="h-4 w-4" />
                   Advanced filters
-                  {getActiveFilterCount() > 0 && (
+                  {getActiveFilterCount > 0 && (
                     <Badge className="ml-1 bg-black text-white text-xs px-2 py-1 rounded-full">
-                      {getActiveFilterCount()}
+                      {getActiveFilterCount}
                     </Badge>
                   )}
                 </Button>
                 
-                {hasActiveFilters() && (
+                {hasActiveFilters && (
                   <Button
                     variant="ghost"
                     onClick={handleClearFilters}
@@ -266,7 +258,7 @@ const Index = () => {
               </div>
               
               {/* Active Filter Badges */}
-              {hasActiveFilters() && (
+              {hasActiveFilters && (
                 <motion.div
                   className="max-w-4xl mx-auto px-2 sm:px-4"
                   initial={{ opacity: 0, y: 10 }}
@@ -319,7 +311,7 @@ const Index = () => {
                       {filteredProperties.length} propert{filteredProperties.length !== 1 ? 'ies' : 'y'} found
                     </h2>
                     
-                    {hasActiveFilters() && filteringStats.total > filteredProperties.length && (
+                    {hasActiveFilters && filteringStats.total > filteredProperties.length && (
                       <Badge variant="outline" className="text-xs">
                         {filteringStats.reduction}% filtered out
                       </Badge>
@@ -333,7 +325,7 @@ const Index = () => {
                       </div>
                     )}
                     
-                    {hasActiveFilters() && (
+                    {hasActiveFilters && (
                       <Button
                         variant="ghost"
                         size="sm"

@@ -1,3 +1,4 @@
+/// <reference types="vitest/globals" />
 import { renderHook } from '@testing-library/react';
 import { usePropertyFiltering } from '@/hooks/usePropertyFiltering';
 import type { CombinedFilters } from '@/hooks/useFilterStore';
@@ -89,7 +90,7 @@ describe('usePropertyFiltering', () => {
     const filters = {
       ...baseFilters,
       location: 'city',
-      advancedFilters: { ...baseFilters.advancedFilters, priceRange: [140, 160] },
+      advancedFilters: { ...baseFilters.advancedFilters, priceRange: [140, 160] as [number, number] },
     };
     const { result } = renderHook(() => usePropertyFiltering(properties, filters));
     expect(result.current.filteredProperties.length).toBe(1);
@@ -100,7 +101,7 @@ describe('usePropertyFiltering', () => {
     const filters = {
       ...baseFilters,
       bookingType: 'monthly' as const,
-      advancedFilters: { ...baseFilters.advancedFilters, bookingType: 'monthly', priceRange: [1000, 4000] },
+      advancedFilters: { ...baseFilters.advancedFilters, bookingType: 'monthly', priceRange: [1000, 4000] as [number, number] },
     };
     const { result } = renderHook(() => usePropertyFiltering(properties, filters));
     expect(result.current.filteredProperties.length).toBe(2);

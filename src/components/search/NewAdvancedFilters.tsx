@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, SlidersHorizontal, Calendar, Home, Building, Building2, Castle, TreePine, Warehouse, Bed, Bath, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,28 +25,43 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
   const [bedrooms, setBedrooms] = useState<number | null>(initialFilters.bedrooms || null);
   const [bathrooms, setBathrooms] = useState<number | null>(initialFilters.bathrooms || null);
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [isPriceRangeCustomized, setIsPriceRangeCustomized] = useState(false);
 
   // Get dynamic price range from database
   const { priceRange: dbPriceRange, loading: priceLoading } = usePriceRange(bookingType as 'daily' | 'monthly');
 
+  // Initialize local state when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setBookingType(initialFilters.bookingType || 'daily');
+      setSelectedPropertyTypes(initialFilters.propertyTypes || []);
+      setSelectedAmenities(initialFilters.amenities || []);
+      setBedrooms(initialFilters.bedrooms || null);
+      setBathrooms(initialFilters.bathrooms || null);
+      
+      // Handle price range initialization
+      if (initialFilters.priceRange) {
+        setPriceRange(initialFilters.priceRange);
+        setIsPriceRangeCustomized(true);
+      } else {
+        setIsPriceRangeCustomized(false);
+      }
+    }
+  }, [isOpen, initialFilters]);
+
   // Update price range when db data loads or booking type changes
   useEffect(() => {
     if (!priceLoading && dbPriceRange && dbPriceRange.min > 0) {
-      // Only reset if no initial price range or booking type changed
-      if (!initialFilters.priceRange || initialFilters.bookingType !== bookingType) {
+      // Only auto-update if not customized or if this is a fresh booking type change
+      if (!isPriceRangeCustomized || initialFilters.bookingType !== bookingType) {
+        console.log('Auto-updating price range:', dbPriceRange);
         setPriceRange([dbPriceRange.min, dbPriceRange.max]);
-      } else {
-        setPriceRange(initialFilters.priceRange);
+        if (initialFilters.bookingType !== bookingType) {
+          setIsPriceRangeCustomized(false);
+        }
       }
     }
-  }, [dbPriceRange, priceLoading, bookingType]);
-
-  // Initialize price range from initial filters if available
-  useEffect(() => {
-    if (initialFilters.priceRange) {
-      setPriceRange(initialFilters.priceRange);
-    }
-  }, [initialFilters.priceRange]);
+  }, [dbPriceRange, priceLoading, bookingType, isPriceRangeCustomized, initialFilters.bookingType]);
 
   const bookingTypes = [
     { id: 'daily', label: 'Daily', icon: Calendar, description: 'Short-term stays' },
@@ -80,6 +95,13 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
 
   const handlePriceChange = useCallback((values: number[]) => {
     setPriceRange([values[0], values[1]]);
+    setIsPriceRangeCustomized(true);
+  }, []);
+
+  const handleBookingTypeChange = useCallback((newBookingType: string) => {
+    setBookingType(newBookingType);
+    // Reset price customization when booking type changes
+    setIsPriceRangeCustomized(false);
   }, []);
 
   const handleApply = useCallback(() => {
@@ -92,6 +114,7 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
       bathrooms,
     };
 
+    console.log('Applying filters:', filters);
     onApply(filters);
     onClose();
   }, [bookingType, priceRange, selectedPropertyTypes, selectedAmenities, bedrooms, bathrooms, dbPriceRange, onApply, onClose]);
@@ -102,12 +125,14 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
     setSelectedAmenities([]);
     setBedrooms(null);
     setBathrooms(null);
+    setIsPriceRangeCustomized(false);
     if (dbPriceRange) {
       setPriceRange([dbPriceRange.min, dbPriceRange.max]);
     }
   }, [dbPriceRange]);
 
-  const hasActiveFilters = useCallback(() => {
+  // Memoized active filters check for better performance
+  const hasActiveFilters = useMemo(() => {
     if (!dbPriceRange) return false;
     
     return (
@@ -121,7 +146,8 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
     );
   }, [bookingType, selectedPropertyTypes, selectedAmenities, bedrooms, bathrooms, priceRange, dbPriceRange]);
 
-  const formatPrice = useCallback((price: number) => {
+  // Memoized price formatter
+  const formatPrice = useMemo(() => (price: number) => {
     return new Intl.NumberFormat('en-EG', {
       style: 'currency',
       currency: 'EGP',
@@ -129,6 +155,7 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
     }).format(price);
   }, []);
 
+  // Early return if not open
   if (!isOpen) return null;
 
   return (
@@ -145,10 +172,10 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: "spring", duration: 0.5 }}
-          className="bg-background rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+          className="bg-background rounded-2xl max-w-4xl w-full max-h-[90vh] shadow-2xl flex flex-col"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b bg-muted/50">
+          <div className="flex items-center justify-between p-6 border-b bg-muted/50 flex-shrink-0">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary rounded-lg">
                 <SlidersHorizontal className="h-5 w-5 text-primary-foreground" />
@@ -169,7 +196,7 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
           </div>
 
           {/* Content */}
-          <div className="overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div className="overflow-y-auto flex-1">
             <div className="p-6 space-y-8">
               
               {/* Booking Type */}
@@ -179,7 +206,7 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
                   {bookingTypes.map((type) => (
                     <motion.button
                       key={type.id}
-                      onClick={() => setBookingType(type.id)}
+                      onClick={() => handleBookingTypeChange(type.id)}
                       className={`p-4 rounded-xl border-2 transition-all text-left ${
                         bookingType === type.id
                           ? 'border-primary bg-primary text-primary-foreground'
@@ -336,18 +363,19 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-between p-6 border-t bg-muted/50">
+          <div className="flex items-center justify-between p-6 border-t bg-background shadow-lg flex-shrink-0">
             <Button
               variant="outline"
               onClick={handleReset}
-              disabled={!hasActiveFilters()}
+              disabled={!hasActiveFilters}
+              className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive font-medium"
             >
               Reset All
             </Button>
             
-            <div className="flex items-center gap-3">
-              {hasActiveFilters() && (
-                <Badge variant="secondary" className="px-3 py-1">
+            <div className="flex items-center gap-4">
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="px-3 py-1 text-sm font-medium">
                   {[
                     bookingType !== 'daily' ? 1 : 0,
                     selectedPropertyTypes.length > 0 ? 1 : 0,
@@ -358,7 +386,11 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
                   ].reduce((a, b) => a + b, 0)} filters active
                 </Badge>
               )}
-              <Button onClick={handleApply} className="px-8">
+              <Button 
+                onClick={handleApply} 
+                size="lg"
+                className="px-8 py-3 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-200 min-w-[140px]"
+              >
                 Apply Filters
               </Button>
             </div>
