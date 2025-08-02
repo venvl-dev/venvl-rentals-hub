@@ -142,6 +142,12 @@ const Index = () => {
         });
 
         setProperties(data);
+        
+        // Debug: Expose properties for debugging
+        if (typeof window !== 'undefined') {
+          (window as any).allProperties = data;
+          console.log('🔍 DEBUG: Properties exposed to window.allProperties for debugging');
+        }
 
         // Properties loaded successfully - filtering will be handled by components
       }

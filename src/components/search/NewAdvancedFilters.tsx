@@ -104,9 +104,24 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
     setIsPriceRangeCustomized(false);
   }, []);
 
+  // Helper function to check if user has made selections beyond just booking type
+  const hasOtherActiveFilters = useCallback(() => {
+    if (!dbPriceRange) return false;
+    
+    return (
+      selectedPropertyTypes.length > 0 ||
+      selectedAmenities.length > 0 ||
+      bedrooms !== null ||
+      bathrooms !== null ||
+      priceRange[0] !== dbPriceRange.min ||
+      priceRange[1] !== dbPriceRange.max
+    );
+  }, [selectedPropertyTypes, selectedAmenities, bedrooms, bathrooms, priceRange, dbPriceRange]);
+
   const handleApply = useCallback(() => {
     const filters: Partial<AdvancedFilters> = {
-      bookingType: bookingType !== 'daily' ? bookingType : null,
+      // Only apply booking type if user has made explicit selections beyond just changing the type
+      bookingType: (bookingType !== 'daily' && hasOtherActiveFilters()) ? bookingType : null,
       priceRange: dbPriceRange && (priceRange[0] !== dbPriceRange.min || priceRange[1] !== dbPriceRange.max) ? priceRange : null,
       propertyTypes: selectedPropertyTypes.length > 0 ? selectedPropertyTypes : null,
       amenities: selectedAmenities.length > 0 ? selectedAmenities : null,
@@ -117,7 +132,7 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
     console.log('Applying filters:', filters);
     onApply(filters);
     onClose();
-  }, [bookingType, priceRange, selectedPropertyTypes, selectedAmenities, bedrooms, bathrooms, dbPriceRange, onApply, onClose]);
+  }, [bookingType, priceRange, selectedPropertyTypes, selectedAmenities, bedrooms, bathrooms, dbPriceRange, onApply, onClose, hasOtherActiveFilters]);
 
   const handleReset = useCallback(() => {
     setBookingType('daily');
@@ -135,8 +150,7 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
   const hasActiveFilters = useMemo(() => {
     if (!dbPriceRange) return false;
     
-    return (
-      bookingType !== 'daily' ||
+    const hasOtherFilters = (
       selectedPropertyTypes.length > 0 ||
       selectedAmenities.length > 0 ||
       bedrooms !== null ||
@@ -144,6 +158,9 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
       priceRange[0] !== dbPriceRange.min ||
       priceRange[1] !== dbPriceRange.max
     );
+    
+    // Only consider booking type as active if there are other filters too
+    return hasOtherFilters || (bookingType !== 'daily' && hasOtherFilters);
   }, [bookingType, selectedPropertyTypes, selectedAmenities, bedrooms, bathrooms, priceRange, dbPriceRange]);
 
   // Memoized price formatter
@@ -251,6 +268,16 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
                       <span>{formatPrice(dbPriceRange.min)}</span>
                       <span>{formatPrice(dbPriceRange.max)}</span>
                     </div>
+                    {(priceRange[0] !== dbPriceRange.min || priceRange[1] !== dbPriceRange.max) && (
+                      <div className="text-xs text-primary mt-1 text-center">
+                        Custom range selected
+                      </div>
+                    )}
+                  </div>
+                )}
+                {priceLoading && (
+                  <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+                    Loading price range for {bookingType} bookings...
                   </div>
                 )}
               </div>
@@ -377,7 +404,6 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
               {hasActiveFilters && (
                 <Badge variant="secondary" className="px-3 py-1 text-sm font-medium">
                   {[
-                    bookingType !== 'daily' ? 1 : 0,
                     selectedPropertyTypes.length > 0 ? 1 : 0,
                     selectedAmenities.length > 0 ? 1 : 0,
                     bedrooms !== null ? 1 : 0,

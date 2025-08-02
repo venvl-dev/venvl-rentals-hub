@@ -27,7 +27,7 @@ export interface CombinedFilters extends SearchFilters {
 const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   location: '',
   guests: 1,
-  bookingType: 'daily',
+  bookingType: 'daily', // Keep as daily but don't filter by default
 };
 
 const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
@@ -76,34 +76,53 @@ export const useFilterStore = () => {
   }, []);
 
   // Handle price range synchronization when booking type changes or data loads
+  // IMPORTANT: Do NOT auto-apply price filter on booking type change.
+  // We only initialize priceRange once on first load so the UI can display the range,
+  // but we avoid setting it again automatically to prevent implicit filtering.
   useEffect(() => {
     if (priceLoading || !dbPriceRange || dbPriceRange.min <= 0) {
       return;
     }
 
     const currentBookingType = effectiveBookingType;
-    const hasBookingTypeChanged = prevBookingTypeRef.current && prevBookingTypeRef.current !== currentBookingType;
-    
-    // Auto-sync price range in these scenarios:
-    // 1. Initial load (!isInitialized)
-    // 2. Booking type changed and no custom price range set
-    // 3. No price range is currently set
-    if (!isInitialized || hasBookingTypeChanged || !advancedFilters.priceRange) {
-      console.log('Syncing price range:', {
-        isInitialized,
-        hasBookingTypeChanged,
-        currentBookingType,
+    const hasBookingTypeChanged =
+      prevBookingTypeRef.current && prevBookingTypeRef.current !== currentBookingType;
+
+    // Initialize on first successful load only, so UI can read/display the range.
+    if (!isInitialized) {
+      console.log('Initializing price range (display only):', {
         dbPriceRange: `${dbPriceRange.min} - ${dbPriceRange.max}`,
-        currentPriceRange: advancedFilters.priceRange
       });
 
       setAdvancedFilters(prev => ({
         ...prev,
-        priceRange: [dbPriceRange.min, dbPriceRange.max]
+        // Initialize to full range once. UI may read it, but hasActiveFilters logic
+        // ensures it is not considered an active filter unless user changes it.
+        priceRange: [dbPriceRange.min, dbPriceRange.max],
       }));
-      
-      if (!isInitialized) {
-        setIsInitialized(true);
+      setIsInitialized(true);
+    } else if (hasBookingTypeChanged) {
+      // When booking type changes, update only the display range if no user override,
+      // but do NOT mark this as an active filter (full-range mirrors db range).
+      console.log('Booking type changed, syncing display range without activating filter:', {
+        from: prevBookingTypeRef.current,
+        to: currentBookingType,
+        dbPriceRange: `${dbPriceRange.min} - ${dbPriceRange.max}`,
+        currentPriceRange: advancedFilters.priceRange,
+      });
+
+      // Only reset to full db range if user has not narrowed it previously.
+      const userHasCustomRange =
+        !!advancedFilters.priceRange &&
+        Array.isArray(advancedFilters.priceRange) &&
+        (advancedFilters.priceRange[0] > dbPriceRange.min ||
+          advancedFilters.priceRange[1] < dbPriceRange.max);
+
+      if (!userHasCustomRange) {
+        setAdvancedFilters(prev => ({
+          ...prev,
+          priceRange: [dbPriceRange.min, dbPriceRange.max],
+        }));
       }
     }
 
@@ -184,7 +203,10 @@ export const useFilterStore = () => {
     if (advancedFilters.amenities && Array.isArray(advancedFilters.amenities) && advancedFilters.amenities.length > 0) count++;
     if (advancedFilters.bedrooms !== null && typeof advancedFilters.bedrooms === 'number') count++;
     if (advancedFilters.bathrooms !== null && typeof advancedFilters.bathrooms === 'number') count++;
-    if (advancedFilters.bookingType && advancedFilters.bookingType !== 'daily') count++;
+    
+    // Only count booking type if there are other active filters too
+    const hasOtherFilters = count > 0;
+    if (advancedFilters.bookingType && advancedFilters.bookingType !== 'daily' && hasOtherFilters) count++;
     
     return count;
   }, [searchFilters, advancedFilters, priceLoading, dbPriceRange]);

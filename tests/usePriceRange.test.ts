@@ -33,7 +33,7 @@ describe('usePriceRange', () => {
     expect(result.current.priceRange).toEqual({ min: 50, max: 2000, distribution: [] });
   });
 
-  it('computes min and max from data with padding', async () => {
+  it('computes exact min and max from data without padding', async () => {
     const data = [
       { price_per_night: 100, daily_price: 90, monthly_price: 2000 },
       { price_per_night: 150, daily_price: 0, monthly_price: 3000 }
@@ -41,9 +41,9 @@ describe('usePriceRange', () => {
     mockSupabaseResponse(data);
     const { result } = renderHook(() => usePriceRange('daily'));
     await waitFor(() => !result.current.loading);
-    // The hook adds 3% padding: min = 90 * 0.97 = 87.3, max = 150 * 1.02 = 153
-    expect(result.current.priceRange.min).toBe(87);
-    expect(result.current.priceRange.max).toBe(153);
+    // The hook now uses exact min/max: min = 90, max = 150 (no padding)
+    expect(result.current.priceRange.min).toBe(90);
+    expect(result.current.priceRange.max).toBe(150);
   });
 
   it('handles fetch errors gracefully', async () => {

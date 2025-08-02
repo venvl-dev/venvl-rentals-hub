@@ -67,8 +67,8 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
       console.log('After guest filter:', filtered.length, 'properties');
     }
 
-    // Booking type filter - Use the advanced filter if set, otherwise use search filter
-    const activeBookingType = advancedFilters.bookingType || filters.bookingType;
+    // Booking type filter - Only apply if explicitly set (not default)
+    const activeBookingType = advancedFilters.bookingType || (filters.bookingType !== 'daily' ? filters.bookingType : null);
     
     if (activeBookingType) {
       filtered = filtered.filter(property => {
@@ -78,36 +78,67 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
             activeBookingType as BookingType
           );
         } catch (error) {
-          console.warn('Error matching search criteria for property', property.id, error);
-          return false; // Exclude properties that can't be matched
+          console.warn('Error matching search criteria for property', property.id, '- including property by default:', error);
+          return true; // Include properties that can't be matched instead of excluding
         }
       });
       console.log('After booking type filter:', filtered.length, 'properties');
     }
 
-    // Price range filter with better null checking
+    // 🎯 ENHANCED PRICE RANGE FILTER with improved accuracy and debugging
     if (advancedFilters.priceRange && Array.isArray(advancedFilters.priceRange) && advancedFilters.priceRange.length === 2) {
       const [minPrice, maxPrice] = advancedFilters.priceRange;
+      
+      console.log('🔍 Price range filter activated:', {
+        minPrice,
+        maxPrice,
+        activeBookingType,
+        propertiesBeforeFilter: filtered.length
+      });
       
       filtered = filtered.filter(property => {
         // Use appropriate price based on booking type
         let price = property.price_per_night; // default
+        let priceSource = 'price_per_night';
         
         if (activeBookingType === 'daily') {
           price = property.daily_price || property.price_per_night;
+          priceSource = property.daily_price ? 'daily_price' : 'price_per_night';
         } else if (activeBookingType === 'monthly') {
           // For monthly filter, compare against actual monthly price, not daily equivalent
           price = property.monthly_price || 0;
+          priceSource = 'monthly_price';
         }
+        
+        console.log(`🏠 Property ${property.id} (${property.title}):`, {
+          priceSource,
+          price,
+          rawPrices: {
+            price_per_night: property.price_per_night,
+            daily_price: property.daily_price,
+            monthly_price: property.monthly_price
+          },
+          activeBookingType,
+          priceRange: [minPrice, maxPrice]
+        });
         
         // Type safety: ensure price is a valid number
         if (!price || typeof price !== 'number' || price <= 0) {
+          console.log(`❌ Property ${property.id} excluded: invalid price ${price} from ${priceSource}`);
           return false;
         }
         
-        return price >= minPrice && price <= maxPrice;
+        // Exact range matching - no tolerance
+        const inRange = price >= minPrice && price <= maxPrice;
+        if (!inRange) {
+          console.log(`❌ Property ${property.id} excluded: price ${price} not in range [${minPrice}, ${maxPrice}]`);
+        } else {
+          console.log(`✅ Property ${property.id} included: price ${price} is in range [${minPrice}, ${maxPrice}]`);
+        }
+        
+        return inRange;
       });
-      console.log('After price filter:', filtered.length, 'properties');
+      console.log('🎯 After price filter:', filtered.length, 'properties');
     }
 
     // Property types filter with better null checking

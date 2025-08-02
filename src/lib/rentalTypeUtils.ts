@@ -15,34 +15,43 @@ export interface PropertyRentalData {
 
 /**
  * Determines the rental type for a property based on booking_types and available prices
+ * Now with better error handling and fallbacks
  */
 export function getRentalType(property: PropertyRentalData): RentalType {
-  // If booking_types is explicitly set, use it
-  if (property.booking_types && property.booking_types.length > 0) {
-    const hasDaily = property.booking_types.includes('daily');
-    const hasMonthly = property.booking_types.includes('monthly');
+  try {
+    // If booking_types is explicitly set, use it
+    if (property.booking_types && Array.isArray(property.booking_types) && property.booking_types.length > 0) {
+      const hasDaily = property.booking_types.includes('daily');
+      const hasMonthly = property.booking_types.includes('monthly');
+      
+      if (hasDaily && hasMonthly) return 'both';
+      if (hasMonthly) return 'monthly';
+      if (hasDaily) return 'daily';
+    }
     
-    if (hasDaily && hasMonthly) return 'both';
-    if (hasMonthly) return 'monthly';
-    if (hasDaily) return 'daily';
+    // Fallback to legacy rental_type field
+    if (property.rental_type && typeof property.rental_type === 'string') {
+      if (property.rental_type === 'both') return 'both';
+      if (property.rental_type === 'monthly') return 'monthly';
+      if (property.rental_type === 'daily') return 'daily';
+    }
+    
+    // Fallback based on available prices - with type safety
+    const hasNightlyPrice = (typeof property.price_per_night === 'number' && property.price_per_night > 0) || 
+                          (typeof property.daily_price === 'number' && property.daily_price > 0);
+    const hasMonthlyPrice = typeof property.monthly_price === 'number' && property.monthly_price > 0;
+    
+    if (hasNightlyPrice && hasMonthlyPrice) return 'both';
+    if (hasMonthlyPrice) return 'monthly';
+    if (hasNightlyPrice) return 'daily';
+    
+    // Default to daily for properties with any pricing data
+    return 'daily';
+  } catch (error) {
+    console.warn('Error determining rental type for property:', property, 'Error:', error);
+    // Safe fallback - assume daily rental
+    return 'daily';
   }
-  
-  // Fallback to legacy rental_type field
-  if (property.rental_type) {
-    if (property.rental_type === 'both') return 'both';
-    if (property.rental_type === 'monthly') return 'monthly';
-    if (property.rental_type === 'daily') return 'daily';
-  }
-  
-  // Fallback based on available prices
-  const hasNightlyPrice = property.price_per_night > 0 || (property.daily_price && property.daily_price > 0);
-  const hasMonthlyPrice = property.monthly_price && property.monthly_price > 0;
-  
-  if (hasNightlyPrice && hasMonthlyPrice) return 'both';
-  if (hasMonthlyPrice) return 'monthly';
-  
-  // Default to daily
-  return 'daily';
 }
 
 /**
@@ -129,36 +138,42 @@ export function getMinimumStay(property: PropertyRentalData, bookingType: Bookin
 }
 
 /**
- * Validates if a property matches search criteria
+ * Validates if a property matches search criteria with better error handling
  */
 export function matchesSearchCriteria(
   property: PropertyRentalData, 
   searchBookingType: BookingType,
   priceRange?: { min: number; max: number }
 ): boolean {
-  // Check if property supports the requested booking type
-  if (!supportsBookingType(property, searchBookingType)) {
-    return false;
-  }
-  
-  // Check price range if specified
-  if (priceRange) {
-    let targetPrice: number;
-    
-    if (searchBookingType === 'monthly') {
-      const monthlyPrice = getMonthlyPrice(property);
-      if (!monthlyPrice) return false;
-      targetPrice = monthlyPrice;
-    } else {
-      targetPrice = getDailyPrice(property);
-    }
-    
-    if (targetPrice < priceRange.min || targetPrice > priceRange.max) {
+  try {
+    // Check if property supports the requested booking type
+    if (!supportsBookingType(property, searchBookingType)) {
       return false;
     }
+    
+    // Check price range if specified
+    if (priceRange) {
+      let targetPrice: number;
+      
+      if (searchBookingType === 'monthly') {
+        const monthlyPrice = getMonthlyPrice(property);
+        if (!monthlyPrice) return false;
+        targetPrice = monthlyPrice;
+      } else {
+        targetPrice = getDailyPrice(property);
+      }
+      
+      if (targetPrice < priceRange.min || targetPrice > priceRange.max) {
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    // Log error but don't exclude property - better to include than exclude
+    console.warn('Error in matchesSearchCriteria for property:', property, 'Error:', error);
+    return true; // Default to including the property
   }
-  
-  return true;
 }
 
 /**
