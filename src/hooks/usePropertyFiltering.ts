@@ -33,11 +33,8 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
   // Memoize the filtering logic with better dependency tracking
   const filteredProperties = useMemo(() => {
     if (!properties || properties.length === 0) {
-      console.log('No properties to filter');
       return [];
     }
-
-    console.log('Filtering', properties.length, 'properties with filters:', filters);
 
     let filtered = [...properties];
     const { advancedFilters } = filters;

@@ -72,7 +72,6 @@ const Index = () => {
   // Use property filtering hook
   const { filteredProperties, filteringStats } = usePropertyFiltering(properties, getCombinedFilters());
   
-  console.log(`🔍 Final result: ${filteredProperties.length} of ${properties.length} properties`);
   
   
   
@@ -139,13 +138,8 @@ const Index = () => {
         return;
       }
 
-      console.log('Fetched approved properties:', data?.length);
       
       if (data) {
-        // Show all available cities
-        console.log('🔍 ALL CITIES IN DATABASE:');
-        const cities = [...new Set(data.map(p => `${p.city}, ${p.state}`))];
-        cities.forEach(city => console.log(`📍 ${city}`));
         
         // Clean amenities data
         data.forEach(p => {
@@ -157,7 +151,6 @@ const Index = () => {
         // Properties loaded successfully - filtering will be handled by components
       }
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Failed to load properties');
     } finally {
       setLoading(false);
@@ -165,10 +158,7 @@ const Index = () => {
   }, []);
 
   const handleSearch = useCallback((filters: any) => {
-    console.log('🔍 Index.tsx - handleSearch received filters:', filters);
-    console.log('🔍 About to call updateSearchFilters...');
     updateSearchFilters(filters);
-    console.log('🔍 updateSearchFilters called successfully');
   }, [updateSearchFilters]);
 
   const handleAdvancedFilters = useCallback((newFilters: any) => {
@@ -354,32 +344,26 @@ const Index = () => {
                 </motion.div>
 
                 {/* Properties Grid */}
-                {console.log('🔍 About to render properties:', filteredProperties.length)}
                 {filteredProperties.length > 0 ? (
-                  <div style={{backgroundColor: 'lightgreen', padding: '20px', margin: '20px'}}>
-                    <h2 style={{fontSize: '24px', fontWeight: 'bold'}}>FOUND {filteredProperties.length} PROPERTIES</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                      {filteredProperties.map((property, index) => (
-                        <div key={property.id} style={{border: '3px solid blue', padding: '10px', backgroundColor: 'white'}}>
-                          <h3>Property: {property.title}</h3>
-                          <p>City: {property.city}</p>
-                          <PropertyCard property={property} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <motion.div 
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.8 }}
+                  >
+                    {filteredProperties.map((property, index) => (
+                      <motion.div
+                        key={property.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                      >
+                        <PropertyCard property={property} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
                 ) : (
                   <div className="text-center py-12">
-                    <div style={{backgroundColor: 'yellow', padding: '20px', margin: '20px', border: '2px solid red'}}>
-                      <h3 style={{fontSize: '18px', fontWeight: 'bold'}}>Available Cities in Database:</h3>
-                      {properties.length > 0 && (
-                        <ul style={{textAlign: 'left', marginTop: '10px'}}>
-                          {[...new Set(properties.map(p => `${p.city}, ${p.state}`))].map(city => (
-                            <li key={city} style={{fontSize: '16px', margin: '5px 0'}}>📍 {city}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
                     <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
                       No Properties Found
