@@ -76,14 +76,14 @@ export function supportsBookingType(property: PropertyRentalData, bookingType: B
   
   switch (bookingType) {
     case 'daily':
-      // Daily filter shows properties that support daily booking
-      return rentalType === 'daily' || rentalType === 'both';
+      // Daily filter shows ONLY daily-only properties (exclusive)
+      return rentalType === 'daily';
     case 'monthly':
-      // Monthly filter shows properties that support monthly booking
-      return rentalType === 'monthly' || rentalType === 'both';
+      // Monthly filter shows ONLY monthly-only properties (exclusive)
+      return rentalType === 'monthly';
     case 'flexible':
-      // Flexible shows all properties
-      return rentalType === 'daily' || rentalType === 'monthly' || rentalType === 'both';
+      // Flexible shows properties that support both types
+      return rentalType === 'both';
     default:
       return false;
   }

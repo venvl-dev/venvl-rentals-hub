@@ -43,31 +43,52 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
     const { advancedFilters } = filters;
     
     console.log('🔍 Starting with', filtered.length, 'properties');
+    console.log('🔍 Search criteria:', {
+      location: filters.location,
+      bookingType: filters.bookingType,
+      guests: filters.guests
+    });
 
-    // Location filter
+    // Location filter - now enabled
     if (filters.location.trim() !== '') {
       const searchTerm = filters.location.toLowerCase();
       console.log('🔍 Applying location filter for:', searchTerm);
+      
+      const beforeCount = filtered.length;
       filtered = filtered.filter(property => {
         const searchFields = [
           property.city,
           property.state,
           property.country,
-          property.title,
-          property.description
-        ].filter(Boolean); // Remove null/undefined values
+          property.title
+        ].filter(Boolean).map(field => field?.toLowerCase());
         
-        const matches = searchFields.some(field => 
-          field?.toLowerCase().includes(searchTerm)
-        );
+        // Extract search words and check for matches - be more flexible
+        const searchWords = searchTerm.split(/[,،\s]+/).filter(word => word.trim().length > 0);
         
-        if (!matches) {
-          console.log(`❌ Property ${property.id} (${property.city}, ${property.state}, ${property.country}) doesn't match "${searchTerm}"`);
-        }
+        // Check if any search word matches any field
+        const matches = searchWords.some(searchWord => {
+          const cleanSearchWord = searchWord.trim();
+          return searchFields.some(field => {
+            if (!field) return false;
+            // More flexible matching - check if field contains search word or search word contains field
+            return field.includes(cleanSearchWord) || cleanSearchWord.includes(field);
+          });
+        });
         
+        console.log(`🔍 Property ${property.id.substring(0, 8)} (${property.city}, ${property.state}): searchWords=[${searchWords.join(', ')}] matches=${matches}`);
+        console.log(`   Fields being searched: [${searchFields.join(', ')}]`);
         return matches;
       });
-      console.log('After location filter:', filtered.length, 'properties');
+      
+      console.log(`🔍 Location filter: ${beforeCount} → ${filtered.length} properties`);
+      
+      if (filtered.length === 0) {
+        console.log('🔍 NO MATCHES! Available cities in database:');
+        properties.slice(0, 10).forEach(p => {
+          console.log(`📍 ${p.city}, ${p.state} (${p.country})`);
+        });
+      }
     }
 
     // Guest capacity filter
@@ -82,20 +103,36 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
     // Apply booking type filter when set
     if (activeBookingType) {
       console.log('🔍 Applying booking type filter:', activeBookingType);
+      console.log('🔍 Properties before booking filter:', filtered.length);
+      
+      const beforeFilter = [...filtered];
       filtered = filtered.filter(property => {
         try {
           const matches = matchesSearchCriteria(
             property as PropertyRentalData, 
             activeBookingType as BookingType
           );
-          console.log(`Property ${property.id} - booking_types: ${JSON.stringify(property.booking_types)}, rental_type: ${property.rental_type}, matches ${activeBookingType}: ${matches}`);
+          console.log(`🔍 Property ${property.id.substring(0, 8)} - booking_types: ${JSON.stringify(property.booking_types)}, rental_type: ${property.rental_type}, matches ${activeBookingType}: ${matches}`);
           return matches;
         } catch (error) {
-          console.warn('Error matching search criteria for property', property.id, '- including property by default:', error);
+          console.warn('🔍 Error matching search criteria for property', property.id, '- including property by default:', error);
           return true; // Include properties that can't be matched instead of excluding
         }
       });
-      console.log('After booking type filter:', filtered.length, 'properties');
+      
+      console.log('🔍 After booking type filter:', filtered.length, 'properties');
+      
+      if (filtered.length < beforeFilter.length) {
+        console.log(`🔍 Booking filter eliminated ${beforeFilter.length - filtered.length} properties!`);
+        console.log('🔍 Properties that FAILED booking filter:');
+        beforeFilter.filter(p => !filtered.includes(p)).slice(0, 5).forEach(p => {
+          console.log(`❌ ${p.id.substring(0, 8)}: rental_type=${p.rental_type}, booking_types=${JSON.stringify(p.booking_types)}`);
+        });
+        console.log('🔍 Properties that PASSED booking filter:');
+        filtered.slice(0, 5).forEach(p => {
+          console.log(`✅ ${p.id.substring(0, 8)}: rental_type=${p.rental_type}, booking_types=${JSON.stringify(p.booking_types)}`);
+        });
+      }
     }
 
     // 🎯 ENHANCED PRICE RANGE FILTER with improved accuracy and debugging

@@ -66,6 +66,20 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
     onClose();
   };
 
+  const handleInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      // Allow user to press Enter to use their typed text
+      onChange(searchTerm);
+      onClose();
+    }
+  };
+
+  const handleUseTypedLocation = () => {
+    // Allow user to use whatever they typed
+    onChange(searchTerm);
+    onClose();
+  };
+
   if (isMobile) {
     return (
       <div className="p-4 h-full overflow-auto">
@@ -87,12 +101,21 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
           <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input
             type="text"
-            placeholder="Search destinations"
+            placeholder="Type any location and press Enter"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={handleInputKeyPress}
             className="pl-12 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:border-black focus:ring-0 transition-colors"
             autoFocus
           />
+          {searchTerm && (
+            <Button
+              onClick={handleUseTypedLocation}
+              className="w-full mt-3 bg-black text-white hover:bg-gray-800"
+            >
+              Use "{searchTerm}"
+            </Button>
+          )}
         </div>
 
         {/* Mobile Suggestions */}
@@ -151,12 +174,22 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
           <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             type="text"
-            placeholder="Search destinations"
+            placeholder="Type any location and press Enter"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyPress={handleInputKeyPress}
             className="pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:border-black focus:ring-0 transition-colors"
             autoFocus
           />
+          {searchTerm && (
+            <Button
+              onClick={handleUseTypedLocation}
+              size="sm"
+              className="w-full mt-2 bg-black text-white hover:bg-gray-800 text-xs"
+            >
+              Use "{searchTerm}"
+            </Button>
+          )}
         </div>
 
         {/* Compact Suggestions */}
