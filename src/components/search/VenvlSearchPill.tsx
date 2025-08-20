@@ -34,8 +34,10 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
   };
 
   const handleSearch = () => {
-    console.log('VenvlSearchPill - handleSearch called with filters:', filters);
+    console.log('🔍 VenvlSearchPill - handleSearch called with filters:', filters);
+    console.log('🔍 About to call onSearch prop...');
     onSearch(filters);
+    console.log('🔍 onSearch prop called successfully');
     setActiveSection(null);
   };
 

@@ -71,6 +71,10 @@ const Index = () => {
 
   // Use property filtering hook
   const { filteredProperties, filteringStats } = usePropertyFiltering(properties, getCombinedFilters());
+  
+  
+  
+  
 
   useEffect(() => {
     fetchProperties();
@@ -134,25 +138,19 @@ const Index = () => {
         return;
       }
 
-      console.log('Fetched approved properties:', data?.length);
+      
       if (data) {
+        
         // Clean amenities data
         data.forEach(p => {
           p.amenities = cleanAmenityIds(p.amenities || []);
         });
 
         setProperties(data);
-        
-        // Debug: Expose properties for debugging
-        if (typeof window !== 'undefined') {
-          (window as any).allProperties = data;
-          console.log('🔍 DEBUG: Properties exposed to window.allProperties for debugging');
-        }
 
         // Properties loaded successfully - filtering will be handled by components
       }
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Failed to load properties');
     } finally {
       setLoading(false);
@@ -160,7 +158,6 @@ const Index = () => {
   }, []);
 
   const handleSearch = useCallback((filters: any) => {
-    console.log('Index.tsx - handleSearch called with filters:', filters);
     updateSearchFilters(filters);
   }, [updateSearchFilters]);
 
@@ -348,18 +345,18 @@ const Index = () => {
 
                 {/* Properties Grid */}
                 {filteredProperties.length > 0 ? (
-                  <motion.div
+                  <motion.div 
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.8 }}
                   >
                     {filteredProperties.map((property, index) => (
                       <motion.div
                         key={property.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
                       >
                         <PropertyCard property={property} />
                       </motion.div>

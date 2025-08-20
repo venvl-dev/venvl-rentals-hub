@@ -39,10 +39,10 @@ interface PropertyCardProps {
 
 const PropertyCard = ({ property }: PropertyCardProps) => {
   const navigate = useNavigate();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [touchStart, setTouchStart] = useState<number | null>(null);
+    const [touchEnd, setTouchEnd] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
   const cleanedAmenities = useMemo(
     () => cleanAmenityIds(property.amenities || []),
     [property.amenities]
@@ -57,7 +57,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     navigate(`/property/${property.id}`);
   };
 
-  const images = property.images?.length > 0 ? property.images : ['/placeholder.svg'];
+  const images = property.images?.length > 0 ? property.images : ['https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'];
 
   const nextImage = useCallback((e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -212,11 +212,8 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     
     if (rentalType === 'daily') {
       badges.push({ type: 'daily', label: 'Daily Stays', icon: Calendar, color: badge.color });
-    } else if (rentalType === 'monthly') {
-      badges.push({ type: 'monthly', label: 'Monthly Stays', icon: Clock, color: badge.color });
     } else if (rentalType === 'both') {
       badges.push({ type: 'daily', label: 'Daily', icon: Calendar, color: 'bg-blue-100 text-blue-800 border-blue-200' });
-      badges.push({ type: 'monthly', label: 'Monthly', icon: Clock, color: 'bg-green-100 text-green-800 border-green-200' });
     }
     
     return badges;
@@ -239,7 +236,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           src={images[currentImageIndex]}
           alt={property.title}
           className="w-full h-full object-cover"
-          fallbackSrc="/placeholder.svg"
+          fallbackSrc="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"
           lazy={true}
           quality={85}
           width={400}
