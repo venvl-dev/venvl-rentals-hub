@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -90,6 +91,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   const [newImageUrl, setNewImageUrl] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
   const [currentRentalType, setCurrentRentalType] = useState<RentalType>('daily');
+  const queryClient = useQueryClient();
 
   // Get current rental type for existing property or default for new property
   const initialRentalType = property ? getRentalType(property as PropertyRentalData) : 'daily';
@@ -322,6 +324,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
           throw new Error(`Update failed: ${error.message}`);
         }
         
+        // Invalidate admin properties cache so updates appear immediately in admin panel
+        queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
+        
         toast.success('Property updated successfully!');
       } else {
         const { data: result, error } = await supabase
@@ -332,6 +337,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         if (error) {
           throw new Error(`Insert failed: ${error.message}`);
         }
+        
+        // Invalidate admin properties cache so new properties appear immediately in admin panel
+        queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
         
         toast.success('Property created successfully!');
       }

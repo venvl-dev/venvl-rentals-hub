@@ -133,7 +133,7 @@ const AdminPanel = () => {
 
       // Load detailed data
       const [usersData, propertiesData, bookingsDetailData] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(10),
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }).limi عغفق t(10),
         supabase.from('properties').select('*').order('created_at', { ascending: false }).limit(10),
         supabase.from('bookings').select(`
           *,
@@ -227,7 +227,7 @@ const AdminPanel = () => {
           </Card>
 
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-blue-500">
               <CardTitle className="text-sm font-medium">{t('admin.totalBookings')}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -242,7 +242,7 @@ const AdminPanel = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold ">${stats.totalRevenue.toLocaleString()}</div> 
             </CardContent>
           </Card>
         </div>
