@@ -1,0 +1,144 @@
+# Welcome to your Lovable project
+
+## Project info
+
+**URL**: https://lovable.dev/projects/33969250-c7b4-45da-9e5a-af9f6021ec27
+
+## ⚠️ Important: Environment Setup Required
+
+**The application will show a blank screen without proper environment setup.**
+
+Before running the application, you **MUST** set up your environment variables:
+
+1. **Copy the example environment file:**
+   ```sh
+   cp .env.example .env
+   ```
+
+2. **Add your Supabase credentials to the `.env` file:**
+   - `VITE_SUPABASE_URL`: Your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+   - `SMTP_HOST`: SMTP server host
+   - `SMTP_PORT`: SMTP server port (e.g. 465)
+   - `SMTP_USER`: Username for sending emails
+   - `SMTP_PASS`: Password for the SMTP user
+   - `SMTP_SECURE`: `true` to use TLS
+
+3. **Find these values in your Supabase project dashboard:**
+   - Go to Settings > API in your Supabase dashboard
+   - Copy the Project URL and anon/public key
+
+4. **Restart the development server after creating the `.env` file**
+
+5. **Configure SMTP in the admin portal**
+   - Open the Admin portal and navigate to **Settings > Email**.
+   - Enter your SMTP credentials and an admin notification address.
+   - Click **Send Test Email** to verify the configuration.
+
+The `smtp_pass` value is encrypted before being stored in the database using the
+`encrypt_sensitive_data` function defined in Supabase. When SMTP settings are
+fetched via the `get-smtp-settings` edge function, the password is decrypted on
+the server with `decrypt_sensitive_data` so it never travels or is stored in
+plain text.
+
+**Without these environment variables, the application will display an error screen with setup instructions.**
+
+## Role-Based Architecture
+
+This project is structured with role-based code splitting for optimal performance:
+
+### Directory Structure
+- `src/pages/guest/*` - Guest-specific pages (bookings, signup)
+- `src/pages/host/*` - Host-specific pages (dashboard, property management)
+- `src/pages/admin/*` - Admin-specific pages (user management, system setup)
+- `src/common/components/*` - Shared components across all roles
+
+### Multiple Entry Points
+The application supports separate builds for each user role:
+
+- **Guest Portal**: `guest.html` - Includes public pages and guest features
+- **Host Portal**: `host.html` - Host dashboard and property management
+- **Admin Portal**: `admin.html` - Administrative features and system management
+- **Main App**: `index.html` - Combined application (default)
+
+### Build Commands
+```sh
+# Development (loads all features)
+npm run dev
+
+# Build all entry points
+npm run build
+
+# Preview built application
+npm run preview
+```
+
+Each entry point loads only the code needed for that specific user role, improving performance and reducing bundle size.
+
+## How can I edit this code?
+
+There are several ways of editing your application.
+
+**Use Lovable**
+
+Simply visit the [Lovable Project](https://lovable.dev/projects/33969250-c7b4-45da-9e5a-af9f6021ec27) and start prompting.
+
+Changes made via Lovable will be committed automatically to this repo.
+
+**Use your preferred IDE**
+
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+
+Follow these steps:
+
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
+
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
+
+# Step 3: Install the necessary dependencies.
+npm i
+
+# Step 4: Start the development server with auto-reloading and an instant preview.
+npm run dev
+```
+
+**Edit a file directly in GitHub**
+
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
+
+**Use GitHub Codespaces**
+
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
+
+## What technologies are used for this project?
+
+This project is built with:
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+
+## How can I deploy this project?
+
+Simply open [Lovable](https://lovable.dev/projects/33969250-c7b4-45da-9e5a-af9f6021ec27) and click on Share -> Publish.
+
+## Can I connect a custom domain to my Lovable project?
+
+Yes, you can!
+
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
