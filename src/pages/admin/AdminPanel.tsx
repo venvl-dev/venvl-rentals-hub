@@ -133,7 +133,7 @@ const AdminPanel = () => {
 
       // Load detailed data
       const [usersData, propertiesData, bookingsDetailData] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }).limi عغفق t(10),
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(10),
         supabase.from('properties').select('*').order('created_at', { ascending: false }).limit(10),
         supabase.from('bookings').select(`
           *,
