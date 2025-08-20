@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 import { Home, Plus, Edit2, Trash2, Search, Star } from 'lucide-react';
 
 interface PropertyType {
@@ -27,7 +27,6 @@ interface PropertyTypeStats {
 }
 
 const PropertyTypeManagement = () => {
-  const { toast } = useToast();
   const [propertyTypes, setPropertyTypes] = useState<PropertyType[]>([]);
   const [filteredTypes, setFilteredTypes] = useState<PropertyType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,11 +68,7 @@ const PropertyTypeManagement = () => {
       calculateStats(data || []);
     } catch (error) {
       console.error('Error loading property types:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load property types",
-        variant: "destructive",
-      });
+      toast.error("Failed to load property types");
     } finally {
       setLoading(false);
     }
@@ -128,21 +123,14 @@ const PropertyTypeManagement = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Property type created successfully",
-      });
+      toast.success("Property type created successfully");
 
       setIsCreateDialogOpen(false);
       resetForm();
       loadPropertyTypes();
     } catch (error) {
       console.error('Error creating property type:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create property type",
-        variant: "destructive",
-      });
+      toast.error("Failed to create property type");
     }
   };
 
@@ -162,10 +150,7 @@ const PropertyTypeManagement = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Property type updated successfully",
-      });
+      toast.success("Property type updated successfully");
 
       setIsEditDialogOpen(false);
       setSelectedType(null);
@@ -173,54 +158,45 @@ const PropertyTypeManagement = () => {
       loadPropertyTypes();
     } catch (error) {
       console.error('Error updating property type:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update property type",
-        variant: "destructive",
-      });
+      toast.error("Failed to update property type");
     }
   };
 
-  const handleDelete = async (typeId: string) => {
+  const handleDelete = async (type: PropertyType) => {
     try {
-      // First check if any properties use this type
-      const { data: propertiesWithType, error: checkError } = await supabase
-        .from('properties')
-        .select('id')
-        .eq('property_type', typeId)
-        .limit(1);
+      // Valid enum values for property_type
+      const validEnumValues = ['apartment', 'house', 'villa', 'studio', 'cabin', 'loft'];
+      const lowerTypeName = type.name.toLowerCase();
+      
+      // Only check for properties if this is a valid enum value
+      if (validEnumValues.includes(lowerTypeName)) {
+        const { data: propertiesWithType, error: checkError } = await supabase
+          .from('properties')
+          .select('id')
+          .eq('property_type', lowerTypeName)
+          .limit(1);
 
-      if (checkError) throw checkError;
+        if (checkError) throw checkError;
 
-      if (propertiesWithType && propertiesWithType.length > 0) {
-        toast({
-          title: "Cannot Delete",
-          description: "This property type is being used by existing properties. Please reassign those properties first.",
-          variant: "destructive",
-        });
-        return;
+        if (propertiesWithType && propertiesWithType.length > 0) {
+          toast.error("Cannot delete: This property type is being used by existing properties. Please reassign those properties first.");
+          return;
+        }
       }
+      // If property type is not in enum, skip properties check since no properties can use invalid enum values
 
       const { error } = await supabase
         .from('property_types')
         .delete()
-        .eq('id', typeId);
+        .eq('id', type.id);
 
       if (error) throw error;
 
-      toast({
-        title: "Success",
-        description: "Property type deleted successfully",
-      });
-
+      toast.success("Property type deleted successfully");
       loadPropertyTypes();
     } catch (error) {
       console.error('Error deleting property type:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete property type",
-        variant: "destructive",
-      });
+      toast.error("Failed to delete property type");
     }
   };
 
@@ -428,8 +404,8 @@ const PropertyTypeManagement = () => {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={() => handleDelete(type.id)}
+                            <AlertDialogAction
+                              onClick={() => handleDelete(type)}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
                               Delete
