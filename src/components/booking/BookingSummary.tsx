@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { CalendarIcon, Users, CreditCard, MapPin, Clock, Check } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import PriceBreakdownModal from './components/PriceBreakdownModal';
 
 interface BookingSummaryProps {
   booking: {
@@ -212,33 +213,14 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
 
               {/* Price Breakdown */}
               <div className="space-y-4">
-                <h4 className="font-semibold">Price breakdown</h4>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span>
-                      EGP {booking.bookingType === 'daily' ? booking.property.price_per_night : booking.property.monthly_price} × {booking.bookingType === 'daily' ? nights : booking.duration} {booking.bookingType === 'daily' ? (nights === 1 ? 'night' : 'nights') : (booking.duration === 1 ? 'month' : 'months')}
-                    </span>
-                    <span>EGP {booking.totalPrice}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span>Service fee</span>
-                    <span>EGP {serviceFee}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span>Taxes</span>
-                    <span>EGP {taxes}</span>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total (EGP)</span>
-                    <span>EGP {finalTotal}</span>
-                  </div>
-                </div>
+                <h4 className="font-semibold">Payment summary</h4>
+                <PriceBreakdownModal 
+                  booking={{
+                    ...booking,
+                    guests: booking.guests
+                  }} 
+                  currency="EGP"
+                />
               </div>
 
               <Separator />

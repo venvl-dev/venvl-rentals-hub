@@ -40,12 +40,21 @@ const BookingDateSelector = ({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <CalendarDays className="h-4 w-4 text-gray-700" />
-        <span className="text-sm font-semibold text-gray-900">
-          {bookingMode === 'daily' ? 'Select dates' : 'Select start & duration'}
-        </span>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+            <CalendarDays className="h-4 w-4 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">
+              {bookingMode === 'daily' ? 'Select Your Dates' : 'Choose Duration'}
+            </h3>
+            <p className="text-xs text-gray-500">
+              {bookingMode === 'daily' ? 'Pick check-in and check-out dates' : 'Select start date and duration'}
+            </p>
+          </div>
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
@@ -56,9 +65,11 @@ const BookingDateSelector = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="space-y-3"
+            className="space-y-4"
           >
-            <div className="border border-gray-200 rounded-lg p-2 lg:p-3 bg-white">
+            <div className="relative overflow-hidden rounded-xl border border-gray-200/50 bg-gradient-to-b from-white to-gray-50/30 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-600/5"></div>
+              <div className="relative p-3 flex justify-center">
               <Calendar
                 mode="range"
                 selected={{ from: checkIn, to: checkOut }}
@@ -70,29 +81,48 @@ const BookingDateSelector = ({
                 }}
                 disabled={isDateBlocked}
                 numberOfMonths={1}
-                className="w-full"
+                className=""
                 classNames={{
-                  months: "flex flex-col space-y-3",
-                  month: "space-y-3",
+                  months: "flex flex-col space-y-2",
+                  month: "space-y-2",
                   caption: "flex justify-center pt-1 relative items-center",
-                  caption_label: "text-sm font-medium",
+                  caption_label: "text-sm font-bold text-gray-800",
                   nav: "space-x-1 flex items-center",
-                  nav_button: "h-6 w-6 bg-transparent p-0 opacity-50 hover:opacity-100",
+                  nav_button: "h-6 w-6 bg-white hover:bg-gray-50 rounded-md border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md",
                   nav_button_previous: "absolute left-1",
                   nav_button_next: "absolute right-1",
-                  table: "w-full border-collapse space-y-1",
-                  head_row: "flex",
-                  head_cell: "text-muted-foreground rounded-md w-7 lg:w-8 font-normal text-xs",
-                  row: "flex w-full mt-1",
-                  cell: "h-7 w-7 lg:h-8 lg:w-8 text-center text-sm p-0 relative",
-                  day: "h-7 w-7 lg:h-8 lg:w-8 p-0 font-normal text-sm",
-                  day_selected: "bg-black text-white hover:bg-gray-800",
-                  day_today: "bg-gray-100 text-gray-900",
-                  day_outside: "text-muted-foreground opacity-50",
-                  day_disabled: "text-muted-foreground opacity-30",
-                  day_range_middle: "aria-selected:bg-gray-100 aria-selected:text-gray-900",
+                  table: "border-collapse space-y-1",
+                  head_row: "flex mb-1",
+                  head_cell: "text-gray-500 rounded-md w-7 font-medium text-xs uppercase tracking-wide",
+                  row: "flex mt-0.5 gap-0.5",
+                  cell: "h-7 w-7 text-center text-sm p-0 relative",
+                  day: "h-7 w-7 p-0 font-medium text-xs hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-md transition-all duration-200 hover:shadow-sm",
+                  day_selected: "bg-gradient-to-br from-gray-800 to-black text-white border-gray-700 shadow-md hover:from-black hover:to-gray-800",
+                  day_today: "bg-blue-50 text-blue-800 border-blue-200 font-bold",
+                  day_outside: "text-gray-300 opacity-40",
+                  day_disabled: "bg-gradient-to-br from-red-50 to-red-100 text-red-600 opacity-60 cursor-not-allowed border-red-200 relative after:absolute after:inset-0 after:bg-red-500/5 after:rounded-md",
+                  day_range_middle: "aria-selected:bg-blue-100 aria-selected:text-blue-800 aria-selected:border-blue-300",
                 }}
               />
+              </div>
+            </div>
+
+            {/* Enhanced Calendar Legend */}
+            <div className="bg-gray-50/50 rounded-lg p-2 border border-gray-100">
+              <div className="flex items-center justify-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-gray-100 rounded-sm border border-gray-200 shadow-sm"></div>
+                  <span className="text-gray-600 font-medium">Available</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-gradient-to-br from-red-100 to-red-200 rounded-sm border border-red-300 shadow-sm"></div>
+                  <span className="text-gray-600 font-medium">Booked</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-gradient-to-br from-gray-800 to-black rounded-sm shadow-sm"></div>
+                  <span className="text-gray-600 font-medium">Selected</span>
+                </div>
+              </div>
             </div>
 
             {/* Date Summary - Compact */}
@@ -133,37 +163,58 @@ const BookingDateSelector = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="space-y-3"
+            className="space-y-4"
           >
-            <div className="border border-gray-200 rounded-lg p-2 lg:p-3 bg-white">
+            <div className="relative overflow-hidden rounded-xl border border-gray-200/50 bg-gradient-to-b from-white to-gray-50/30 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-600/5"></div>
+              <div className="relative p-3 flex justify-center">
               <Calendar
                 mode="single"
                 selected={monthlyStartDate}
                 onSelect={(date) => onDateChange({ monthlyStartDate: date })}
                 disabled={isDateBlocked}
                 numberOfMonths={1}
-                className="w-full"
+                className=""
                 classNames={{
-                  months: "flex flex-col space-y-3",
-                  month: "space-y-3",
+                  months: "flex flex-col space-y-2",
+                  month: "space-y-2",
                   caption: "flex justify-center pt-1 relative items-center",
-                  caption_label: "text-sm font-medium",
+                  caption_label: "text-sm font-bold text-gray-800",
                   nav: "space-x-1 flex items-center",
-                  nav_button: "h-6 w-6 bg-transparent p-0 opacity-50 hover:opacity-100",
+                  nav_button: "h-6 w-6 bg-white hover:bg-gray-50 rounded-md border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md",
                   nav_button_previous: "absolute left-1",
                   nav_button_next: "absolute right-1",
-                  table: "w-full border-collapse space-y-1",
-                  head_row: "flex",
-                  head_cell: "text-muted-foreground rounded-md w-7 lg:w-8 font-normal text-xs",
-                  row: "flex w-full mt-1",
-                  cell: "h-7 w-7 lg:h-8 lg:w-8 text-center text-sm p-0 relative",
-                  day: "h-7 w-7 lg:h-8 lg:w-8 p-0 font-normal text-sm",
-                  day_selected: "bg-black text-white hover:bg-gray-800",
-                  day_today: "bg-gray-100 text-gray-900",
-                  day_outside: "text-muted-foreground opacity-50",
-                  day_disabled: "text-muted-foreground opacity-30",
+                  table: "border-collapse space-y-1",
+                  head_row: "flex mb-1",
+                  head_cell: "text-gray-500 rounded-md w-7 font-medium text-xs uppercase tracking-wide",
+                  row: "flex mt-0.5 gap-0.5",
+                  cell: "h-7 w-7 text-center text-sm p-0 relative",
+                  day: "h-7 w-7 p-0 font-medium text-xs hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-md transition-all duration-200 hover:shadow-sm",
+                  day_selected: "bg-gradient-to-br from-gray-800 to-black text-white border-gray-700 shadow-md hover:from-black hover:to-gray-800",
+                  day_today: "bg-blue-50 text-blue-800 border-blue-200 font-bold",
+                  day_outside: "text-gray-300 opacity-40",
+                  day_disabled: "bg-gradient-to-br from-red-50 to-red-100 text-red-600 opacity-60 cursor-not-allowed border-red-200 relative after:absolute after:inset-0 after:bg-red-500/5 after:rounded-md",
                 }}
               />
+              </div>
+            </div>
+
+            {/* Enhanced Calendar Legend */}
+            <div className="bg-gray-50/50 rounded-lg p-2 border border-gray-100">
+              <div className="flex items-center justify-center gap-4 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-gray-100 rounded-sm border border-gray-200 shadow-sm"></div>
+                  <span className="text-gray-600 font-medium">Available</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-gradient-to-br from-red-100 to-red-200 rounded-sm border border-red-300 shadow-sm"></div>
+                  <span className="text-gray-600 font-medium">Booked</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2.5 h-2.5 bg-gradient-to-br from-gray-800 to-black rounded-sm shadow-sm"></div>
+                  <span className="text-gray-600 font-medium">Selected</span>
+                </div>
+              </div>
             </div>
 
             <div className="bg-gray-50 rounded-lg p-3 space-y-3">
