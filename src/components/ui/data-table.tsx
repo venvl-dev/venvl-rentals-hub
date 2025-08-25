@@ -8,6 +8,7 @@ import {
   SortingState,
   getFilteredRowModel,
   ColumnFiltersState,
+  getGlobalFilter,
 } from "@tanstack/react-table";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ interface DataTableProps<TData, TValue> {
   data: TData[];
   searchPlaceholder?: string;
   searchColumn?: string;
+  enableGlobalSearch?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -34,9 +36,11 @@ export function DataTable<TData, TValue>({
   data,
   searchPlaceholder = "Search...",
   searchColumn,
+  enableGlobalSearch = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const table = useReactTable({
     data,
@@ -47,9 +51,12 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onGlobalFilterChange: setGlobalFilter,
+    globalFilterFn: "includesString",
     state: {
       sorting,
       columnFilters,
+      globalFilter,
     },
     initialState: {
       pagination: {
@@ -60,14 +67,18 @@ export function DataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      {searchColumn && (
+      {(searchColumn || enableGlobalSearch) && (
         <div className="flex items-center py-4">
           <Input
             placeholder={searchPlaceholder}
-            value={(table.getColumn(searchColumn)?.getFilterValue() as string) ?? ""}
-            onChange={(event) =>
-              table.getColumn(searchColumn)?.setFilterValue(event.target.value)
-            }
+            value={enableGlobalSearch ? globalFilter : (table.getColumn(searchColumn!)?.getFilterValue() as string) ?? ""}
+            onChange={(event) => {
+              if (enableGlobalSearch) {
+                setGlobalFilter(event.target.value);
+              } else if (searchColumn) {
+                table.getColumn(searchColumn)?.setFilterValue(event.target.value);
+              }
+            }}
             className="max-w-sm"
           />
         </div>
@@ -120,8 +131,8 @@ export function DataTable<TData, TValue>({
       
       <div className="flex items-center justify-between space-x-2 py-4">
         <div className="text-sm text-muted-foreground">
-          {table.getFilteredRowModel().rows.length} of{" "}
-          {table.getCoreRowModel().rows.length} row(s)
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {table.getPageCount()}
         </div>
         <div className="flex items-center space-x-2">
           <Button

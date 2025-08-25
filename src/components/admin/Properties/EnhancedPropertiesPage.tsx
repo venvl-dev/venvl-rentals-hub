@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAdminQueryClient } from '@/hooks/useAdminQueryClient';
 import { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
 import { 
   MoreHorizontal, 
   CheckCircle, 
@@ -191,7 +192,7 @@ const EnhancedPropertiesPage = () => {
       case 'pending': return 'outline';
       default: return 'outline';
     }
-  };
+  }; 
 
   const columns: ColumnDef<Property>[] = [
     {
@@ -201,7 +202,12 @@ const EnhancedPropertiesPage = () => {
         const property = row.original;
         return (
           <div>
-            <div className="font-medium">{property.title}</div>
+            <Link 
+              to={`/admin/property/${property.id}`}
+              className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
+            >
+              {property.title}
+            </Link>
             <div className="text-sm text-muted-foreground capitalize">
               {property.property_type}
             </div>
@@ -524,19 +530,19 @@ const EnhancedPropertiesPage = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="text-sm font-medium">Price per Night</label>
-                    <p className="text-sm text-muted-foreground">${selectedProperty.price_per_night}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Daily Price</label>
-                    <p className="text-sm text-muted-foreground">${selectedProperty.daily_price || 'N/A'}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium">Monthly Price</label>
-                    <p className="text-sm text-muted-foreground">${selectedProperty.monthly_price || 'N/A'}</p>
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {(selectedProperty.booking_types?.includes('daily') || selectedProperty.daily_price) && (
+                    <div>
+                      <label className="text-sm font-medium">Daily Stay Price</label>
+                      <p className="text-sm text-muted-foreground">${selectedProperty.daily_price || selectedProperty.price_per_night}</p>
+                    </div>
+                  )}
+                  {(selectedProperty.booking_types?.includes('monthly') || selectedProperty.monthly_price) && (
+                    <div>
+                      <label className="text-sm font-medium">Monthly Stay Price</label>
+                      <p className="text-sm text-muted-foreground">${selectedProperty.monthly_price || 'N/A'}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div>

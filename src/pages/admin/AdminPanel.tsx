@@ -87,8 +87,10 @@ const AdminPanel = () => {
       let role = profileData?.role || null;
 
       if (profileError || !role) {
-        console.warn('Profile fetch failed for user', session.user.id, '- falling back to user metadata');
-        role = (session.user.user_metadata as any)?.role || null;
+        console.warn('Profile fetch failed for user', session.user.id, '- SECURITY: No metadata fallback for admin panel');
+        // SECURITY FIX: Never trust user metadata for admin access
+        // Admin panel should only work with database-verified roles
+        role = null;
       }
 
       setUserRole(role);
@@ -133,7 +135,7 @@ const AdminPanel = () => {
 
       // Load detailed data
       const [usersData, propertiesData, bookingsDetailData] = await Promise.all([
-        supabase.from('profiles').select('*').order('created_at', { ascending: false }).limi عغفق t(10),
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(10),
         supabase.from('properties').select('*').order('created_at', { ascending: false }).limit(10),
         supabase.from('bookings').select(`
           *,
