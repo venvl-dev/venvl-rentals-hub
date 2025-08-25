@@ -57,36 +57,50 @@ const ProtectedRoute = ({
       }
 
       const roleKey = `user_role_${user!.id}`;
-      // Clear any cached role to ensure fresh fetch
+      // SECURITY FIX: Always fetch fresh role for protected routes to prevent cache poisoning
       localStorage.removeItem(roleKey);
+      
+      // TEMPORARY DEBUG: Clear all role-related cache
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('user_role_')) {
+          localStorage.removeItem(key);
+        }
+      });
 
-      // Always fetch fresh role data to avoid cache issues
+      // Always fetch fresh role data for security-critical route access
       let role: string | null = null;
       try {
-        // Create a query function for the secure API
-        const queryFunction = async () => {
-          const { data, error } = await import('@/integrations/supabase/client').then(module =>
-            module.supabase.from('profiles').select('role').eq('id', user!.id).maybeSingle()
-          );
-          if (error) throw error;
-          return data;
-        };
-
-        const profile = await secureProfileQuery.execute(queryFunction);
+        // Direct query to profiles table - bypassing useSecureQuery due to issues
+        const { data: profile, error } = await import('@/integrations/supabase/client').then(module =>
+          module.supabase.from('profiles').select('id, email, role').eq('id', user!.id).maybeSingle()
+        );
+        
+        if (error) {
+          console.error('Profile query error:', error);
+          throw error;
+        }
 
         if (profile) {
-          role = (profile as any)?.role || null;
+          role = profile?.role || null;
         }
 
         if (!role) {
           console.warn('Profile not found for user:', user!.id, '- falling back to user metadata');
-          role = (user as any)?.user_metadata?.role || 'guest';
+          // SECURITY FIX: More restrictive fallback - don't trust user metadata for admin roles
+          const fallbackRole = (user as any)?.user_metadata?.role || 'guest';
+          role = ['guest', 'host'].includes(fallbackRole) ? fallbackRole : 'guest';
         }
 
         console.log('Role resolved for user:', user!.id, 'Role:', role);
 
-        // Update cache with fresh role
-        localStorage.setItem(roleKey, role);
+        // SECURITY FIX: Store with secure cache format matching useUserRole
+        const secureCache = {
+          role,
+          timestamp: Date.now(),
+          sessionId: user!.id,
+          checksum: btoa(role + user!.id).slice(0, 8)
+        };
+        localStorage.setItem(roleKey, JSON.stringify(secureCache));
       } catch (error) {
         console.error('Profile fetch error for user:', user!.id, error);
         toast.error('Unable to fetch user profile');

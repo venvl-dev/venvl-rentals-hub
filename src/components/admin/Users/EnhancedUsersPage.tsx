@@ -14,6 +14,7 @@ import {
   Clock
 } from 'lucide-react';
 
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +24,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -300,28 +304,26 @@ const EnhancedUsersPage = () => {
 
            
 
-              <DropdownMenuItem
-                onClick={async () => {
-                  const newRole = prompt('Enter new role (guest, host, super_admin):');
-                  if (
-                    newRole &&
-                    ['guest', 'host', 'super_admin'].includes(newRole) &&
-                    newRole !== user.role
-                  ) {
-                    try {
-                      await updateUserRoleMutation.mutateAsync({ userId: user.id, newRole });
-                      toast.success(`User role changed to "${newRole}" successfully.`);
-                    } catch (error) {
-                      toast.error('Failed to change user role.');
-                    }
-                  } else if (newRole === user.role) {
-                    toast.info('User already has this role.');
-                  }
-                }}
-              >
-                <Shield className="mr-2 h-4 w-4 " />
-                Change Role
-              </DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Change Role
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  {['guest', 'host', 'super_admin'].filter(role => role !== user.role).map(role => (
+                    <DropdownMenuItem
+                      key={role}
+                      onClick={() => {
+                        updateUserRoleMutation.mutate({ userId: user.id, newRole: role });
+                      }}
+                    >
+                      {role === 'guest' && 'Guest'}
+                      {role === 'host' && 'Host'}
+                      {role === 'super_admin' && 'Super Admin'}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
               
               <DropdownMenuItem
                 onClick={() => togglePendingStatusMutation.mutate({ userId: user.id, setPending: !user.is_pending })}
@@ -467,8 +469,8 @@ const EnhancedUsersPage = () => {
                 <DataTable
                   columns={columns}
                   data={filteredUsers}
-                  searchPlaceholder="Search by Role"
-                  searchColumn="role"
+                  searchPlaceholder="Search by name, email, role, status..."
+                  enableGlobalSearch={true}
                 />
               </CardContent>
             </Card>
