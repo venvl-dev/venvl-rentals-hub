@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Check, Calendar, MapPin, Users, Download, Share2, MessageCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import PaymentDetailsModal from './components/PaymentDetailsModal';
 
 interface BookingConfirmationProps {
   booking: {
@@ -197,7 +198,7 @@ Status: ${booking.status}
                 <h4 className="font-semibold text-gray-900">Payment summary</h4>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Total paid</span>
-                  <span className="font-bold text-lg">EGP {booking.total_price}</span>
+                  <span className="font-bold text-lg">EGP {Math.round(booking.total_price)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Status</span>
@@ -225,6 +226,11 @@ Status: ${booking.status}
             <Download className="h-4 w-4 mr-2" />
             Download receipt
           </Button>
+          
+          <PaymentDetailsModal 
+            booking={booking}
+            currency="EGP"
+          />
           
           <Button
             onClick={() => navigator.share?.({ 

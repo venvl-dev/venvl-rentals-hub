@@ -37,10 +37,15 @@ export const usePriceRange = (bookingType?: 'daily' | 'monthly', debug = true) =
           .eq('is_active', true)
           .eq('approval_status', 'approved');
 
-        if (error || !data || !mounted) {
+        if (error) {
           console.error('❌ Error fetching properties:', error);
           console.log('📝 Data received:', data);
           console.log('🔄 Component mounted:', mounted);
+          return;
+        }
+
+        if (!data || !mounted) {
+          console.log('⚠️ No data or component unmounted:', { data: !!data, mounted });
           return;
         }
 

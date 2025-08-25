@@ -4,11 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, MapPin, Bed, Bath, Users, Star, Calendar, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  getRentalType, 
-  getDailyPrice, 
-  getMonthlyPrice, 
+  getBookingTypeLabel,
   getRentalTypeBadge,
-  supportsBookingType,
+  getPrimaryPrice,
   type PropertyRentalData 
 } from '@/lib/rentalTypeUtils';
 import { getTopAmenities, cleanAmenityIds } from '@/lib/amenitiesUtils';
@@ -121,102 +119,44 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     }
   }, [currentImageIndex, images]);
 
-  const rentalType = getRentalType(property);
-  const badge = getRentalTypeBadge(rentalType);
+  // ✅ SIMPLIFIED: Use new booking type utilities
+  const bookingTypes = property.booking_types || ['daily'];
+  const bookingTypeLabel = getBookingTypeLabel(bookingTypes);
+  const badge = getRentalTypeBadge(bookingTypes);
+  const { price, unit } = getPrimaryPrice(property);
 
+  // ✅ SIMPLIFIED: Single pricing display using getPrimaryPrice
   const getPricingDisplay = () => {
-    switch (rentalType) {
-      case 'daily':
-        return (
-          <div className="h-24 flex flex-col justify-center space-y-2">
-            <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-bold text-gray-900">
-                EGP {getDailyPrice(property)}
-              </span>
-              <span className="text-gray-600 text-sm">/ night</span>
-            </div>
-            {property.min_nights && (
-              <div className="text-xs text-gray-500 flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                Min. stay: {property.min_nights} night{property.min_nights > 1 ? 's' : ''}
-              </div>
-            )}
+    return (
+      <div className="h-24 flex flex-col justify-center space-y-2">
+        <div className="flex items-baseline space-x-2">
+          <span className="text-2xl font-bold text-gray-900">
+            EGP {Math.round(price)}
+          </span>
+          <span className="text-gray-600 text-sm">/ {unit}</span>
+        </div>
+        {/* Show min requirements based on booking types */}
+        {unit === 'night' && property.min_nights && (
+          <div className="text-xs text-gray-500 flex items-center gap-1">
+            <Calendar className="h-3 w-3" />
+            Min. stay: {property.min_nights} night{property.min_nights > 1 ? 's' : ''}
           </div>
-        );
-      case 'monthly':
-        return (
-          <div className="h-24 flex flex-col justify-center space-y-2">
-            <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-bold text-gray-900">
-                EGP {getMonthlyPrice(property)}
-              </span>
-              <span className="text-gray-600 text-sm">/ month</span>
-            </div>
-            {property.min_months && (
-              <div className="text-xs text-gray-500 flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Min. stay: {property.min_months} month{property.min_months > 1 ? 's' : ''}
-              </div>
-            )}
+        )}
+        {unit === 'month' && property.min_months && (
+          <div className="text-xs text-gray-500 flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            Min. stay: {property.min_months} month{property.min_months > 1 ? 's' : ''}
           </div>
-        );
-      case 'both':
-        return (
-          <div className="h-24 flex flex-col justify-center space-y-2">
-            <div className="space-y-1">
-              <div className="flex items-baseline space-x-2">
-                <span className="text-2xl font-bold text-gray-900">
-                  EGP {getDailyPrice(property)}
-                </span>
-                <span className="text-gray-600 text-sm">/ night</span>
-              </div>
-              <div className="flex items-baseline space-x-2">
-                <span className="text-lg font-semibold text-gray-700">
-                  EGP {getMonthlyPrice(property)}
-                </span>
-                <span className="text-gray-500 text-xs">/ month</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-gray-500">
-                {property.min_nights && (
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    Min: {property.min_nights}n
-                  </div>
-                )}
-                {property.min_months && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    Min: {property.min_months}m
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <div className="h-24 flex flex-col justify-center space-y-2">
-            <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-bold text-gray-900">
-                EGP {property.price_per_night}
-              </span>
-              <span className="text-gray-600 text-sm">/ night</span>
-            </div>
-          </div>
-        );
-    }
+        )}
+      </div>
+    );
   };
 
-  const getRentalBadges = () => {
-    const badges = [];
-    
-    if (rentalType === 'daily') {
-      badges.push({ type: 'daily', label: 'Daily Stays', icon: Calendar, color: badge.color });
-    } else if (rentalType === 'both') {
-      badges.push({ type: 'daily', label: 'Daily', icon: Calendar, color: 'bg-blue-100 text-blue-800 border-blue-200' });
-    }
-    
-    return badges;
+  // ✅ SIMPLIFIED: Single badge using booking type label
+  const getBadgeIcon = () => {
+    if (bookingTypeLabel === 'Monthly') return Clock;
+    if (bookingTypeLabel === 'Flexible') return Calendar; // Could use both icons but keep simple
+    return Calendar; // Default for Daily
   };
 
   return (
@@ -284,18 +224,13 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           </>
         )}
         
-        {/* Rental Type Badges */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
-          {getRentalBadges().map((badgeItem, index) => {
-            const IconComponent = badgeItem.icon;
-            return (
-              <Badge key={badgeItem.type} className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm ${badgeItem.color}`}>
-                <IconComponent className="h-3 w-3" />
-                <span className="hidden sm:inline">{badgeItem.label}</span>
-                <span className="sm:hidden">{badgeItem.label.split(' ')[0]}</span>
-              </Badge>
-            );
-          })}
+        {/* Rental Type Badge */}
+        <div className="absolute top-3 left-3 z-10">
+          <Badge className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm ${badge.colorClass}`}>
+            {getBadgeIcon() && React.createElement(getBadgeIcon(), { className: "h-3 w-3" })}
+            <span className="hidden sm:inline">{badge.label}</span>
+            <span className="sm:hidden">{badge.label.split(' ')[0]}</span>
+          </Badge>
         </div>
 
         {/* Rating Badge */}
