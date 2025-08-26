@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -113,6 +114,7 @@ const BookingsList = () => {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'checked_in': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -143,6 +145,7 @@ const BookingsList = () => {
             <SelectItem value="all">All Bookings</SelectItem>
             <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="confirmed">Confirmed</SelectItem>
+            <SelectItem value="checked_in">Checked In</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
@@ -250,12 +253,31 @@ const BookingsList = () => {
                           </>
                         )}
                         {booking.status === 'confirmed' && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => updateBookingStatus(booking.id, 'checked_in')}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              Check In
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateBookingStatus(booking.id, 'completed')}
+                            >
+                              Mark Complete
+                            </Button>
+                          </>
+                        )}
+                        {booking.status === 'checked_in' && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => updateBookingStatus(booking.id, 'completed')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
                           >
-                            Mark Complete
+                            Check Out
                           </Button>
                         )}
                       </div>

@@ -44,7 +44,7 @@ interface HostCalendarProps {
 }
 
 interface BookingFilter {
-  status: 'all' | 'pending' | 'confirmed' | 'completed';
+  status: 'all' | 'pending' | 'confirmed' | 'checked_in' | 'completed';
   type: 'all' | 'daily' | 'monthly';
 }
 
@@ -190,6 +190,8 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
         return 'bg-green-500';
       case 'pending':
         return 'bg-yellow-500';
+      case 'checked_in':
+        return 'bg-purple-500';
       case 'completed':
         return 'bg-blue-500';
       default:
@@ -264,7 +266,7 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
                   </div>
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-3 w-3" />
-                    <span className="text-sm">EGP {day.bookingData.total_price}</span>
+                    <span className="text-sm">EGP {Math.round(day.bookingData.total_price)}</span>
                   </div>
                   <Badge className={`text-xs ${getBookingStatusColor(day.bookingData.status)}`}>
                     {day.bookingData.status.charAt(0).toUpperCase() + day.bookingData.status.slice(1)}
@@ -338,6 +340,7 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="pending">Pending</SelectItem>
                 <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="checked_in">Checked In</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
               </SelectContent>
             </Select>
@@ -414,6 +417,10 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-yellow-500 rounded" />
             <span>Pending</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-3 h-3 bg-purple-500 rounded" />
+            <span>Checked In</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-3 h-3 bg-blue-500 rounded" />

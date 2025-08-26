@@ -24,6 +24,9 @@ export interface Property {
   min_months: number | null;
   images: string[];
   amenities: string[];
+  // ✅ SIMPLIFIED: booking_types is now the single source of truth
+  // Contains: ['daily'], ['monthly'], or ['daily', 'monthly']
+  // rental_type is DEPRECATED - computed from booking_types when needed
   is_active: boolean | null;
   approval_status: string | null;
   blocked_dates: string[] | null;
