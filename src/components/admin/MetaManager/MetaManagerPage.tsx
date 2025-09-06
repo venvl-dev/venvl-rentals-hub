@@ -63,7 +63,7 @@ const MetaManagerPage = () => {
   const [editingAmenity, setEditingAmenity] = useState<Amenity | null>(null);
   const [editingPropertyType, setEditingPropertyType] = useState<PropertyType | null>(null);
 
-  // Fetch amenities
+  
   const { data: amenities, isLoading: amenitiesLoading } = useQuery({
     queryKey: ['admin-amenities'],
     queryFn: async () => {
@@ -76,7 +76,7 @@ const MetaManagerPage = () => {
       return data as Amenity[];
     },
   });
-
+ 
   // Fetch property types
   const { data: propertyTypes, isLoading: propertyTypesLoading } = useQuery({
     queryKey: ['admin-property-types'],

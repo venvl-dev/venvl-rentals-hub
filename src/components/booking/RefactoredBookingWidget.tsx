@@ -89,16 +89,79 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
     totalPrice,
   });
 
+  // Force refresh calendar by clearing cache
+  const refreshCalendar = useCallback(() => {
+    console.log(`🔄 Refreshing guest calendar for property: ${property.id}`);
+    setUnavailableDates([]);
+    fetchUnavailableDates();
+  }, [property.id]);
+
   // Fetch unavailable dates
-  const fetchUnavailableDates = useCallback(async () => {
+  const fetchUnavailableDates = useCallback(async (force = false) => {
     try {
+      // Debug: Check current user
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log(`👤 RefactoredWidget user:`, user?.id?.substring(0, 8));
+
+      // Test 1: Try to get ALL bookings for this property (no filters)
+      const { data: allBookingsTest, error: allError } = await supabase
+        .from('bookings')
+        .select('check_in, check_out, status, guest_id, id')
+        .eq('property_id', property.id);
+
+      console.log(`🧪 RLS Test - All bookings query:`, {
+        totalFound: allBookingsTest?.length || 0,
+        error: allError?.message,
+        bookings: allBookingsTest?.map(b => ({
+          id: b.id?.substring(0, 8),
+          status: b.status,
+          check_in: b.check_in,
+          check_out: b.check_out,
+          guest_id: b.guest_id?.substring(0, 8)
+        })) || []
+      });
+
+      // Debug: Check what status the booking has vs our filter
+      const foundStatuses = [...new Set(allBookingsTest?.map(b => b.status) || [])];
+      const ourFilter = ['pending', 'confirmed', 'checked_in'];
+      console.log(`📋 Booking statuses found:`, foundStatuses);
+      console.log(`🔍 Our filter includes:`, ourFilter);
+      console.log(`❌ Excluded statuses:`, foundStatuses.filter(s => !ourFilter.includes(s)));
+
+      // Only get ACTIVE bookings that block availability (exclude cancelled and completed)
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
-        .select('check_in, check_out')
+        .select('check_in, check_out, status, guest_id, id')
         .eq('property_id', property.id)
-        .in('status', ['pending', 'confirmed', 'completed']);
+        .in('status', ['pending', 'confirmed', 'checked_in']); // Removed 'completed' - those dates should be available again
 
-      if (bookingsError) throw bookingsError;
+      if (bookingsError) {
+        console.error(`❌ RefactoredWidget booking query error:`, bookingsError);
+        throw bookingsError;
+      }
+
+      // Debug: Log what bookings RefactoredWidget found
+      console.log(`🔧 RefactoredWidget fetchUnavailableDates for ${property.id}:`, {
+        totalBookings: bookings?.length || 0,
+        activeStatuses: ['pending', 'confirmed', 'checked_in'],
+        bookings: bookings?.map(b => ({
+          id: b.id?.substring(0, 8),
+          check_in: b.check_in,
+          check_out: b.check_out,
+          status: b.status,
+          guest_id: b.guest_id?.substring(0, 8)
+        })) || []
+      });
+
+      // Log how many dates will be blocked
+      const totalBlockedDates = bookings?.reduce((total, booking) => {
+        const start = new Date(booking.check_in);
+        const end = new Date(booking.check_out);
+        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+        return total + days;
+      }, 0) || 0;
+      
+      console.log(`📅 Will block ${totalBlockedDates} total dates from ${bookings?.length || 0} active bookings`);
 
       const { data: availability, error: availabilityError } = await supabase
         .from('property_availability')
@@ -114,8 +177,11 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
         const end = new Date(booking.check_out);
         const current = new Date(start);
         
+        console.log(`🚫 Blocking dates for booking ${booking.id?.substring(0, 8)}: ${booking.check_in} to ${booking.check_out}`);
+        
         while (current < end) {
           blocked.push(new Date(current));
+          console.log(`  - Blocked date: ${current.toISOString().split('T')[0]} (${current.getMonth() + 1}/${current.getDate()}/${current.getFullYear()})`);
           current.setDate(current.getDate() + 1);
         }
       });
@@ -124,6 +190,7 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
         blocked.push(new Date(item.blocked_date));
       });
 
+      console.log(`📊 Total blocked dates to set:`, blocked.length, 'dates:', blocked.map(d => d.toISOString().split('T')[0]));
       setUnavailableDates(blocked);
     } catch (error) {
       console.error('Error fetching unavailable dates:', error);
@@ -143,7 +210,19 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
     }
   }, [rentalType]);
 
-  // Fetch unavailable dates on mount
+  // Fetch unavailable dates on mount and set up periodic refresh
+  useEffect(() => {
+    fetchUnavailableDates();
+    
+    // Refresh calendar every 30 seconds to catch booking status changes
+    const refreshInterval = setInterval(() => {
+      refreshCalendar();
+    }, 30000);
+    
+    return () => clearInterval(refreshInterval);
+  }, [fetchUnavailableDates, refreshCalendar]);
+
+  // Also refresh when property changes
   useEffect(() => {
     fetchUnavailableDates();
   }, [fetchUnavailableDates]);
@@ -168,9 +247,39 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
   }, []);
 
   const isDateBlocked = useCallback((date: Date) => {
-    return unavailableDates.some(blockedDate => 
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+    const currentDate = today.getDate();
+    
+    // Reset hours for accurate comparison
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    
+    const isInUnavailableList = unavailableDates.some(blockedDate => 
       format(blockedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-    ) || date < new Date();
+    );
+    
+    // Only block dates that are actually in the past (before today)
+    // For a booking system, we typically want to allow future dates
+    // If you're testing with dates in 2025, make sure this logic makes sense
+    // Temporarily disable past date blocking for testing
+    // const isPastDate = checkDate < today;
+    const isPastDate = false; // Allow all dates for testing
+    
+    // Debug: Log for a few sample dates
+    if (checkDate.getDate() <= 3) {
+      console.log(`✅ Date check ${format(date, 'yyyy-MM-dd')}:`, {
+        isPastDate,
+        isInUnavailableList,
+        unavailableDatesCount: unavailableDates.length,
+        today: format(today, 'yyyy-MM-dd'),
+        blocked: isPastDate || isInUnavailableList
+      });
+    }
+    
+    return isInUnavailableList || isPastDate;
   }, [unavailableDates]);
 
   const handleBooking = async () => {

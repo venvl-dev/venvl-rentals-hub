@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  generateCalendarDays, 
   getCalendarStatusColor, 
-  CalendarDay,
   blockDates,
   unblockDates,
   clearCalendarCache
+} from '@/lib/calendarUtils';
+import { 
+  generateCalendarDays,
+  CalendarDay
 } from '@/lib/calendarUtils';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { 
@@ -80,23 +82,43 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
   const loadCalendarData = useCallback(async () => {
     setLoading(true);
     try {
+      // Clear cache to ensure fresh data
+      clearCalendarCache(propertyId);
+      
+      // Use the calendar generation function
       const days = await generateCalendarDays(
         propertyId,
         currentDate.getFullYear(),
         currentDate.getMonth()
       );
       
-      // Apply filters
+      // Apply filters - but keep the booking status visible, just don't show details
       const filteredDays = days.map(day => {
         if (day.bookingData) {
           const matchesStatus = filter.status === 'all' || day.bookingData.status === filter.status;
           const matchesType = filter.type === 'all' || day.bookingData.booking_type === filter.type;
           
           if (!matchesStatus || !matchesType) {
-            return { ...day, status: 'available' as const, bookingData: undefined };
+            // Keep the day as booked but hide booking details for filtered items
+            return { ...day, bookingData: undefined };
           }
         }
         return day;
+      });
+      
+      // Debug: Show what HostCalendar is displaying
+      const bookedDays = filteredDays.filter(d => d.status !== 'available');
+      console.log(`🔍 HostCalendar showing:`, {
+        propertyId: propertyId,
+        totalDays: filteredDays.length,
+        bookedDays: bookedDays.length,
+        currentFilter: filter,
+        bookedDates: bookedDays.map(d => ({
+          date: format(d.date, 'yyyy-MM-dd'),
+          status: d.status,
+          bookingStatus: d.bookingData?.status,
+          bookingId: d.bookingData?.id
+        }))
       });
       
       setCalendarDays(filteredDays);

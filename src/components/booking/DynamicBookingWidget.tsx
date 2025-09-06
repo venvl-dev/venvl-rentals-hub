@@ -85,14 +85,23 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
 
   const fetchUnavailableDates = async () => {
     try {
-      // Fetch booked dates - using only valid booking statuses
+      // Fetch booked dates - exclude cancelled bookings as they don't block availability
       const { data: bookings, error: bookingsError } = await supabase
         .from('bookings')
         .select('check_in, check_out')
         .eq('property_id', property.id)
-        .in('status', ['pending', 'confirmed', 'completed']);
+        .in('status', ['pending', 'confirmed', 'completed', 'checked_in']);
 
       if (bookingsError) throw bookingsError;
+
+      // Debug: Log what bookings GuestWidget found
+      console.log(`👤 GuestWidget fetchUnavailableDates for ${property.id}:`, {
+        totalBookings: bookings?.length || 0,
+        bookings: bookings?.map(b => ({
+          check_in: b.check_in,
+          check_out: b.check_out
+        })) || []
+      });
 
       // Fetch blocked dates
       const { data: availability, error: availabilityError } = await supabase
@@ -116,16 +125,15 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
         }
       });
 
-      // Add manually blocked dates
+      // Add manually blocked dates from property_availability table
       availability?.forEach(item => {
         blocked.push(new Date(item.blocked_date));
       });
 
-      // Add property blocked dates
-      property.blocked_dates?.forEach(dateStr => {
-        blocked.push(new Date(dateStr));
-      });
-
+      console.log(`🔍 BookingWidget blocking ${blocked.length} dates for property ${property.id}:`, 
+        blocked.map(d => format(d, 'yyyy-MM-dd')).slice(0, 10)
+      );
+      
       setUnavailableDates(blocked);
     } catch (error) {
       console.error('Error fetching unavailable dates:', error);
