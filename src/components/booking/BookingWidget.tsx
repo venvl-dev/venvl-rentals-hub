@@ -68,9 +68,8 @@ const BookingWidget = ({ property, user }: BookingWidgetProps) => {
       if (error) throw error;
 
       const dates = data?.map(item => new Date(item.blocked_date)) || [];
-      const propertyBlockedDates = property.blocked_dates?.map(date => new Date(date)) || [];
       
-      setBlockedDates([...dates, ...propertyBlockedDates]);
+      setBlockedDates(dates);
     } catch (error) {
       console.error('Error fetching blocked dates:', error);
     }

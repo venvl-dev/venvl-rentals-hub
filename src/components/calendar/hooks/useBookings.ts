@@ -23,15 +23,13 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
 
       console.log(`Fetching bookings for ${userType} user ${userId} from ${startDate} to ${endDate}`);
 
-      // First, get bookings with property data
+      // Get bookings without foreign key joins to avoid relationship issues
       let bookingsQuery = supabase
         .from('bookings')
-        .select(`
-          *,
-          property:properties(title)
-        `)
-        .gte('check_in', startDate)
-        .lte('check_out', endDate);
+        .select('*')
+        .lte('check_in', endDate)
+        .gte('check_out', startDate)
+        .in('status', ['pending', 'confirmed', 'completed', 'checked_in']);
 
       if (userType === 'host') {
         // Get properties owned by this host first
@@ -65,7 +63,15 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
         throw bookingsError;
       }
 
-      console.log(`Found ${bookingsData?.length || 0} bookings`);
+      console.log(`Found ${bookingsData?.length || 0} bookings for period ${startDate} to ${endDate}:`, 
+        bookingsData?.map(b => ({
+          id: b.id.substring(0, 8),
+          check_in: b.check_in,
+          check_out: b.check_out,
+          status: b.status,
+          property_id: b.property_id.substring(0, 8)
+        }))
+      );
 
       if (!bookingsData || bookingsData.length === 0) {
         setBookings([]);
@@ -73,9 +79,11 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
         return;
       }
 
-      // Get unique guest IDs for guest profile data
+      // Get unique guest IDs and property IDs for separate queries
       const guestIds = [...new Set(bookingsData.map(b => b.guest_id).filter(Boolean))];
+      const propertyIds = [...new Set(bookingsData.map(b => b.property_id).filter(Boolean))];
       
+      // Fetch guest profiles separately
       let guestProfiles: Array<{
         id: string;
         first_name?: string;
@@ -89,18 +97,36 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
 
         if (profilesError) {
           console.error('Error fetching guest profiles:', profilesError);
-          // Don't throw error here, just log it and continue without guest names
         } else {
           guestProfiles = profiles || [];
+        }
+      }
+
+      // Fetch property data separately
+      let propertyData: Array<{
+        id: string;
+        title: string;
+      }> = [];
+      if (propertyIds.length > 0) {
+        const { data: properties, error: propertiesError } = await supabase
+          .from('properties')
+          .select('id, title')
+          .in('id', propertyIds);
+
+        if (propertiesError) {
+          console.error('Error fetching property data:', propertiesError);
+        } else {
+          propertyData = properties || [];
         }
       }
 
       // Combine the data
       const typedBookings: CalendarBooking[] = bookingsData.map(booking => {
         const guestProfile = guestProfiles.find(p => p.id === booking.guest_id);
+        const property = propertyData.find(p => p.id === booking.property_id);
         return {
           ...booking,
-          property: booking.property || null,
+          property: property ? { title: property.title } : null,
           guest: guestProfile ? {
             first_name: guestProfile.first_name || '',
             last_name: guestProfile.last_name || ''

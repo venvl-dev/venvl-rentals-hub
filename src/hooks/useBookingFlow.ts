@@ -74,44 +74,107 @@ export const useBookingFlow = ({ user, propertyId }: UseBookingFlowProps) => {
         return null;
       }
 
+      // Check if user profile exists
+      const { data: profileCheck, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError || !profileCheck) {
+        console.error('❌ User profile not found:', profileError);
+        toast.error('User profile not found. Please refresh and try again.');
+        return null;
+      }
+
+      // Get property host_id for the booking
+      const { data: propertyInfo, error: propertyError } = await supabase
+        .from('properties')
+        .select('host_id')
+        .eq('id', bookingDetails.property_id)
+        .single();
+
+      if (propertyError || !propertyInfo) {
+        console.error('❌ Property not found:', propertyError);
+        toast.error('Property not found. Please refresh and try again.');
+        return null;
+      }
+
+      // Validate booking data before inserting
+      const bookingDataToInsert = {
+        property_id: bookingDetails.property_id,
+        guest_id: user.id,
+        host_id: propertyInfo.host_id,
+        check_in: bookingDetails.check_in,
+        check_out: bookingDetails.check_out,
+        guests: bookingDetails.guests,
+        total_price: bookingDetails.total_price,
+        booking_type: bookingDetails.booking_type || 'daily',
+        duration_months: bookingDetails.duration_months,
+        status: bookingDetails.status || 'pending'
+      };
+
+      // Remove undefined values to avoid database issues
+      Object.keys(bookingDataToInsert).forEach(key => {
+        if (bookingDataToInsert[key as keyof typeof bookingDataToInsert] === undefined) {
+          delete bookingDataToInsert[key as keyof typeof bookingDataToInsert];
+        }
+      });
+
       // Create booking
+      console.log('🔍 Creating booking with data:', bookingDataToInsert);
+      
       const { data, error } = await supabase
         .from('bookings')
-        .insert({
-          ...bookingDetails,
-          guest_id: user.id,
-        })
+        .insert(bookingDataToInsert)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Booking creation failed:');
+        console.error('Error message:', error.message);
+        console.error('Error details:', error.details);
+        console.error('Error hint:', error.hint);
+        console.error('Error code:', error.code);
+        console.error('Full error as JSON:', JSON.stringify(error, null, 2));
+        console.error('Full error object:', error);
+        throw error;
+      }
 
       // Create notification for host
-      const { data: propertyData } = await supabase
+      const { data: notificationPropertyData } = await supabase
         .from('properties')
         .select('host_id, title')
         .eq('id', propertyId)
         .single();
 
-      if (propertyData) {
+      if (notificationPropertyData) {
         await supabase.from('notifications').insert({
-          user_id: propertyData.host_id,
+          user_id: notificationPropertyData.host_id,
           title: 'New Booking Request',
-          message: `You have a new booking request for ${propertyData.title}`,
+          message: `You have a new booking request for ${notificationPropertyData.title}`,
           type: 'booking',
         });
 
         // Track booking notification
         await supabase.from('booking_notifications').insert({
           booking_id: data.id,
-          recipient_id: propertyData.host_id,
+          recipient_id: notificationPropertyData.host_id,
           notification_type: 'new_booking',
         });
       }
 
       return data;
     } catch (error) {
-      console.error('Error creating booking:', error);
+      console.error('=== CATCH BLOCK ERROR ===');
+      console.error('Error type:', typeof error);
+      console.error('Error instanceof Error:', error instanceof Error);
+      console.error('Error as JSON:', JSON.stringify(error, null, 2));
+      console.error('Error object:', error);
+      if (error instanceof Error) {
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+      }
       const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
       toast.error(errorMessage);
       return null;

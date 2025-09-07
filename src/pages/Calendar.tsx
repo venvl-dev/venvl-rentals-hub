@@ -4,6 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import DashboardCalendar from '@/components/calendar/DashboardCalendar';
+import CalendarSyncTest from '@/components/debug/CalendarSyncTest';
+import CalendarDataDebug from '@/components/debug/CalendarDataDebug';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
@@ -120,24 +122,46 @@ const Calendar = () => {
             </Button>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>
-                  {userType === 'host' ? 'Property Bookings' : 'My Bookings'}
-                </span>
-                <span className="text-sm font-normal text-gray-500 capitalize">
-                  {userType} View
-                </span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <DashboardCalendar 
-                userId={user.id} 
-                userType={userType}
-              />
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>
+                    {userType === 'host' ? 'Property Bookings' : 'My Bookings'}
+                  </span>
+                  <span className="text-sm font-normal text-gray-500 capitalize">
+                    {userType} View
+                  </span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <DashboardCalendar 
+                  userId={user.id} 
+                  userType={userType}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Calendar Sync Test - for debugging */}
+            <Card className="border-2 border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="text-blue-800">🔧 Calendar Sync Test</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CalendarSyncTest />
+              </CardContent>
+            </Card>
+
+            {/* Calendar Data Debug - for deep debugging */}
+            <Card className="border-2 border-purple-200 bg-purple-50">
+              <CardHeader>
+                <CardTitle className="text-purple-800">🔍 Calendar Data Debug</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CalendarDataDebug />
+              </CardContent>
+            </Card>
+          </div>
         </motion.div>
       </main>
     </div>
