@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, MapPin, Bed, Bath, Users, Star, Calendar, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, MapPin, Bed, Bath, Users, Star, Calendar, Clock, Eye, Archive } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { 
   getRentalType, 
@@ -128,80 +128,28 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     switch (rentalType) {
       case 'daily':
         return (
-          <div className="h-24 flex flex-col justify-center space-y-2">
-            <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-bold text-gray-900">
-                EGP {getDailyPrice(property)}
-              </span>
-              <span className="text-gray-600 text-sm">/ night</span>
-            </div>
-            {property.min_nights && (
-              <div className="text-xs text-gray-500 flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                Min. stay: {property.min_nights} night{property.min_nights > 1 ? 's' : ''}
-              </div>
-            )}
+          <div className="space-y-1">
+            <div className="font-semibold text-lg text-gray-900">EGP {getDailyPrice(property)}/night</div>
+            <div className="text-sm text-gray-500">EGP {getDailyPrice(property) * 30}/month</div>
           </div>
         );
       case 'monthly':
         return (
-          <div className="h-24 flex flex-col justify-center space-y-2">
-            <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-bold text-gray-900">
-                EGP {getMonthlyPrice(property)}
-              </span>
-              <span className="text-gray-600 text-sm">/ month</span>
-            </div>
-            {property.min_months && (
-              <div className="text-xs text-gray-500 flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                Min. stay: {property.min_months} month{property.min_months > 1 ? 's' : ''}
-              </div>
-            )}
+          <div className="space-y-1">
+            <div className="font-semibold text-lg text-gray-900">EGP {getMonthlyPrice(property)}/month</div>
           </div>
         );
       case 'both':
         return (
-          <div className="h-24 flex flex-col justify-center space-y-2">
-            <div className="space-y-1">
-              <div className="flex items-baseline space-x-2">
-                <span className="text-2xl font-bold text-gray-900">
-                  EGP {getDailyPrice(property)}
-                </span>
-                <span className="text-gray-600 text-sm">/ night</span>
-              </div>
-              <div className="flex items-baseline space-x-2">
-                <span className="text-lg font-semibold text-gray-700">
-                  EGP {getMonthlyPrice(property)}
-                </span>
-                <span className="text-gray-500 text-xs">/ month</span>
-              </div>
-              <div className="flex items-center gap-3 text-xs text-gray-500">
-                {property.min_nights && (
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    Min: {property.min_nights}n
-                  </div>
-                )}
-                {property.min_months && (
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    Min: {property.min_months}m
-                  </div>
-                )}
-              </div>
-            </div>
+          <div className="space-y-0.5">
+            <div className="font-semibold text-lg text-gray-900">EGP {getDailyPrice(property)}/night</div>
+            <div className="text-sm text-gray-500">EGP {getMonthlyPrice(property)}/month</div>
           </div>
         );
       default:
         return (
-          <div className="h-24 flex flex-col justify-center space-y-2">
-            <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-bold text-gray-900">
-                EGP {property.price_per_night}
-              </span>
-              <span className="text-gray-600 text-sm">/ night</span>
-            </div>
+          <div className="space-y-1">
+            <div className="font-semibold text-lg text-gray-900">EGP {property.price_per_night}/night</div>
           </div>
         );
     }
@@ -223,8 +171,8 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   };
 
   return (
-    <Card 
-      className="cursor-pointer overflow-hidden rounded-3xl border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white h-full flex flex-col"
+    <Card
+      className="cursor-pointer overflow-hidden rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white h-full flex flex-col"
       onClick={handleClick}
     >
       {/* Image Carousel Container */}
@@ -287,131 +235,83 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           </>
         )}
         
-        {/* Rental Type Badges */}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 z-10">
-          {getRentalBadges().map((badgeItem, index) => {
-            const IconComponent = badgeItem.icon;
-            return (
-              <Badge key={badgeItem.type} className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm ${badgeItem.color}`}>
-                <IconComponent className="h-3 w-3" />
-                <span className="hidden sm:inline">{badgeItem.label}</span>
-                <span className="sm:hidden">{badgeItem.label.split(' ')[0]}</span>
-              </Badge>
-            );
-          })}
-        </div>
-
-        {/* Rating Badge */}
+        {/* Status Badge - Clean dark badge like reference */}
         <div className="absolute top-3 right-3 z-10">
-          <Badge className="bg-white/95 text-gray-900 border-0 shadow-lg backdrop-blur-sm text-xs px-2 py-1">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 mr-1" />
-            4.9
-          </Badge>
-        </div>
-
-        {/* VENVL Brand Badge */}
-        <div className="absolute bottom-3 right-3 z-10">
-          <Badge className="bg-black text-white border-0 shadow-lg font-semibold tracking-wide text-xs px-2 py-1">
-            VENVL
+          <Badge className="bg-gray-900 text-white text-xs px-3 py-1 rounded-full">
+            Active
           </Badge>
         </div>
       </div>
 
       {/* Content Area */}
-      <CardContent className="p-4 sm:p-4 lg:p-6 flex-1 flex flex-col">
-        <div className="space-y-2 sm:space-y-3 flex-1">
+      <CardContent className="p-0 flex flex-col flex-1">
+        <div className="p-6 pb-4 flex-1">
+          {/* Title - Clean typography like reference */}
+          <h3 className="font-semibold text-xl mb-1 line-clamp-2 text-gray-900">{property.title}</h3>
+
           {/* Location */}
-          <div className="flex items-center text-gray-600">
-            <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span className="text-sm font-medium truncate">{property.city}, {property.state}</span>
-          </div>
-
-          {/* Title - Single line only */}
-          <h3 className="font-bold text-lg sm:text-lg lg:text-xl text-gray-900 truncate leading-tight" title={property.title}>
-            {property.title}
-          </h3>
-          
-          {/* Property Details */}
-          <div className="flex items-center gap-3 text-sm text-gray-600 flex-wrap">
-            <div className="flex items-center gap-1">
-              <Bed className="h-4 w-4" />
-              <span>{property.bedrooms}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Bath className="h-4 w-4" />
-              <span>{property.bathrooms}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              <span>{property.max_guests}</span>
-            </div>
-            <Badge variant="outline" className="text-xs rounded-full capitalize ml-auto">
-              {property.property_type}
-            </Badge>
-          </div>
-
-          {/* Top Amenities - Single line with horizontal scroll */}
-          {topAmenities.length > 0 ? (
-            <div className="w-full">
-              <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 scroll-smooth-x touch-pan-x">
-                <div className="flex items-center gap-2 flex-nowrap min-w-0">
-                  {topAmenities.slice(0, 5).map((amenity, index) => {
-                    const IconComponent = amenity.icon;
-
-                    return (
-                      <div
-                        key={index}
-                        className="flex items-center gap-1 text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full px-2 py-1 flex-shrink-0 whitespace-nowrap transition-colors duration-200"
-                        title={amenity.name}
-                      >
-                        <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
-                          {IconComponent ? (
-                            <IconComponent className="h-2.5 w-2.5 text-gray-700" strokeWidth={1.5} />
-                          ) : (
-                            <div className="w-2.5 h-2.5 rounded-full bg-gray-700"></div>
-                          )}
-                        </div>
-                        <span className="hidden sm:inline font-medium text-xs">
-                          {amenity.name}
-                        </span>
-                      </div>
-                    );
-                  })}
-                  {cleanedAmenities.length > 5 && (
-                    <div className="flex items-center text-xs text-gray-500 rounded-full px-2 py-1 flex-shrink-0 bg-gray-100 hover:bg-gray-200 transition-colors duration-200">
-                      <span className="font-medium whitespace-nowrap">+{cleanedAmenities.length - 5}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="text-xs text-gray-400 italic">
-              No amenities listed
-            </div>
-          )}
+          <p className="text-sm text-gray-500 mb-3">{property.city}, {property.state}</p>
 
           {/* Description */}
-          <p className="text-sm sm:text-sm lg:text-base text-gray-600 line-clamp-2 leading-relaxed flex-1">
-            {property.description}
-          </p>
+          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed mb-4 flex-1">{property.description}</p>
 
-          {/* Pricing Section */}
-          <div className="mt-auto">
-            {getPricingDisplay()}
+          <div className="space-y-3">
+            {/* Pricing Section */}
+            <div>
+              {getPricingDisplay()}
+            </div>
+
+            {/* Property Details */}
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>{property.bedrooms} bed • {property.bathrooms} bath</span>
+              <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50 text-xs">
+                Flexible Booking
+              </Badge>
+            </div>
           </div>
         </div>
 
-        {/* Book Now Button */}
-        <button
-          className="w-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-2xl transition-all duration-200 shadow-lg mt-3 sm:mt-4 text-xs sm:text-sm lg:text-base hover:from-black hover:to-gray-900"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClick();
-          }}
-        >
-          Book Now
-        </button>
+        {/* Action Buttons */}
+        <div className="px-6 pb-6 mt-auto">
+          <div className="flex gap-2">
+            <button
+              className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-1"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
+            >
+              <Eye className="h-4 w-4" />
+              View
+            </button>
+            <button
+              className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
+            >
+              Edit
+            </button>
+            <button
+              className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClick();
+              }}
+            >
+              Pause
+            </button>
+            <button
+              className="w-10 border border-red-300 text-red-600 hover:bg-red-50 font-medium py-2 rounded-lg transition-colors text-sm flex items-center justify-center"
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
+            >
+              <Archive className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );
