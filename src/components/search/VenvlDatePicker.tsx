@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Calendar, X, Clock, Minus, Plus } from 'lucide-react';
@@ -33,6 +33,21 @@ const VenvlDatePicker = ({
   const [selectedCheckOut, setSelectedCheckOut] = useState<Date | undefined>(checkOut);
   const [selectedDuration, setSelectedDuration] = useState<number>(duration || 1);
   const [selectedFlexibleOption, setSelectedFlexibleOption] = useState<string>(flexibleOption || 'weekend');
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
 
   const handleApply = () => {
     if (bookingType === 'daily') {
@@ -67,6 +82,7 @@ const VenvlDatePicker = ({
 
   return (
     <motion.div
+      ref={containerRef}
       className="bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 overflow-hidden"
       initial={{ opacity: 0, y: -20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}

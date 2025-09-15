@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Calendar, User, Home, DollarSign } from 'lucide-react';
+import { Calendar, User, Home, DollarSign, BarChart3 } from 'lucide-react';
 import { Booking, BookingStatus } from '@/types/booking';
+import BookingSaturationDashboard from './BookingSaturationDashboard';
 
 interface BookingWithJoinedData extends Booking {
   properties: {
@@ -27,6 +28,7 @@ const BookingsList = () => {
   const [bookings, setBookings] = useState<BookingWithJoinedData[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showDashboard, setShowDashboard] = useState(true);
 
   useEffect(() => {
     fetchBookings();
@@ -137,20 +139,32 @@ const BookingsList = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Bookings Management</h2>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Bookings</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="checked_in">Checked In</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowDashboard(!showDashboard)}
+            className="flex items-center gap-2 rounded-xl"
+          >
+            <BarChart3 className="h-4 w-4" />
+            {showDashboard ? 'Hide Dashboard' : 'Show Dashboard'}
+          </Button>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Bookings</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="checked_in">Checked In</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {showDashboard && <BookingSaturationDashboard />}
 
       {filteredBookings.length === 0 ? (
         <Card>

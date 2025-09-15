@@ -38,10 +38,16 @@ const HostDashboard = () => {
   const [activeTab, setActiveTab] = useState(() =>
     localStorage.getItem('hostDashboardTab') || 'properties'
   );
+  const [selectedPropertyForCalendar, setSelectedPropertyForCalendar] = useState<string | null>(null);
 
   useEffect(() => {
     localStorage.setItem('hostDashboardTab', activeTab);
-  }, [activeTab]);
+
+    // Auto-select first property when switching to calendar tab
+    if (activeTab === 'calendar' && properties.length > 0 && !selectedPropertyForCalendar) {
+      setSelectedPropertyForCalendar(properties[0].id);
+    }
+  }, [activeTab, properties, selectedPropertyForCalendar]);
 
   const handlePropertySave = useCallback(() => {
     setEditingProperty(null);
@@ -393,21 +399,51 @@ const HostDashboard = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-8">
-                {properties.map((property) => (
-                  <motion.div
-                    key={property.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <HostCalendar
-                      propertyId={property.id}
-                      propertyTitle={property.title}
-                      onBookingClick={(bookingId) => console.log('Booking clicked:', bookingId)}
-                    />
-                  </motion.div>
-                ))}
+              <div className="space-y-6">
+                <Card className="rounded-3xl shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Select Property to View Calendar</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {properties.map((property) => (
+                        <Card
+                          key={property.id}
+                          className="hover:shadow-md transition-shadow rounded-2xl"
+                        >
+                          <CardContent className="p-4">
+                            <h3 className="font-semibold mb-2">{property.title}</h3>
+                            <p className="text-sm text-gray-600">{property.city}, {property.state}</p>
+                            <Button
+                              size="sm"
+                              className="mt-3 w-full rounded-xl"
+                              variant={selectedPropertyForCalendar === property.id ? "default" : "outline"}
+                              onClick={() => setSelectedPropertyForCalendar(property.id)}
+                            >
+                              {selectedPropertyForCalendar === property.id ? "Viewing Calendar" : "View Calendar"}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {selectedPropertyForCalendar ? (
+                  <HostCalendar
+                    propertyId={selectedPropertyForCalendar}
+                    propertyTitle={properties.find(p => p.id === selectedPropertyForCalendar)?.title || ''}
+                    onBookingClick={(bookingId) => console.log('Booking clicked:', bookingId)}
+                  />
+                ) : (
+                  <Card className="rounded-3xl shadow-lg">
+                    <CardContent className="flex flex-col items-center justify-center py-12">
+                      <Calendar className="h-16 w-16 text-gray-400 mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">Select a Property</h3>
+                      <p className="text-gray-600">Choose a property above to view its calendar</p>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
           </TabsContent>

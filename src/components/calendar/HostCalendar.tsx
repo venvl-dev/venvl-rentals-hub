@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
   getCalendarStatusColor, 
   blockDates,
@@ -29,7 +28,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -82,53 +80,20 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
   const loadCalendarData = useCallback(async () => {
     setLoading(true);
     try {
-      // Clear cache to ensure fresh data
-      clearCalendarCache(propertyId);
-      
-      // Use the calendar generation function
       const days = await generateCalendarDays(
         propertyId,
         currentDate.getFullYear(),
         currentDate.getMonth()
       );
-      
-      // Apply filters - but keep the booking status visible, just don't show details
-      const filteredDays = days.map(day => {
-        if (day.bookingData) {
-          const matchesStatus = filter.status === 'all' || day.bookingData.status === filter.status;
-          const matchesType = filter.type === 'all' || day.bookingData.booking_type === filter.type;
-          
-          if (!matchesStatus || !matchesType) {
-            // Keep the day as booked but hide booking details for filtered items
-            return { ...day, bookingData: undefined };
-          }
-        }
-        return day;
-      });
-      
-      // Debug: Show what HostCalendar is displaying
-      const bookedDays = filteredDays.filter(d => d.status !== 'available');
-      console.log(`🔍 HostCalendar showing:`, {
-        propertyId: propertyId,
-        totalDays: filteredDays.length,
-        bookedDays: bookedDays.length,
-        currentFilter: filter,
-        bookedDates: bookedDays.map(d => ({
-          date: format(d.date, 'yyyy-MM-dd'),
-          status: d.status,
-          bookingStatus: d.bookingData?.status,
-          bookingId: d.bookingData?.id
-        }))
-      });
-      
-      setCalendarDays(filteredDays);
+
+      setCalendarDays(days);
     } catch (error) {
       console.error('Error loading calendar data:', error);
       toast.error('Failed to load calendar data');
     } finally {
       setLoading(false);
     }
-  }, [propertyId, currentDate, filter]);
+  }, [propertyId, currentDate]);
 
   useEffect(() => {
     loadCalendarData();
@@ -221,98 +186,68 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
     }
   };
 
-  const isDateSelected = (date: Date): boolean => {
+  const isDateSelected = useCallback((date: Date): boolean => {
     return selectedDates.some(d => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
-  };
+  }, [selectedDates]);
+
+  // Memoize filtered calendar days to avoid recalculating on every render
+  const filteredCalendarDays = useMemo(() => {
+    return calendarDays.map(day => {
+      if (day.bookingData) {
+        const matchesStatus = filter.status === 'all' || day.bookingData.status === filter.status;
+        const matchesType = filter.type === 'all' || day.bookingData.booking_type === filter.type;
+
+        if (!matchesStatus || !matchesType) {
+          // Keep the day as booked but hide booking details for filtered items
+          return { ...day, bookingData: undefined };
+        }
+      }
+      return day;
+    });
+  }, [calendarDays, filter]);
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const renderCalendarDay = (day: CalendarDay, index: number) => {
+  const renderCalendarDay = useCallback((day: CalendarDay, index: number) => {
     const isSelected = isDateSelected(day.date);
     const hasBooking = !!day.bookingData;
 
     return (
-      <TooltipProvider key={index}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <motion.div
-              className={`
-                relative w-full h-16 flex flex-col items-center justify-center text-sm font-medium rounded-lg cursor-pointer
-                transition-all duration-200 border-2
-                ${day.isCurrentMonth ? 'text-black' : 'text-gray-400'}
-                ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-transparent'}
-                ${hasBooking ? 'hover:bg-gray-50' : 'hover:bg-gray-100'}
-                ${getCalendarStatusColor(day.status)}
-              `}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => handleDateClick(day.date, day)}
-            >
-              <span className="relative z-10 text-xs">
-                {format(day.date, 'd')}
-              </span>
-              
-              {day.isToday && (
-                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full" />
-              )}
-              
-              {hasBooking && (
-                <div className="flex items-center justify-center mt-1">
-                  <div className={`w-2 h-2 rounded-full ${getBookingStatusColor(day.bookingData!.status)}`} />
-                </div>
-              )}
-              
-              {day.status === 'blocked' && (
-                <div className="absolute top-1 right-1">
-                  <Ban className="h-3 w-3 text-gray-500" />
-                </div>
-              )}
-            </motion.div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="space-y-2 min-w-[200px]">
-              <p className="font-medium">{format(day.date, 'EEE, MMM d, yyyy')}</p>
-              
-              {day.bookingData && (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <User className="h-3 w-3" />
-                    <span className="text-sm">{day.bookingData.guest_name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-3 w-3" />
-                    <span className="text-sm">
-                      {format(new Date(day.bookingData.check_in), 'MMM d')} - 
-                      {format(new Date(day.bookingData.check_out), 'MMM d')}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="h-3 w-3" />
-                    <span className="text-sm">EGP {Math.round(day.bookingData.total_price)}</span>
-                  </div>
-                  <Badge className={`text-xs ${getBookingStatusColor(day.bookingData.status)}`}>
-                    {day.bookingData.status.charAt(0).toUpperCase() + day.bookingData.status.slice(1)}
-                  </Badge>
-                </div>
-              )}
-              
-              {day.status === 'blocked' && (
-                <div className="text-sm text-gray-600">
-                  <strong>Blocked:</strong> {day.blockedReason || 'No reason provided'}
-                </div>
-              )}
-              
-              {day.status === 'available' && (
-                <div className="text-sm text-green-600">
-                  Available for booking
-                </div>
-              )}
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <div
+        key={index}
+        className={`
+          relative w-full h-16 flex flex-col items-center justify-center text-sm font-medium rounded-lg cursor-pointer
+          transition-colors duration-150 border-2
+          ${day.isCurrentMonth ? 'text-black' : 'text-gray-400'}
+          ${isSelected ? 'border-blue-500 bg-blue-50' : 'border-transparent'}
+          ${hasBooking ? 'hover:bg-gray-50' : 'hover:bg-gray-100'}
+          ${getCalendarStatusColor(day.status)}
+        `}
+        onClick={() => handleDateClick(day.date, day)}
+        title={`${format(day.date, 'EEE, MMM d, yyyy')}${hasBooking ? ` - ${day.bookingData!.guest_name}` : ''}`}
+      >
+        <span className="relative z-10 text-xs">
+          {format(day.date, 'd')}
+        </span>
+
+        {day.isToday && (
+          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full" />
+        )}
+
+        {hasBooking && (
+          <div className="flex items-center justify-center mt-1">
+            <div className={`w-2 h-2 rounded-full ${getBookingStatusColor(day.bookingData!.status)}`} />
+          </div>
+        )}
+
+        {day.status === 'blocked' && (
+          <div className="absolute top-1 right-1">
+            <Ban className="h-3 w-3 text-gray-500" />
+          </div>
+        )}
+      </div>
     );
-  };
+  }, [isDateSelected, handleDateClick]);
 
   return (
     <Card className={`w-full ${className}`}>
@@ -473,18 +408,9 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
               ))}
             </div>
           ) : (
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={format(currentDate, 'yyyy-MM')}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="grid grid-cols-7 gap-1"
-              >
-                {calendarDays.map((day, index) => renderCalendarDay(day, index))}
-              </motion.div>
-            </AnimatePresence>
+            <div className="grid grid-cols-7 gap-1">
+              {filteredCalendarDays.map((day, index) => renderCalendarDay(day, index))}
+            </div>
           )}
         </div>
 

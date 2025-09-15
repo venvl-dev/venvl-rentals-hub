@@ -5,34 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Check, Calendar, MapPin, Users, Download, Share2, MessageCircle } from 'lucide-react';
+import { Check, Calendar, MapPin, Users, Share2, MessageCircle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import PaymentDetailsModal from './components/PaymentDetailsModal';
+import ReceiptModal from './components/ReceiptModal';
 
-interface BookingConfirmationProps {
-  booking: {
-    id: string;
-    booking_reference: string;
-    property: {
-      id: string;
-      title: string;
-      images: string[];
-      city: string;
-      state: string;
-      address: string;
-    };
-    check_in: string;
-    check_out: string;
-    guests: number;
-    total_price: number;
-    booking_type: string;
-    status: string;
-    created_at: string;
-  };
-}
-
-const BookingConfirmation = ({ booking }: BookingConfirmationProps) => {
+const BookingConfirmation = ({ booking }) => {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
 
@@ -46,29 +25,6 @@ const BookingConfirmation = ({ booking }: BookingConfirmationProps) => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleDownloadReceipt = () => {
-    // Simulate receipt download
-    const receiptData = `
-VENVL Booking Confirmation
-Reference: ${booking.booking_reference}
-Property: ${booking.property.title}
-Check-in: ${format(checkIn, 'MMM dd, yyyy')}
-Check-out: ${format(checkOut, 'MMM dd, yyyy')}
-Guests: ${booking.guests}
-Total: EGP ${booking.total_price}
-Status: ${booking.status}
-    `;
-    
-    const blob = new Blob([receiptData], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `VENVL-${booking.booking_reference}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="max-w-3xl mx-auto p-6">
@@ -218,14 +174,10 @@ Status: ${booking.status}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
         >
-          <Button
-            onClick={handleDownloadReceipt}
-            variant="outline"
-            className="flex-1 border-2 hover:border-gray-300 py-3 rounded-2xl"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Download receipt
-          </Button>
+          <ReceiptModal 
+            booking={booking}
+            currency="EGP"
+          />
           
           <PaymentDetailsModal 
             booking={booking}

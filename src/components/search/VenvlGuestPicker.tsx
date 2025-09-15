@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, X, Users } from 'lucide-react';
@@ -21,6 +21,21 @@ const VenvlGuestPicker = ({ guests, onChange, onClose }: VenvlGuestPickerProps) 
     children: 0
   });
   const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
 
   const guestTypes = [
     {
@@ -52,7 +67,7 @@ const VenvlGuestPicker = ({ guests, onChange, onClose }: VenvlGuestPickerProps) 
 
   if (isMobile) {
     return (
-      <div className="p-4 h-full">
+      <div ref={containerRef} className="p-4 h-full">
         {/* Mobile Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -130,6 +145,7 @@ const VenvlGuestPicker = ({ guests, onChange, onClose }: VenvlGuestPickerProps) 
 
   return (
     <motion.div
+      ref={containerRef}
       className="bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden w-80 mt-2"
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
