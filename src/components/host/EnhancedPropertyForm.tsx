@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Home, Calendar, DollarSign, Settings, ArrowLeft, Plus, X, CheckCircle, Upload, Image as ImageIcon, Video, Trash2 } from 'lucide-react';
+import { Home, Calendar, DollarSign, Settings, ArrowLeft, Plus, X } from 'lucide-react';
 import { Property } from '@/types/property';
 import { 
   getRentalType, 
@@ -91,31 +91,6 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   const [newImageUrl, setNewImageUrl] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
   const [currentRentalType, setCurrentRentalType] = useState<RentalType>('daily');
-  const [uploadingFiles, setUploadingFiles] = useState(false);
-  const [mediaFiles, setMediaFiles] = useState<Array<{
-    id: string;
-    url: string;
-    type: 'image' | 'video';
-    name: string;
-  }>>(
-    property?.images?.map((url, index) => ({
-      id: `existing-${index}`,
-      url,
-      type: 'image' as const,
-      name: `Image ${index + 1}`,
-    })) || []
-  );
-  const [completedTabs, setCompletedTabs] = useState<{
-    basic: boolean;
-    pricing: boolean;
-    details: boolean;
-    media: boolean;
-  }>({
-    basic: false,
-    pricing: false,
-    details: false,
-    media: false,
-  });
   const queryClient = useQueryClient();
 
   // Get current rental type for existing property or default for new property
@@ -184,55 +159,6 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     }
   }, [watchedRentalType, currentRentalType, form]);
 
-  // Tab validation functions
-  const validateBasicTab = () => {
-    const values = form.getValues();
-    return !!(values.title && values.description && values.property_type &&
-             values.address && values.city && values.rental_type);
-  };
-
-  const validatePricingTab = () => {
-    const values = form.getValues();
-    const rentalType = values.rental_type as RentalType;
-
-    if (rentalType === 'daily') {
-      return !!(values.price_per_night && values.price_per_night > 0 &&
-               values.min_nights && values.min_nights >= 1);
-    } else if (rentalType === 'monthly') {
-      return !!(values.monthly_price && values.monthly_price > 0 &&
-               values.min_months && values.min_months >= 1);
-    } else if (rentalType === 'both') {
-      return !!(values.price_per_night && values.price_per_night > 0 &&
-               values.min_nights && values.min_nights >= 1 &&
-               values.monthly_price && values.monthly_price > 0 &&
-               values.min_months && values.min_months >= 1);
-    }
-    return false;
-  };
-
-  const validateDetailsTab = () => {
-    const values = form.getValues();
-    return !!(values.bedrooms >= 0 && values.bathrooms >= 0 &&
-             values.max_guests >= 1);
-  };
-
-  const validateMediaTab = () => {
-    return mediaFiles.length > 0;
-  };
-
-  // Watch for form changes to update tab completion
-  useEffect(() => {
-    const subscription = form.watch(() => {
-      setCompletedTabs({
-        basic: validateBasicTab(),
-        pricing: validatePricingTab(),
-        details: validateDetailsTab(),
-        media: validateMediaTab(),
-      });
-    });
-    return () => subscription.unsubscribe();
-  }, [form, mediaFiles]);
-
   // Update form when property changes (important for editing mode)
   useEffect(() => {
     if (property) {
@@ -272,197 +198,27 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     form.setValue('amenities', updated);
   };
 
-  // File upload handler
-  const uploadFiles = async (files: FileList) => {
-    setUploadingFiles(true);
-    console.log('Starting file upload process...', { fileCount: files.length });
-
-    const uploadPromises: Promise<{ id: string; url: string; type: 'image' | 'video'; name: string }>[] = [];
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      console.log(`Processing file ${i + 1}:`, { name: file.name, size: file.size, type: file.type });
-
-      // Check file size (10MB limit)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`File ${file.name} is too large. Please upload files smaller than 10MB.`);
-        continue;
-      }
-
-      const fileType = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : null;
-
-      if (!fileType) {
-        toast.error(`File ${file.name} is not supported. Please upload images or videos only.`);
-        continue;
-      }
-
-      const uploadPromise = new Promise<{ id: string; url: string; type: 'image' | 'video'; name: string }>((resolve, reject) => {
-        const timestamp = Date.now();
-        const randomId = Math.random().toString(36).substring(2);
-        const fileExtension = file.name.split('.').pop() || '';
-        const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const fileName = `${timestamp}_${randomId}_${sanitizedName}`;
-        const filePath = `property-media/${fileName}`;
-
-        console.log(`Uploading file to path: ${filePath}`);
-
-        const uploadToSupabase = async (): Promise<void> => {
-          try {
-            // Since bucket creation is restricted, let's use a fallback approach
-            console.log('Attempting file upload...');
-
-            // Try common bucket names that might already exist, starting with the one we found
-            const commonBuckets = ['properties', 'property-images', 'images', 'uploads', 'files', 'media', 'assets'];
-
-            let uploadSuccess = false;
-            let finalUrl = '';
-
-            for (const bucketName of commonBuckets) {
-              try {
-                console.log(`Trying upload to bucket: ${bucketName}`);
-
-                const { data: uploadData, error: uploadError } = await supabase.storage
-                  .from(bucketName)
-                  .upload(filePath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                  });
-
-                if (!uploadError && uploadData) {
-                  console.log(`Upload successful to bucket: ${bucketName}`);
-
-                  // Get public URL
-                  const { data: { publicUrl } } = supabase.storage
-                    .from(bucketName)
-                    .getPublicUrl(filePath);
-
-                  finalUrl = publicUrl;
-                  uploadSuccess = true;
-                  break;
-                }
-
-                console.log(`Upload failed for bucket ${bucketName}:`, uploadError);
-              } catch (bucketError) {
-                console.log(`Bucket ${bucketName} not accessible:`, bucketError);
-                continue;
-              }
-            }
-
-            if (!uploadSuccess) {
-              // If all bucket attempts failed, create a data URL as fallback
-              console.log('All bucket uploads failed, creating data URL fallback...');
-
-              const reader = new FileReader();
-              reader.onload = () => {
-                const dataUrl = reader.result as string;
-                console.log('Created data URL fallback');
-
-                resolve({
-                  id: `uploaded-${timestamp}-${i}`,
-                  url: dataUrl,
-                  type: fileType,
-                  name: file.name,
-                });
-              };
-
-              reader.onerror = () => {
-                reject(new Error('Failed to create data URL fallback'));
-              };
-
-              reader.readAsDataURL(file);
-              return;
-            }
-
-            console.log(`Upload successful! Public URL: ${finalUrl}`);
-
-            resolve({
-              id: `uploaded-${timestamp}-${i}`,
-              url: finalUrl,
-              type: fileType,
-              name: file.name,
-            });
-
-          } catch (error) {
-            console.error('Upload process failed:', error);
-
-            // Final fallback to data URL
-            try {
-              console.log('Creating data URL as final fallback...');
-              const reader = new FileReader();
-              reader.onload = () => {
-                resolve({
-                  id: `uploaded-${timestamp}-${i}`,
-                  url: reader.result as string,
-                  type: fileType,
-                  name: file.name,
-                });
-              };
-              reader.readAsDataURL(file);
-            } catch (fallbackError) {
-              reject(fallbackError);
-            }
-          }
-        };
-
-        uploadToSupabase().catch(reject);
-      });
-
-      uploadPromises.push(uploadPromise);
-    }
-
-    try {
-      const uploadedFiles = await Promise.all(uploadPromises);
-      console.log('All files uploaded successfully:', uploadedFiles);
-
-      const newMediaFiles = [...mediaFiles, ...uploadedFiles];
-      setMediaFiles(newMediaFiles);
-
-      // Update form with image URLs only (for backward compatibility)
-      const imageUrls = newMediaFiles.filter(f => f.type === 'image').map(f => f.url);
-      form.setValue('images', imageUrls);
-
-      toast.success(`Successfully uploaded ${uploadedFiles.length} file(s)`);
-    } catch (error) {
-      console.error('Upload process failed:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown upload error';
-      toast.error(`Upload failed: ${errorMessage}. Check console for details.`);
-    } finally {
-      setUploadingFiles(false);
-    }
-  };
-
   const addImage = () => {
-    if (newImageUrl && !mediaFiles.some(f => f.url === newImageUrl)) {
-      const newFile = {
-        id: `manual-${Date.now()}`,
-        url: newImageUrl,
-        type: 'image' as const,
-        name: 'Manual URL',
-      };
-      const updated = [...mediaFiles, newFile];
-      setMediaFiles(updated);
-
-      const imageUrls = updated.filter(f => f.type === 'image').map(f => f.url);
-      form.setValue('images', imageUrls);
+    if (newImageUrl && !imageUrls.includes(newImageUrl)) {
+      const updated = [...imageUrls, newImageUrl];
+      setImageUrls(updated);
+      form.setValue('images', updated);
       setNewImageUrl('');
     }
   };
 
-  const removeMediaFile = (fileId: string) => {
-    const updated = mediaFiles.filter(f => f.id !== fileId);
-    setMediaFiles(updated);
-
-    const imageUrls = updated.filter(f => f.type === 'image').map(f => f.url);
-    form.setValue('images', imageUrls);
+  const removeImage = (index: number) => {
+    const updated = imageUrls.filter((_, i) => i !== index);
+    setImageUrls(updated);
+    form.setValue('images', updated);
   };
 
   const onSubmit = async (data: PropertyFormData) => {
     try {
       setIsSubmitting(true);
-      console.log('Form submission started...', { data, mediaFiles });
 
       const rentalType = data.rental_type as RentalType;
-
+      
       // Enhanced validation with detailed error messages
       if (rentalType === 'daily') {
         if (!data.price_per_night || data.price_per_night <= 0) {
@@ -506,14 +262,8 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         throw new Error('User not authenticated');
       }
 
-      console.log('User authenticated:', user.id);
-
       // Prepare property data with only relevant price fields
       const normalizedAmenityIds = cleanAmenityIds(data.amenities || []);
-
-      // Get image URLs from mediaFiles
-      const imageUrls = mediaFiles.filter(f => f.type === 'image').map(f => f.url);
-      console.log('Image URLs:', imageUrls);
 
       const propertyData: any = {
         title: data.title,
@@ -579,32 +329,23 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         
         toast.success('Property updated successfully!');
       } else {
-        console.log('Inserting property data:', propertyData);
-
         const { data: result, error } = await supabase
           .from('properties')
           .insert(propertyData)
           .select();
-
-        console.log('Insert result:', { result, error });
-
+        
         if (error) {
-          console.error('Database insert error:', error);
           throw new Error(`Insert failed: ${error.message}`);
         }
-
-        console.log('Property created successfully:', result);
-
+        
         // Invalidate admin properties cache so new properties appear immediately in admin panel
         queryClient.invalidateQueries({ queryKey: ['admin-properties'] });
-
+        
         toast.success('Property created successfully!');
       }
 
-      console.log('Calling onSave...');
       onSave();
     } catch (error) {
-      console.error('Form submission error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Failed to save property';
       toast.error(`Save failed: ${errorMessage}`);
     } finally {
@@ -650,33 +391,21 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-4 rounded-2xl p-1 bg-gray-100">
-              <TabsTrigger value="basic" className={`rounded-xl relative ${completedTabs.basic ? 'bg-green-100 text-green-800' : ''}`}>
+              <TabsTrigger value="basic" className="rounded-xl">
                 <Home className="h-4 w-4 mr-2" />
                 Basic Info
-                {completedTabs.basic && (
-                  <CheckCircle className="h-4 w-4 ml-2 text-green-600" />
-                )}
               </TabsTrigger>
-              <TabsTrigger value="pricing" className={`rounded-xl relative ${completedTabs.pricing ? 'bg-green-100 text-green-800' : ''}`}>
+              <TabsTrigger value="pricing" className="rounded-xl">
                 <DollarSign className="h-4 w-4 mr-2" />
                 Pricing
-                {completedTabs.pricing && (
-                  <CheckCircle className="h-4 w-4 ml-2 text-green-600" />
-                )}
               </TabsTrigger>
-              <TabsTrigger value="details" className={`rounded-xl relative ${completedTabs.details ? 'bg-green-100 text-green-800' : ''}`}>
+              <TabsTrigger value="details" className="rounded-xl">
                 <Settings className="h-4 w-4 mr-2" />
                 Details
-                {completedTabs.details && (
-                  <CheckCircle className="h-4 w-4 ml-2 text-green-600" />
-                )}
               </TabsTrigger>
-              <TabsTrigger value="media" className={`rounded-xl relative ${completedTabs.media ? 'bg-green-100 text-green-800' : ''}`}>
+              <TabsTrigger value="media" className="rounded-xl">
                 <Calendar className="h-4 w-4 mr-2" />
                 Media
-                {completedTabs.media && (
-                  <CheckCircle className="h-4 w-4 ml-2 text-green-600" />
-                )}
               </TabsTrigger>
             </TabsList>
 
@@ -1008,10 +737,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                     <div className="space-y-4">
                       <Label>Amenities</Label>
                       <div className="space-y-6">
-                        {/* Essentials */}
+                        {/* الأساسيات */}
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm text-gray-700">Essentials</h4>
+                            <h4 className="font-medium text-sm text-gray-700">الأساسيات</h4>
                             <div className="flex-1 h-px bg-gray-200"></div>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -1040,10 +769,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                           </div>
                         </div>
 
-                        {/* Comfort */}
+                        {/* الراحة */}
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm text-gray-700">Comfort</h4>
+                            <h4 className="font-medium text-sm text-gray-700">الراحة</h4>
                             <div className="flex-1 h-px bg-gray-200"></div>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -1072,10 +801,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                           </div>
                         </div>
 
-                        {/* Entertainment */}
+                        {/* الترفيه */}
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm text-gray-700">Entertainment</h4>
+                            <h4 className="font-medium text-sm text-gray-700">الترفيه</h4>
                             <div className="flex-1 h-px bg-gray-200"></div>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -1121,149 +850,54 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                        <ImageIcon className="h-5 w-5 text-white" />
+                        <Plus className="h-5 w-5 text-white" />
                       </div>
-                      Property Media
-                      <Badge variant="secondary" className="ml-auto">
-                        {mediaFiles.length} file{mediaFiles.length !== 1 ? 's' : ''}
-                      </Badge>
+                      Property Images
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* File Upload Section */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-gray-400 transition-colors">
-                      <div className="text-center">
-                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                        <div className="mb-4">
-                          <p className="text-lg font-medium">Upload Media Files</p>
-                          <p className="text-sm text-gray-500">
-                            Drop your images and videos here, or click to browse
-                          </p>
-                          <p className="text-xs text-gray-400 mt-2">
-                            Supports: JPG, PNG, GIF, WebP, MP4, MOV, AVI (Max 10MB per file)
-                          </p>
-                        </div>
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*,video/*"
-                          onChange={(e) => e.target.files && uploadFiles(e.target.files)}
-                          className="hidden"
-                          id="media-upload"
-                          disabled={uploadingFiles}
-                        />
-                        <Button
-                          type="button"
-                          onClick={() => document.getElementById('media-upload')?.click()}
-                          disabled={uploadingFiles}
-                          className="rounded-xl bg-black text-white hover:bg-gray-800 mb-4"
-                        >
-                          {uploadingFiles ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-                              Uploading...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="h-4 w-4 mr-2" />
-                              Choose Files
-                            </>
-                          )}
-                        </Button>
-                      </div>
+                    <div className="flex gap-4">
+                      <Input
+                        value={newImageUrl}
+                        onChange={(e) => setNewImageUrl(e.target.value)}
+                        placeholder="Enter image URL"
+                        className="rounded-xl border-gray-200 focus:border-black"
+                      />
+                      <Button
+                        type="button"
+                        onClick={addImage}
+                        className="rounded-xl bg-black text-white hover:bg-gray-800"
+                      >
+                        Add Image
+                      </Button>
                     </div>
 
-                    {/* URL Input (Alternative method) */}
-                    <div className="border rounded-xl p-4 bg-gray-50">
-                      <Label className="text-sm font-medium mb-3 block">Or add from URL</Label>
-                      <div className="flex gap-3">
-                        <Input
-                          value={newImageUrl}
-                          onChange={(e) => setNewImageUrl(e.target.value)}
-                          placeholder="https://example.com/image.jpg"
-                          className="rounded-lg border-gray-200 focus:border-black"
-                        />
-                        <Button
-                          type="button"
-                          onClick={addImage}
-                          variant="outline"
-                          className="rounded-lg"
-                        >
-                          Add URL
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Media Files Display */}
-                    {mediaFiles.length > 0 && (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-lg font-semibold">Uploaded Media</Label>
-                          <div className="flex gap-2">
-                            <Badge variant="outline" className="flex items-center gap-1">
-                              <ImageIcon className="h-3 w-3" />
-                              {mediaFiles.filter(f => f.type === 'image').length} Images
-                            </Badge>
-                            <Badge variant="outline" className="flex items-center gap-1">
-                              <Video className="h-3 w-3" />
-                              {mediaFiles.filter(f => f.type === 'video').length} Videos
-                            </Badge>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {mediaFiles.map((file) => (
-                            <motion.div
-                              key={file.id}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              exit={{ opacity: 0, scale: 0.8 }}
-                              className="relative group border border-gray-200 rounded-xl overflow-hidden"
+                    {imageUrls.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {imageUrls.map((url, index) => (
+                          <motion.div
+                            key={index}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="relative group"
+                          >
+                            <img
+                              src={url}
+                              alt={`Property ${index + 1}`}
+                              className="w-full h-48 object-cover rounded-xl"
+                            />
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => removeImage(index)}
+                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-8 h-8 p-0"
                             >
-                              {file.type === 'image' ? (
-                                <img
-                                  src={file.url}
-                                  alt={file.name}
-                                  className="w-full h-48 object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-                                  <div className="text-center">
-                                    <Video className="h-12 w-12 text-gray-400 mx-auto mb-2" />
-                                    <p className="text-sm text-gray-600 px-2 truncate">{file.name}</p>
-                                  </div>
-                                </div>
-                              )}
-
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
-                                <Button
-                                  type="button"
-                                  onClick={() => removeMediaFile(file.id)}
-                                  variant="destructive"
-                                  size="sm"
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-
-                              <div className="absolute top-2 left-2">
-                                <Badge className="bg-black/70 text-white text-xs">
-                                  {file.type === 'image' ? <ImageIcon className="h-3 w-3 mr-1" /> : <Video className="h-3 w-3 mr-1" />}
-                                  {file.type.toUpperCase()}
-                                </Badge>
-                              </div>
-                            </motion.div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {mediaFiles.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <ImageIcon className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-                        <p>No media files uploaded yet</p>
-                        <p className="text-sm">Upload your first image or video to get started</p>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </motion.div>
+                        ))}
                       </div>
                     )}
                   </CardContent>
@@ -1288,19 +922,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
               </Button>
               <Button
                 type="submit"
-                disabled={isSubmitting || !Object.values(completedTabs).every(Boolean)}
-                className={`rounded-xl px-8 ${
-                  Object.values(completedTabs).every(Boolean)
-                    ? 'bg-black text-white hover:bg-gray-800'
-                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+                disabled={isSubmitting}
+                className="rounded-xl px-8 bg-black text-white hover:bg-gray-800"
               >
-                {isSubmitting
-                  ? 'Saving...'
-                  : Object.values(completedTabs).every(Boolean)
-                    ? (property ? 'Update Property' : 'Create Property')
-                    : 'Complete All Tabs to Save'
-                }
+                {isSubmitting ? 'Saving...' : property ? 'Update Property' : 'Create Property'}
               </Button>
             </motion.div>
           </Tabs>

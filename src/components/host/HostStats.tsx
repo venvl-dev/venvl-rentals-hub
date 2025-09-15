@@ -259,7 +259,7 @@ const HostStats = () => {
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map(i => (
-            <Card key={i} className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+            <Card key={i}>
               <CardContent className="flex items-center justify-center py-12">
                 <div className="text-center">Loading...</div>
               </CardContent>
@@ -293,7 +293,7 @@ const HostStats = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
             <Home className="h-4 w-4 text-muted-foreground" />
@@ -306,7 +306,7 @@ const HostStats = () => {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Bookings</CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -319,7 +319,7 @@ const HostStats = () => {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -332,7 +332,7 @@ const HostStats = () => {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Rating</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -348,7 +348,7 @@ const HostStats = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader>
             <CardTitle>Monthly Revenue Trend</CardTitle>
             <p className="text-sm text-muted-foreground">Last 6 months revenue performance</p>
@@ -402,7 +402,7 @@ const HostStats = () => {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader>
             <CardTitle>Bookings by Status</CardTitle>
             <p className="text-sm text-muted-foreground">All-time booking status distribution</p>
@@ -455,7 +455,7 @@ const HostStats = () => {
 
       {/* Enhanced Performance Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Occupancy Rate</CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
@@ -474,7 +474,7 @@ const HostStats = () => {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Daily Rate (ADR)</CardTitle>
             <Target className="h-4 w-4 text-muted-foreground" />
@@ -489,7 +489,7 @@ const HostStats = () => {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Revenue PAR</CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
@@ -504,7 +504,7 @@ const HostStats = () => {
           </CardContent>
         </Card>
 
-        <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+        <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Average Booking Value</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />

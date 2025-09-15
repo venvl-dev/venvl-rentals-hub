@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,7 +91,6 @@ const PropertyImage = ({ src, alt, className }: { src?: string; alt: string; cla
 
 const HostDashboard = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   
   
@@ -118,38 +117,21 @@ const HostDashboard = () => {
     [key: string]: { action: string; loading: boolean }
   }>({});
   const [retryAttempts, setRetryAttempts] = useState<{ [key: string]: number }>({});
-  const [activeTab, setActiveTab] = useState(() => {
-    const tabFromUrl = searchParams.get('tab');
-    return tabFromUrl || localStorage.getItem('hostDashboardTab') || 'properties';
-  });
+  const [activeTab, setActiveTab] = useState(() =>
+    localStorage.getItem('hostDashboardTab') || 'properties'
+  );
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     property: Property | null;
   }>({ isOpen: false, property: null });
   const [pauseModal, setPauseModal] = useState<{
-    isOpen: boolean; 
+    isOpen: boolean;
     property: Property | null;
   }>({ isOpen: false, property: null });
 
-  // Handle tab changes and update URL
-  const handleTabChange = useCallback((newTab: string) => {
-    setActiveTab(newTab);
-    localStorage.setItem('hostDashboardTab', newTab);
-    
-    // Update URL with tab parameter
-    const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.set('tab', newTab);
-    setSearchParams(newSearchParams, { replace: false });
-  }, [searchParams, setSearchParams]);
-
-  // Listen for URL changes (back/forward navigation)
   useEffect(() => {
-    const tabFromUrl = searchParams.get('tab');
-    if (tabFromUrl && tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl);
-      localStorage.setItem('hostDashboardTab', tabFromUrl);
-    }
-  }, [searchParams, activeTab]);
+    localStorage.setItem('hostDashboardTab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     localStorage.setItem('hostPropertyFilter', propertyFilter);
@@ -544,21 +526,27 @@ const HostDashboard = () => {
     const rentalType = getRentalType(property);
     const dailyPrice = getDailyPrice(property);
     const monthlyPrice = getMonthlyPrice(property);
+    const badge = getRentalTypeBadge(rentalType);
 
     return (
       <div className="space-y-1">
         {rentalType === 'daily' && (
-          <div className="font-semibold text-lg text-gray-900">{formatPrice(dailyPrice)}/night</div>
+          <div className="font-medium text-lg">{formatPrice(dailyPrice)}/night</div>
         )}
         {rentalType === 'monthly' && (
-          <div className="font-semibold text-lg text-gray-900">{formatPrice(monthlyPrice)}/month</div>
+          <div className="font-medium text-lg">{formatPrice(monthlyPrice)}/month</div>
         )}
         {rentalType === 'both' && (
-          <div className="space-y-0.5">
-            <div className="font-semibold text-lg text-gray-900">{formatPrice(dailyPrice)}/night</div>
-            <div className="text-sm text-gray-500">{formatPrice(monthlyPrice)}/month</div>
+          <div className="space-y-1">
+            <div className="font-medium text-lg">{formatPrice(dailyPrice)}/night</div>
+            <div className="text-sm text-gray-600 font-medium">{formatPrice(monthlyPrice)}/month</div>
           </div>
         )}
+        <div className="mt-2">
+          <Badge className={`text-xs font-medium px-2 py-1 ${badge.color}`}>
+            {badge.label}
+          </Badge>
+        </div>
       </div>
     );
   }, [formatPrice]);
@@ -624,7 +612,7 @@ const HostDashboard = () => {
           </Button>
         </div>
 
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(120px,1fr))] rounded-2xl bg-gray-100 p-2">
             <TabsTrigger value="properties" className="flex items-center gap-2 rounded-xl">
               <Home className="h-4 w-4" />
@@ -687,70 +675,63 @@ const HostDashboard = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {properties.map((property) => (
-                  <Card key={property.id} className="overflow-hidden rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col bg-white h-full">
-                    <div className="h-48 relative flex-shrink-0">
-                      <PropertyImage
-                        src={property.images?.[0]}
+                  <Card key={property.id} className="overflow-hidden rounded-3xl shadow-lg hover:shadow-xl transition-all duration-300">
+                    <div className="aspect-video relative">
+                      <PropertyImage 
+                        src={property.images?.[0]} 
                         alt={property.title}
                         className="w-full h-full object-cover"
                       />
-                      <div className="absolute top-3 right-3">
+                      <div className="absolute top-4 right-4 flex flex-col gap-2">
+                        <Badge className={`${getStatusColor(property.approval_status || 'pending')} border-0`}>
+                          {property.approval_status || 'pending'}
+                        </Badge>
                         {property.deleted_at ? (
-                          <Badge className="bg-gray-900 text-white text-xs px-3 py-1 rounded-full">
+                          <Badge className="bg-gray-100 text-gray-800 border-0">
+                            <Archive className="h-3 w-3 mr-1" />
                             Archived
                           </Badge>
                         ) : (
-                          <Badge className="bg-gray-900 text-white text-xs px-3 py-1 rounded-full">
+                          <Badge variant={property.is_active ? "default" : "secondary"}>
                             {property.is_active ? "Active" : "Inactive"}
                           </Badge>
                         )}
                       </div>
                     </div>
-
-                    <CardContent className="p-0 flex flex-col flex-1">
-                      <div className="p-6 pb-4 flex-1 flex flex-col">
-                        <div className="h-16 flex flex-col justify-start">
-                          <h3 className="font-semibold text-xl mb-1 line-clamp-2 text-gray-900">{property.title}</h3>
-                        </div>
-                        <p className="text-sm text-gray-500 mb-3">{property.city}, {property.state}</p>
-                        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed mb-4 flex-1">{property.description}</p>
-
-                        <div className="space-y-3 mt-auto">
-                          <div>
-                            <PropertyPriceDisplay property={property} />
-                          </div>
-                          <div className="flex items-center justify-between text-sm text-gray-600">
-                            <span>{property.bedrooms} bed • {property.bathrooms} bath</span>
-                            <Badge variant="outline" className="text-purple-600 border-purple-200 bg-purple-50 text-xs">
-                              Flexible Booking
-                            </Badge>
-                          </div>
-                        </div>
+                    
+                    <CardContent className="p-6">
+                      <h3 className="font-semibold text-lg mb-2 truncate">{property.title}</h3>
+                      <p className="text-sm text-gray-600 mb-2">{property.city}, {property.state}</p>
+                      <p className="text-sm text-gray-600 mb-4 line-clamp-2">{property.description}</p>
+                      
+                      <div className="flex items-center justify-between text-sm mb-4">
+                        <PropertyPriceDisplay property={property} />
+                        <span className="text-gray-600">{property.bedrooms} bed • {property.bathrooms} bath</span>
                       </div>
 
-                      <div className="px-6 pb-6 mt-auto">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/property/${property.id}`)}
-                            className="flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-
-                          {/* Show different actions based on property status */}
-                          {property.deleted_at ? (
-                            // Archived property actions
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/property/${property.id}`)}
+                          className="flex-1 rounded-xl"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                        
+                        {/* Show different actions based on property status */}
+                        {property.deleted_at ? (
+                          // Archived property actions
+                          <>
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleRestoreClick(property)}
                               disabled={loadingStates[property.id]?.loading && loadingStates[property.id]?.action === 'restoring'}
-                              className="flex-1 rounded-lg border-green-300 hover:bg-green-50 text-green-700"
+                              className="flex-1 rounded-xl text-green-600 hover:text-green-700 hover:bg-green-50"
                               title={`Restore "${property.title}"`}
                             >
                               {loadingStates[property.id]?.loading && loadingStates[property.id]?.action === 'restoring' ? (
@@ -765,61 +746,61 @@ const HostDashboard = () => {
                                 </>
                               )}
                             </Button>
-                          ) : (
-                            // Active property actions
-                            <>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEdit(property)}
-                                className="flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700"
-                              >
-                                <Edit className="h-4 w-4 mr-1" />
-                                Edit
-                              </Button>
-                              {(() => {
-                                const buttonState = getButtonState(property);
-                                const IconComponent = buttonState.icon;
-
-                                return (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => property.is_active ? handlePauseClick(property) : handleActivateProperty(property.id, property.title)}
-                                    disabled={buttonState.isLoading}
-                                    className="flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700"
-                                  >
-                                    {buttonState.isLoading ? (
-                                      <>
-                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                                        {buttonState.loadingText}
-                                      </>
-                                    ) : (
-                                      <>
-                                        <IconComponent className="h-4 w-4 mr-1" />
-                                        {buttonState.buttonText}
-                                      </>
-                                    )}
-                                  </Button>
-                                );
-                              })()}
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteClick(property)}
-                                disabled={loadingStates[property.id]?.loading && loadingStates[property.id]?.action === 'deleting'}
-                                className="w-10 rounded-lg border-red-300 hover:bg-red-50 text-red-600 p-0 flex items-center justify-center"
-                                title={`Archive "${property.title}"`}
-                              >
-                                {loadingStates[property.id]?.loading && loadingStates[property.id]?.action === 'deleting' ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Archive className="h-4 w-4" />
-                                )}
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                          </>
+                        ) : (
+                          // Active property actions
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEdit(property)}
+                              className="flex-1 rounded-xl"
+                            >
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            {(() => {
+                              const buttonState = getButtonState(property);
+                              const IconComponent = buttonState.icon;
+                              
+                              return (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => property.is_active ? handlePauseClick(property) : handleActivateProperty(property.id, property.title)}
+                                  disabled={buttonState.isLoading}
+                                  className="flex-1 rounded-xl"
+                                >
+                                  {buttonState.isLoading ? (
+                                    <>
+                                      <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                      {buttonState.loadingText}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <IconComponent className="h-3 w-3 mr-1" />
+                                      {buttonState.buttonText}
+                                    </>
+                                  )}
+                                </Button>
+                              );
+                            })()}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteClick(property)}
+                              disabled={loadingStates[property.id]?.loading && loadingStates[property.id]?.action === 'deleting'}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-colors"
+                              title={`Archive "${property.title}"`}
+                            >
+                              {loadingStates[property.id]?.loading && loadingStates[property.id]?.action === 'deleting' ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Archive className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
