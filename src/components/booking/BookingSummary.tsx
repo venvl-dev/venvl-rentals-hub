@@ -38,9 +38,16 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
   
   const nights = differenceInDays(booking.checkOut, booking.checkIn);
-  const serviceFee = Math.round(booking.totalPrice * 0.1); // 10% service fee
-  const taxes = Math.round(booking.totalPrice * 0.05); // 5% taxes
-  const finalTotal = booking.totalPrice + serviceFee + taxes;
+  
+  // For monthly bookings, use monthly price instead of total
+  const basePrice = booking.bookingType === 'monthly' 
+    ? booking.property.monthly_price || 0 
+    : booking.totalPrice;
+    
+  const serviceFee = Math.round(basePrice * 0.1); // 10% service fee
+  const taxes = Math.round(basePrice * 0.05); // 5% taxes
+  const finalTotal = basePrice + serviceFee + taxes;
+
 
   const handlePayment = async () => {
     try {
@@ -149,6 +156,18 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
                   </div>
                 </div>
 
+                {/* Total Amount Information for Monthly Bookings */}
+                {booking.bookingType === 'monthly' && booking.duration && booking.duration > 1 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="text-sm text-amber-800">
+                      <div className="font-medium mb-1">Payment Information:</div>
+                      <div>• Monthly payment: EGP {finalTotal.toLocaleString()}</div>
+                      <div>• Total over {booking.duration} months: <span className="font-semibold">EGP {(finalTotal * booking.duration).toLocaleString()}</span></div>
+                      <div className="text-xs mt-1">You will be charged monthly, not upfront</div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-gray-600" />
@@ -217,6 +236,7 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
                 <PriceBreakdownModal 
                   booking={{
                     ...booking,
+                    totalPrice: basePrice,
                     guests: booking.guests
                   }} 
                   currency="EGP"

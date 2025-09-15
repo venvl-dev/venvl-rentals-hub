@@ -23,10 +23,19 @@ const PriceBreakdown = ({
   showDetailed = true 
 }: PriceBreakdownProps) => {
   const nights = differenceInDays(booking.checkOut, booking.checkIn);
-  const basePrice = booking.totalPrice;
-  const serviceFee = Math.round(basePrice * 0.1); // 10% service fee
-  const taxes = Math.round(basePrice * 0.05); // 5% taxes
-  const finalTotal = basePrice + serviceFee + taxes;
+  
+  // For monthly bookings, calculate per-month pricing instead of total
+  const isMonthly = booking.bookingType === 'monthly';
+  const monthlyPrice = booking.property.monthly_price || 0;
+  const monthlyServiceFee = Math.round(monthlyPrice * 0.1); // 10% service fee per month
+  const monthlyTaxes = Math.round(monthlyPrice * 0.05); // 5% taxes per month
+  const monthlyTotal = monthlyPrice + monthlyServiceFee + monthlyTaxes;
+
+  // For daily bookings, use total pricing
+  const basePrice = isMonthly ? monthlyPrice : booking.totalPrice;
+  const serviceFee = isMonthly ? monthlyServiceFee : Math.round(booking.totalPrice * 0.1);
+  const taxes = isMonthly ? monthlyTaxes : Math.round(booking.totalPrice * 0.05);
+  const finalTotal = isMonthly ? monthlyTotal : booking.totalPrice + serviceFee + taxes;
 
   const unitPrice = booking.bookingType === 'daily' 
     ? booking.property.price_per_night 
@@ -35,7 +44,7 @@ const PriceBreakdown = ({
   const units = booking.bookingType === 'daily' ? nights : booking.duration || 1;
   const unitLabel = booking.bookingType === 'daily' 
     ? (nights === 1 ? 'night' : 'nights')
-    : (booking.duration === 1 ? 'month' : 'months');
+    : 'month';
 
   return (
     <div className="space-y-4">
@@ -55,7 +64,7 @@ const PriceBreakdown = ({
         {/* Base Rate */}
         <div className="flex justify-between">
           <span className="text-sm">
-            {currency} {Math.round(unitPrice)} × {units} {unitLabel}
+            {currency} {Math.round(unitPrice)} × {isMonthly ? 1 : units} {unitLabel}
           </span>
           <span className="font-medium">
             {currency} {Math.round(basePrice).toLocaleString()}
@@ -82,9 +91,32 @@ const PriceBreakdown = ({
 
         {/* Total */}
         <div className="flex justify-between text-lg font-bold text-gray-900">
-          <span>Total ({currency})</span>
+          <span>{isMonthly ? 'Monthly Payment' : 'Total'} ({currency})</span>
           <span>{currency} {finalTotal.toLocaleString()}</span>
         </div>
+
+        {/* Monthly Payment Info */}
+        {isMonthly && units > 1 && (
+          <div className="bg-blue-50 rounded-lg p-3 mt-4">
+            <div className="text-sm text-blue-800">
+              <div className="font-medium mb-1">Payment Schedule:</div>
+              <div>• You pay: {currency} {finalTotal.toLocaleString()} per month</div>
+              <div>• Duration: {units} months</div>
+              <div className="font-semibold">• Total amount over {units} months: {currency} {(finalTotal * units).toLocaleString()}</div>
+              <div className="text-xs mt-1 text-blue-600">* You will be charged monthly, not upfront</div>
+            </div>
+          </div>
+        )}
+
+        {/* Single month info */}
+        {isMonthly && units === 1 && (
+          <div className="bg-blue-50 rounded-lg p-3 mt-4">
+            <div className="text-sm text-blue-800">
+              <div className="font-medium">Single month booking</div>
+              <div className="text-xs mt-1">Payment due: {currency} {finalTotal.toLocaleString()}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Additional Info */}

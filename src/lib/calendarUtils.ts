@@ -56,8 +56,6 @@ export async function fetchPropertyBookings(propertyId: string): Promise<Booking
   if (cached) return cached;
 
   try {
-    console.log(`🔍 Fetching bookings for property: ${propertyId}`);
-    
     const { data, error } = await supabase
       .from('bookings')
       .select(`
@@ -74,16 +72,6 @@ export async function fetchPropertyBookings(propertyId: string): Promise<Booking
       .in('status', ['pending', 'confirmed', 'checked_in']) // Removed 'completed' - completed bookings should make dates available again
       .order('check_in', { ascending: true });
 
-    console.log(`📊 Raw booking query result:`, { 
-      dataCount: data?.length || 0, 
-      error: error?.message,
-      data: data?.map(b => ({ 
-        id: b.id.substring(0, 8), 
-        dates: `${b.check_in} to ${b.check_out}`, 
-        status: b.status,
-        guest_id: b.guest_id.substring(0, 8)
-      }))
-    });
 
     if (error) throw error;
 
@@ -100,17 +88,6 @@ export async function fetchPropertyBookings(propertyId: string): Promise<Booking
         'Guest'
     })) || [];
 
-    // Debug: Log what bookings HostCalendar found
-    console.log(`🏠 HostCalendar fetchPropertyBookings for ${propertyId}:`, {
-      totalBookings: bookings.length,
-      bookings: bookings.map(b => ({
-        id: b.id.substring(0, 8),
-        check_in: b.check_in,
-        check_out: b.check_out,
-        status: b.status,
-        guest: b.guest_name
-      }))
-    });
 
     setCachedData(cacheKey, bookings);
     return bookings;
@@ -256,20 +233,6 @@ export async function generateCalendarDays(
   const bookings = await fetchPropertyBookings(propertyId);
   const blockedDates = await fetchBlockedDates(propertyId);
   
-  console.log(`🗓️ generateCalendarDays for ${propertyId} (${year}-${String(month + 1).padStart(2, '0')}):`, {
-    totalBookings: bookings.length,
-    bookingDateRanges: bookings.map(b => ({ 
-      id: b.id.substring(0, 8), 
-      dates: `${b.check_in} to ${b.check_out}`,
-      status: b.status,
-      guest_id: b.guest_id.substring(0, 8)
-    })),
-    blockedDatesCount: blockedDates.length
-  });
-
-  // Get current user for debugging
-  const { data: { user } } = await supabase.auth.getUser();
-  console.log(`👤 Current user generating calendar:`, user?.id?.substring(0, 8));
 
   // Removed RLS policy test for performance - only run when debugging
   
@@ -350,17 +313,6 @@ export async function generateCalendarDays(
     }
   }
 
-  // Debug: Show final calendar data
-  const bookedDays = days.filter(d => d.status !== 'available');
-  console.log(`🏠 HostCalendar generateCalendarDays for ${propertyId} (${year}-${String(month + 1).padStart(2, '0')}):`, {
-    totalDays: days.length,
-    bookedDays: bookedDays.length,
-    bookedDates: bookedDays.map(d => ({
-      date: format(d.date, 'yyyy-MM-dd'),
-      status: d.status,
-      bookingId: d.bookingData?.id?.substring(0, 8)
-    }))
-  });
 
   setCachedData(cacheKey, days);
   return days;

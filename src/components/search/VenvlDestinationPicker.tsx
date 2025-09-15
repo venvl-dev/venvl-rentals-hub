@@ -1,8 +1,8 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
-import { MapPin, X } from 'lucide-react';
+import { MapPin, X, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { supabase } from '@/integrations/supabase/client';
@@ -18,14 +18,24 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [availableLocations, setAvailableLocations] = useState<string[]>([]);
   const isMobile = useIsMobile();
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch available locations from properties
+  // Fetch available locations from properties that are actually available for booking
   useEffect(() => {
     const fetchLocations = async () => {
       try {
+        // Get today's date for availability check
+        const today = new Date().toISOString().split('T')[0];
+        
+        // Query to get properties that are active and approved with their bookings
         const { data, error } = await supabase
           .from('properties')
-          .select('city, state')
+          .select(`
+            id,
+            city, 
+            state,
+            bookings(check_in, check_out, status)
+          `)
           .eq('is_active', true)
           .eq('approval_status', 'approved');
 
@@ -34,10 +44,29 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
           return;
         }
 
+        // Filter properties to only include those without current/future active bookings
+        const availableProperties = data?.filter(property => {
+          // If no bookings at all, property is available
+          if (!property.bookings || property.bookings.length === 0) {
+            return true;
+          }
+          
+          // Check if property has any current or future active bookings
+          const hasActiveBookings = property.bookings.some(booking => {
+            const checkOut = booking.check_out;
+            const status = booking.status;
+            return checkOut >= today && ['pending', 'confirmed', 'checked_in'].includes(status);
+          });
+          return !hasActiveBookings;
+        }) || [];
+
+        console.log('📍 Total properties:', data?.length || 0);
+        console.log('📍 Available properties (no current bookings):', availableProperties.length);
+
         // Create various location format options for better matching
         const locationSet = new Set();
         
-        data
+        availableProperties
           .filter(property => property.city && property.state)
           .forEach(property => {
             // Add different formats
@@ -60,15 +89,41 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
     fetchLocations();
   }, []);
 
+  // Handle click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [onClose]);
+
   useEffect(() => {
     if (searchTerm) {
       const filtered = availableLocations.filter(location =>
         location.toLowerCase().includes(searchTerm.toLowerCase())
       );
-      setSuggestions(filtered.slice(0, 6));
+      
+      // Always include the typed text as an option if it doesn't match existing locations
+      const suggestions = [...filtered];
+      if (searchTerm && !filtered.some(loc => loc.toLowerCase() === searchTerm.toLowerCase())) {
+        suggestions.unshift(`📍 Use "${searchTerm}"`);
+      }
+      
+      setSuggestions(suggestions.slice(0, 6));
     } else {
-      // Add "All Locations" option when no search term
-      setSuggestions(['🌍 All Locations', ...availableLocations.slice(0, 5)]);
+      // Show popular/featured locations when no search term
+      const featuredLocations = availableLocations.slice(0, 8);
+      const popularSuggestions = [
+        '🌍 All Locations',
+        ...featuredLocations
+      ];
+      setSuggestions(popularSuggestions);
     }
   }, [searchTerm, availableLocations]);
 
@@ -79,6 +134,10 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
     if (location === '🌍 All Locations') {
       console.log('📍 All Locations selected - clearing location filter');
       onChange('');
+    } else if (location.startsWith('📍 Use "')) {
+      // Handle custom location format: 📍 Use "Custom Location"
+      const customLocation = location.replace('📍 Use "', '').replace('"', '');
+      onChange(customLocation);
     } else {
       onChange(location);
     }
@@ -100,9 +159,14 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
     onClose();
   };
 
+  const handleClearLocation = () => {
+    setSearchTerm('');
+    onChange('');
+  };
+
   if (isMobile) {
     return (
-      <div className="p-4 h-full overflow-auto">
+      <div ref={containerRef} className="p-4 h-full overflow-auto">
         {/* Mobile Header */}
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900">Where to?</h3>
@@ -180,6 +244,7 @@ const VenvlDestinationPicker = ({ value, onChange, onClose }: VenvlDestinationPi
 
   return (
     <motion.div
+      ref={containerRef}
       className="bg-white rounded-xl shadow-xl border border-gray-100 z-50 overflow-hidden max-w-sm mx-auto mt-2"
       initial={{ opacity: 0, y: -10, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
