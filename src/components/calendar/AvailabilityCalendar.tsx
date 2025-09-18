@@ -52,7 +52,7 @@ const AvailabilityCalendar = ({
         .from('bookings')
         .select('*')
         .eq('property_id', propertyId)
-        .in('status', ['pending', 'confirmed', 'completed'])
+        .in('status', ['pending', 'confirmed', 'completed', 'checked_in'])
         .order('check_in', { ascending: true });
 
       if (bookingsError) throw bookingsError;

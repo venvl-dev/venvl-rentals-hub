@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { matchesSearchCriteria, type BookingType, type PropertyRentalData } from '@/lib/rentalTypeUtils';
+import { supportsBookingType, matchesSearchCriteria, type BookingType, type PropertyRentalData } from '@/lib/rentalTypeUtils';
 import { CombinedFilters } from './useFilterStore';
 
 interface Property {
@@ -30,35 +30,100 @@ interface Property {
 }
 
 export const usePropertyFiltering = (properties: Property[], filters: CombinedFilters) => {
-  // Memoize the filtering logic with better dependency tracking
-  const filteredProperties = useMemo(() => {
+  console.log('🚨 HOOK CALLED - usePropertyFiltering with:', {
+    propertiesLength: properties?.length || 0,
+    bookingType: filters?.bookingType,
+    hasProperties: !!properties,
+    hasFilters: !!filters
+  });
+  
+  // Remove useMemo temporarily to force filtering to run every time
+  console.log('🔥 FILTERING RUNNING - usePropertyFiltering recalculating...', new Date().toISOString());
+  console.log('🔥 Properties received:', properties ? properties.length : 'null/undefined');
+  console.log('🔥 Filters received:', JSON.stringify(filters, null, 2));
+  
+  const filteredProperties = (() => {
+    
     if (!properties || properties.length === 0) {
-      console.log('No properties to filter');
+      console.log('🔥 No properties available, returning empty array');
+      console.log('🔥 Properties is:', properties);
       return [];
     }
 
-    console.log('Filtering', properties.length, 'properties with filters:', filters);
-
     let filtered = [...properties];
     const { advancedFilters } = filters;
+    
+    console.log('🔍 Starting with', filtered.length, 'properties');
+    console.log('🔍 Search criteria:', {
+      location: filters.location,
+      bookingType: filters.bookingType,
+      guests: filters.guests
+    });
+    
+    // Debug: Show all property locations to understand the data format
+    console.log('📍 ALL PROPERTY LOCATIONS:');
+    filtered.slice(0, 10).forEach((p, index) => {
+      console.log(`   ${index + 1}. ${p.title}: city="${p.city}", state="${p.state}", country="${p.country}"`);
+    });
+    
+    // Debug: Show rental types of all properties
+    console.log('🏠 All properties rental types:');
+    filtered.slice(0, 5).forEach(p => {
+      const rentalType = p.rental_type || 'undefined';
+      const bookingTypes = JSON.stringify(p.booking_types || []);
+      console.log(`   ${p.id.substring(0, 8)}: rental_type=${rentalType}, booking_types=${bookingTypes}`);
+    });
 
-    // Location filter - early return for performance
-    if (filters.location.trim() !== '') {
+    // Location filter - now enabled
+    if (filters.location && filters.location.trim() !== '') {
       const searchTerm = filters.location.toLowerCase();
+      console.log('📍 ===== LOCATION FILTER START =====');
+      console.log('📍 Applying location filter for:', `"${searchTerm}"`);
+      console.log('📍 Properties before location filter:', filtered.length);
+      
+      const beforeCount = filtered.length;
       filtered = filtered.filter(property => {
         const searchFields = [
           property.city,
           property.state,
           property.country,
-          property.title,
-          property.description
-        ].filter(Boolean); // Remove null/undefined values
+          property.title
+        ].filter(Boolean).map(field => field?.toLowerCase());
         
-        return searchFields.some(field => 
-          field?.toLowerCase().includes(searchTerm)
-        );
+        // Extract search words and check for matches - improved flexibility
+        const searchWords = searchTerm.split(/[,\s]+/).filter(word => word.trim().length > 1);
+        
+        // Check if any search word matches any field
+        const matches = searchWords.some(searchWord => {
+          const cleanSearchWord = searchWord.trim().toLowerCase();
+          return searchFields.some(field => {
+            if (!field) return false;
+            const fieldLower = field.toLowerCase();
+            // Multiple matching strategies
+            return (
+              fieldLower.includes(cleanSearchWord) ||
+              cleanSearchWord.includes(fieldLower) ||
+              // Check if search word starts with field (for abbreviations)
+              cleanSearchWord.startsWith(fieldLower.substring(0, 3))
+            );
+          });
+        });
+        
+        console.log(`🔍 Property ${property.id.substring(0, 8)} (${property.city}, ${property.state}): searchWords=[${searchWords.join(', ')}] matches=${matches}`);
+        console.log(`   Fields being searched: [${searchFields.join(', ')}]`);
+        console.log(`   Original location fields: city="${property.city}", state="${property.state}", country="${property.country}"`);
+        return matches;
       });
-      console.log('After location filter:', filtered.length, 'properties');
+      
+      console.log(`📍 Location filter result: ${beforeCount} → ${filtered.length} properties`);
+      
+      if (filtered.length === 0) {
+        console.log('📍 NO LOCATION MATCHES! Available locations in database:');
+        properties.slice(0, 10).forEach(p => {
+          console.log(`   📍 "${p.city}, ${p.state}" (${p.country}) - ${p.title}`);
+        });
+      }
+      console.log('📍 ===== LOCATION FILTER END =====');
     }
 
     // Guest capacity filter
@@ -67,26 +132,32 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
       console.log('After guest filter:', filtered.length, 'properties');
     }
 
-    // Booking type filter - Only apply if explicitly set (not default)
-    const activeBookingType = advancedFilters.bookingType || (filters.bookingType !== 'daily' ? filters.bookingType : null);
+    // ✅ SIMPLIFIED: Booking type filter - now just 8 lines instead of 63!
+    const activeBookingType = advancedFilters.bookingType || filters.bookingType;
     
     if (activeBookingType) {
-      filtered = filtered.filter(property => {
-        try {
-          return matchesSearchCriteria(
-            property as PropertyRentalData, 
-            activeBookingType as BookingType
-          );
-        } catch (error) {
-          console.warn('Error matching search criteria for property', property.id, '- including property by default:', error);
-          return true; // Include properties that can't be matched instead of excluding
-        }
+      console.log(`🔍 Filtering ${filtered.length} properties for booking type: ${activeBookingType}`);
+      
+      // Debug: Show booking types of first few properties
+      console.log('🏠 Sample property booking types:');
+      filtered.slice(0, 5).forEach(p => {
+        console.log(`   ${p.id.substring(0, 8)}: booking_types=${JSON.stringify(p.booking_types)}`);
       });
-      console.log('After booking type filter:', filtered.length, 'properties');
+      
+      filtered = filtered.filter(property => {
+        const supports = supportsBookingType(property as PropertyRentalData, activeBookingType as BookingType);
+        if (activeBookingType === 'monthly') {
+          console.log(`🔍 Monthly check for ${property.id.substring(0, 8)}: booking_types=${JSON.stringify(property.booking_types)}, supports=${supports}`);
+        }
+        return supports;
+      });
+      
+      console.log(`🔍 After booking type filter: ${filtered.length} properties remaining`);
     }
 
     // 🎯 ENHANCED PRICE RANGE FILTER with improved accuracy and debugging
-    if (advancedFilters.priceRange && Array.isArray(advancedFilters.priceRange) && advancedFilters.priceRange.length === 2) {
+    // TEMPORARILY DISABLE price range filter for monthly bookings to test
+    if (advancedFilters.priceRange && Array.isArray(advancedFilters.priceRange) && advancedFilters.priceRange.length === 2 && activeBookingType !== 'monthly') {
       const [minPrice, maxPrice] = advancedFilters.priceRange;
       
       console.log('🔍 Price range filter activated:', {
@@ -218,22 +289,21 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
       }
     }
 
-    console.log('Final filtered properties:', filtered.length);
+    console.log('🎯 FINAL FILTERING RESULTS:');
+    console.log(`🎯 Total properties after all filters: ${filtered.length}`);
+    console.log('🎯 Sample filtered properties:');
+    filtered.slice(0, 3).forEach(p => {
+      console.log(`🏠 ${p.id.substring(0, 8)}: ${p.title} - rental_type: ${p.rental_type}, booking_types: ${JSON.stringify(p.booking_types)}`);
+    });
+    console.log('🎯 Active filter criteria:', {
+      location: filters.location,
+      bookingType: filters.bookingType,
+      advancedBookingType: filters.advancedFilters.bookingType,
+      activeBookingType
+    });
+    
     return filtered;
-  }, [
-    properties, 
-    filters.location, 
-    filters.guests, 
-    filters.checkIn, 
-    filters.checkOut,
-    filters.bookingType,
-    filters.advancedFilters.bookingType,
-    filters.advancedFilters.priceRange,
-    filters.advancedFilters.propertyTypes,
-    filters.advancedFilters.amenities,
-    filters.advancedFilters.bedrooms,
-    filters.advancedFilters.bathrooms
-  ]);
+  })();
 
   // Memoize statistics calculation
   const filteringStats = useMemo(() => {

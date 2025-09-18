@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "sonner";
-import Header from "@/components/Header";
-import { useSecureQuery } from "@/hooks/useSecureApi";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import Header from '@/components/Header';
+import { useSecureQuery } from '@/hooks/useSecureApi';
 // import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
 
 interface ProtectedRouteProps {
@@ -13,11 +13,11 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-const ProtectedRoute = ({
-  children,
-  allowedRoles = [],
+const ProtectedRoute = ({ 
+  children, 
+  allowedRoles = [], 
   requireAuth = true,
-  redirectTo = "/auth",
+  redirectTo = '/auth'
 }: ProtectedRouteProps) => {
   const { user, loading: authLoading } = useAuth();
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -31,17 +31,17 @@ const ProtectedRoute = ({
   }, [authLoading, user?.id]);
 
   // Secure profile query hook
-  const secureProfileQuery = useSecureQuery("profiles");
+  const secureProfileQuery = useSecureQuery('profiles');
 
   const checkAuth = async () => {
     setLoading(true);
     try {
       // Log access attempt
-      console.log("Route access attempt by user:", user?.id);
+      console.log('Route access attempt by user:', user?.id);
 
       if (!user && requireAuth) {
-        console.log("Unauthorized access attempt - no user session");
-        toast.error("Please sign in to access this page");
+        console.log('Unauthorized access attempt - no user session');
+        toast.error('Please sign in to access this page');
         navigate(redirectTo);
         return;
       }
@@ -57,132 +57,70 @@ const ProtectedRoute = ({
       }
 
       const roleKey = `user_role_${user!.id}`;
-      let cachedRole: string | null = null;
-      let shouldUseCachedRole = false;
-
-      try {
-        const cached = localStorage.getItem(roleKey);
-        if (cached) {
-          const roleData = JSON.parse(cached);
-          const isRecent = Date.now() - roleData.timestamp < 5 * 60 * 1000; // 5 minutes
-          const isValidSession = roleData.sessionId === user!.id;
-
-          if (isRecent && isValidSession) {
-            cachedRole = roleData.role;
-            shouldUseCachedRole = true;
-          }
-        }
-      } catch (error) {
-        console.warn("Error reading cached role:", error);
-      }
-      // If we have valid cached role and user has required permissions, allow immediate access
-      if (
-        shouldUseCachedRole &&
-        cachedRole &&
-        allowedRoles.includes(cachedRole)
-      ) {
-        setUserRole(cachedRole);
-        setAuthorized(true);
-        setLoading(false);
-        return; // Exit early, skip the aggressive cache clearing
-      }
-      // SECURITY FIX: Always fetch fresh role for protected routes to prevent cache poisoning
+      // Clear any cached role to ensure fresh fetch
       localStorage.removeItem(roleKey);
 
-      // TEMPORARY DEBUG: Clear all role-related cache
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith("user_role_")) {
-          localStorage.removeItem(key);
-        }
-      });
-
-      // Always fetch fresh role data for security-critical route access
+      // Always fetch fresh role data to avoid cache issues
       let role: string | null = null;
       try {
-        // Direct query to profiles table - bypassing useSecureQuery due to issues
-        const { data: profile, error } = await import(
-          "@/integrations/supabase/client"
-        ).then((module) =>
-          module.supabase
-            .from("profiles")
-            .select("id, email, role")
-            .eq("id", user!.id)
-            .maybeSingle()
-        );
+        // Create a query function for the secure API
+        const queryFunction = async () => {
+          const { data, error } = await import('@/integrations/supabase/client').then(module =>
+            module.supabase.from('profiles').select('role').eq('id', user!.id).maybeSingle()
+          );
+          if (error) throw error;
+          return data;
+        };
 
-        if (error) {
-          console.error("Profile query error:", error);
-          throw error;
-        }
+        const profile = await secureProfileQuery.execute(queryFunction);
 
         if (profile) {
-          role = profile?.role || null;
+          role = (profile as any)?.role || null;
         }
 
         if (!role) {
-          console.warn(
-            "Profile not found for user:",
-            user!.id,
-            "- falling back to user metadata"
-          );
-          // SECURITY FIX: More restrictive fallback - don't trust user metadata for admin roles
-          const fallbackRole = (user as any)?.user_metadata?.role || "guest";
-          role = ["guest", "host"].includes(fallbackRole)
-            ? fallbackRole
-            : "guest";
+          console.warn('Profile not found for user:', user!.id, '- falling back to user metadata');
+          role = (user as any)?.user_metadata?.role || 'guest';
         }
 
-        console.log("Role resolved for user:", user!.id, "Role:", role);
+        console.log('Role resolved for user:', user!.id, 'Role:', role);
 
-        // SECURITY FIX: Store with secure cache format matching useUserRole
-        const secureCache = {
-          role,
-          timestamp: Date.now(),
-          sessionId: user!.id,
-          checksum: btoa(role + user!.id).slice(0, 8),
-        };
-        localStorage.setItem(roleKey, JSON.stringify(secureCache));
+        // Update cache with fresh role
+        localStorage.setItem(roleKey, role);
       } catch (error) {
-        console.error("Profile fetch error for user:", user!.id, error);
-        toast.error("Unable to fetch user profile");
-        navigate("/");
+        console.error('Profile fetch error for user:', user!.id, error);
+        toast.error('Unable to fetch user profile');
+        navigate('/');
         return;
       }
-
+      
       setUserRole(role);
 
       // Check if user has required role
       if (role && allowedRoles.includes(role)) {
-        console.log("Authorized access for user:", user!.id, "Role:", role);
+        console.log('Authorized access for user:', user!.id, 'Role:', role);
         setAuthorized(true);
       } else {
-        console.log(
-          "Unauthorized access attempt for user:",
-          user!.id,
-          "Required:",
-          allowedRoles.join(", "),
-          "User has:",
-          role
-        );
-        toast.error("You do not have permission to access this page");
-
+        console.log('Unauthorized access attempt for user:', user!.id, 'Required:', allowedRoles.join(', '), 'User has:', role);
+        toast.error('You do not have permission to access this page');
+        
         // Redirect based on user role
         switch (role) {
-          case "host":
-            navigate("/host/dashboard");
+          case 'host':
+            navigate('/host/dashboard');
             break;
-          case "super_admin":
-            navigate("/admin/panel");
+          case 'super_admin':
+            navigate('/admin/panel');
             break;
-          case "guest":
+          case 'guest':
           default:
-            navigate("/");
+            navigate('/');
             break;
         }
       }
     } catch (error) {
-      console.error("Authentication check failed for user:", user?.id, error);
-      toast.error("Authentication check failed");
+      console.error('Authentication check failed for user:', user?.id, error);
+      toast.error('Authentication check failed');
       navigate(redirectTo);
     } finally {
       setLoading(false);
@@ -210,11 +148,9 @@ const ProtectedRoute = ({
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-            <p className="text-gray-600 mb-4">
-              You do not have permission to view this page.
-            </p>
-            <button
-              onClick={() => navigate("/")}
+            <p className="text-gray-600 mb-4">You do not have permission to view this page.</p>
+            <button 
+              onClick={() => navigate('/')}
               className="bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors font-medium"
             >
               Go Home
@@ -228,4 +164,4 @@ const ProtectedRoute = ({
   return <>{children}</>;
 };
 
-export default ProtectedRoute;
+export default ProtectedRoute; 

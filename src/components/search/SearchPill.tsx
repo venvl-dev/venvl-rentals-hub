@@ -18,6 +18,7 @@ interface SearchFilters {
 
 interface SearchPillProps {
   onSearch: (filters: SearchFilters) => void;
+  
   initialFilters?: Partial<SearchFilters>;
 }
 

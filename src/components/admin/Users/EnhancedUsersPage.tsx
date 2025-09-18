@@ -10,10 +10,8 @@ import {
   Shield, 
   Eye, 
   MessageSquare,
-  UserPlus,
-  Clock
+  UserPlus
 } from 'lucide-react';
-
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,9 +22,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
   AlertDialog,
@@ -59,7 +54,6 @@ interface User {
   last_name: string | null;
   role: 'guest' | 'host' | 'super_admin';
   is_active: boolean;
-  is_pending?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -83,15 +77,11 @@ const EnhancedUsersPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('*, is_pending')
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      // Ensure is_pending defaults to false if not set
-      return (data as User[]).map(user => ({
-        ...user,
-        is_pending: user.is_pending || false
-      }));
+      return data as User[];
     },
   });
 
@@ -149,40 +139,13 @@ const EnhancedUsersPage = () => {
     },
   });
 
-  // Toggle pending status mutation
-  const togglePendingStatusMutation = useMutation({
-    mutationFn: async ({ userId, setPending }: { userId: string; setPending: boolean }) => {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ is_pending: setPending })
-        .eq('id', userId);
-      
-      if (error) throw error;
-      
-      await supabase.rpc('log_admin_action', {
-        p_action: setPending ? 'set_user_pending' : 'remove_user_pending',
-        p_resource_type: 'profiles',
-        p_resource_id: userId,
-        p_metadata: { pending_status: setPending ? 'pending' : 'not_pending' }
-      });
-    },
-    onSuccess: (_, { setPending }) => {
-      invalidateAdminQueries([['admin-users']]);
-      toast.success(`User ${setPending ? 'marked as pending' : 'removed from pending'} successfully`);
-    },
-    onError: (error) => {
-      toast.error('Failed to update pending status');
-      console.error('Pending status update error:', error);
-    },
-  });
-
   // Calculate stats
   const stats: UserStats = {
     totalUsers: users.length,
     activeUsers: users.filter(u => u.is_active).length,
     guestUsers: users.filter(u => u.role === 'guest').length,
     hostUsers: users.filter(u => u.role === 'host').length,
-    pendingHosts: users.filter(u => u.is_pending).length,
+    pendingHosts: 0, // Future: implement host request status
   };
 
   // Filter users based on active tab
@@ -239,17 +202,7 @@ const EnhancedUsersPage = () => {
       accessorKey: 'is_active',
       header: 'Status',
       cell: ({ row }) => {
-        const user = row.original;
         const isActive = row.getValue('is_active') as boolean;
-        
-        if (user.is_pending) {
-          return (
-            <Badge variant="outline" className="text-orange-600 border-orange-600">
-              Pending
-            </Badge>
-          );
-        }
-        
         return (
           <Badge variant={isActive ? 'default' : 'secondary'}>
             {isActive ? 'Active' : 'Inactive'}
@@ -301,36 +254,17 @@ const EnhancedUsersPage = () => {
                   Approve as Host
                 </DropdownMenuItem>
               )}
-
-           
-
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                  <Shield className="mr-2 h-4 w-4" />
-                  Change Role
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  {['guest', 'host', 'super_admin'].filter(role => role !== user.role).map(role => (
-                    <DropdownMenuItem
-                      key={role}
-                      onClick={() => {
-                        updateUserRoleMutation.mutate({ userId: user.id, newRole: role });
-                      }}
-                    >
-                      {role === 'guest' && 'Guest'}
-                      {role === 'host' && 'Host'}
-                      {role === 'super_admin' && 'Super Admin'}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
               
               <DropdownMenuItem
-                onClick={() => togglePendingStatusMutation.mutate({ userId: user.id, setPending: !user.is_pending })}
-                className={user.is_pending ? 'text-green-600' : 'text-orange-600'}
+                onClick={() => {
+                  const newRole = prompt('Enter new role (guest, host, super_admin):');
+                  if (newRole && ['guest', 'host', 'super_admin'].includes(newRole)) {
+                    updateUserRoleMutation.mutate({ userId: user.id, newRole });
+                  }
+                }}
               >
-                <Clock className="mr-2 h-4 w-4" />
-                {user.is_pending ? 'Remove Pending' : 'Mark as Pending'}
+                <Shield className="mr-2 h-4 w-4" />
+                Change Role
               </DropdownMenuItem>
               
               <DropdownMenuItem onClick={() => toast.info('Message feature coming soon')}>
@@ -403,7 +337,7 @@ const EnhancedUsersPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium ">Total Users</CardTitle>
+              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalUsers}</div>
@@ -465,12 +399,12 @@ const EnhancedUsersPage = () => {
                   Manage user accounts, roles, and permissions
                 </CardDescription>
               </CardHeader>
-              <CardContent >
+              <CardContent>
                 <DataTable
                   columns={columns}
                   data={filteredUsers}
-                  searchPlaceholder="Search by name, email, role, status..."
-                  enableGlobalSearch={true}
+                  searchPlaceholder="Search by email..."
+                  searchColumn="email"
                 />
               </CardContent>
             </Card>

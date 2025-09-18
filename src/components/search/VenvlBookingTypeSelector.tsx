@@ -6,6 +6,8 @@ interface BookingTypeSelectorProps {
 }
 
 const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSelectorProps) => {
+  console.log('🎛️ VenvlBookingTypeSelector rendered with selectedType:', selectedType);
+  
   const bookingTypes = [
     { 
       id: 'daily', 
@@ -24,6 +26,14 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
     }
   ];
 
+  const handleTypeClick = (type: 'daily' | 'monthly' | 'flexible') => {
+    console.log('🎛️ VenvlBookingTypeSelector - Button clicked:', type);
+    console.log('🎛️ Current selectedType:', selectedType);
+    console.log('🎛️ Calling onTypeChange...');
+    onTypeChange(type);
+    console.log('🎛️ onTypeChange called successfully');
+  };
+
   return (
     <div className="w-full max-w-md mx-auto">
       {/* Desktop & Tablet View */}
@@ -33,7 +43,7 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
             <Button
               key={type.id}
               variant="ghost"
-              onClick={() => onTypeChange(type.id as 'daily' | 'monthly' | 'flexible')}
+              onClick={() => handleTypeClick(type.id as 'daily' | 'monthly' | 'flexible')}
               className={`
                 flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-200
                 ${selectedType === type.id 
@@ -55,7 +65,7 @@ const VenvlBookingTypeSelector = ({ selectedType, onTypeChange }: BookingTypeSel
             <Button
               key={type.id}
               variant="ghost"
-              onClick={() => onTypeChange(type.id as 'daily' | 'monthly' | 'flexible')}
+              onClick={() => handleTypeClick(type.id as 'daily' | 'monthly' | 'flexible')}
               className={`
                 flex-1 h-8 px-2 text-xs font-medium rounded-md transition-all duration-200
                 ${selectedType === type.id 

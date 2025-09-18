@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -29,6 +29,7 @@ const Header = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchRole = async () => {
@@ -72,12 +73,47 @@ const Header = () => {
     }
   };
 
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      if (location.pathname === '/') {
+        // Only update URL if we're on the home page
+        if (query.trim()) {
+          navigate(`/?search=${encodeURIComponent(query)}`, { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
+      }
+    }, 300),
+    [navigate, location.pathname]
+  );
+
+  // Handle search input change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    debouncedSearch(value);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/?search=${encodeURIComponent(searchQuery)}`);
     }
   };
+
+  // Simple debounce function
+  function debounce(func: Function, wait: number) {
+    let timeout: NodeJS.Timeout;
+    return function executedFunction(...args: any[]) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
 
   const getUserDisplayName = () => {
     if (user?.user_metadata?.first_name) {
@@ -143,7 +179,7 @@ const Header = () => {
                   type="text"
                   placeholder="Search properties, cities..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   className="pl-10 pr-4 py-2 w-full rounded-full border-gray-300 focus:border-black focus:ring-black bg-gray-50 hover:bg-white transition-colors"
                 />
               </div>

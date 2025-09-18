@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { CalendarIcon, Users, CreditCard, MapPin, Clock, Check } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import PriceBreakdownModal from './components/PriceBreakdownModal';
 
 interface BookingSummaryProps {
   booking: {
@@ -37,9 +38,16 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
   
   const nights = differenceInDays(booking.checkOut, booking.checkIn);
-  const serviceFee = Math.round(booking.totalPrice * 0.1); // 10% service fee
-  const taxes = Math.round(booking.totalPrice * 0.05); // 5% taxes
-  const finalTotal = booking.totalPrice + serviceFee + taxes;
+  
+  // For monthly bookings, use monthly price instead of total
+  const basePrice = booking.bookingType === 'monthly' 
+    ? booking.property.monthly_price || 0 
+    : booking.totalPrice;
+    
+  const serviceFee = Math.round(basePrice * 0.1); // 10% service fee
+  const taxes = Math.round(basePrice * 0.05); // 5% taxes
+  const finalTotal = basePrice + serviceFee + taxes;
+
 
   const handlePayment = async () => {
     try {
@@ -57,6 +65,29 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
     }
   };
 
+//   const handlePayment = async () => {
+//   try {
+//     if (paymentMethod === 'card') {
+//       // 🎯 STRIPE INTEGRATION GOES HERE
+//       const { sessionId } = await createStripeCheckoutSession({
+//         amount: finalTotal,
+//         bookingData: booking,
+//         customerId: user.id
+//       });
+      
+//       // Redirect to Stripe Checkout
+//       const stripe = await stripePromise;
+//       await stripe.redirectToCheckout({ sessionId });
+      
+//     } else {
+//       // Cash payment - create booking with 'pending' payment status
+//       onConfirmPayment();
+//     }
+//   } catch (error) {
+//     console.error('Payment error:', error);
+//     toast.error('Payment failed. Please try again.');
+//   }
+// };
   return (
     <div className="max-w-4xl mx-auto p-6">
       <motion.div
@@ -70,7 +101,7 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
           <p className="text-gray-600">Review your booking details before payment</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-3 lg:grid-cols-1 gap-6">
           {/* Booking Details */}
           <Card className="rounded-3xl shadow-lg">
             <CardHeader className="pb-4">
@@ -90,10 +121,10 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
                     alt={booking.property.title}
                     className="w-20 h-20 rounded-xl object-cover"
                   />
-                  <div className="flex-1">
+                  <div className="flex-4 ">
                     <h3 className="font-semibold text-lg">{booking.property.title}</h3>
-                    <div className="flex items-center text-gray-600 text-sm">
-                      <MapPin className="h-4 w-4 mr-1" />
+                    <div className="flex justify-between items-center text-gray-600 text-sm">
+                      <MapPin className="h-1 w-1 mr-1" />
                       {booking.property.city}, {booking.property.state}
                     </div>
                     <Badge className="mt-2 bg-black text-white">
@@ -124,6 +155,18 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
                     </div>
                   </div>
                 </div>
+
+                {/* Total Amount Information for Monthly Bookings */}
+                {booking.bookingType === 'monthly' && booking.duration && booking.duration > 1 && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                    <div className="text-sm text-amber-800">
+                      <div className="font-medium mb-1">Payment Information:</div>
+                      <div>• Monthly payment: EGP {finalTotal.toLocaleString()}</div>
+                      <div>• Total over {booking.duration} months: <span className="font-semibold">EGP {(finalTotal * booking.duration).toLocaleString()}</span></div>
+                      <div className="text-xs mt-1">You will be charged monthly, not upfront</div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -189,33 +232,15 @@ const BookingSummary = ({ booking, onConfirmPayment, onCancel, isProcessing = fa
 
               {/* Price Breakdown */}
               <div className="space-y-4">
-                <h4 className="font-semibold">Price breakdown</h4>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span>
-                      EGP {booking.bookingType === 'daily' ? booking.property.price_per_night : booking.property.monthly_price} × {booking.bookingType === 'daily' ? nights : booking.duration} {booking.bookingType === 'daily' ? (nights === 1 ? 'night' : 'nights') : (booking.duration === 1 ? 'month' : 'months')}
-                    </span>
-                    <span>EGP {booking.totalPrice}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span>Service fee</span>
-                    <span>EGP {serviceFee}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span>Taxes</span>
-                    <span>EGP {taxes}</span>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex justify-between text-lg font-bold">
-                    <span>Total (EGP)</span>
-                    <span>EGP {finalTotal}</span>
-                  </div>
-                </div>
+                <h4 className="font-semibold">Payment summary</h4>
+                <PriceBreakdownModal 
+                  booking={{
+                    ...booking,
+                    totalPrice: basePrice,
+                    guests: booking.guests
+                  }} 
+                  currency="EGP"
+                />
               </div>
 
               <Separator />

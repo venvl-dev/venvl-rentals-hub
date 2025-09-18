@@ -88,6 +88,70 @@ const DataSeeding = () => {
     }
   };
 
+  const fixBookingTypes = async () => {
+    setLoading(true);
+    
+    try {
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error('No authenticated user found');
+
+      // Get all properties that are missing booking_types
+      const { data: properties, error: fetchError } = await supabase
+        .from('properties')
+        .select('id, rental_type, booking_types, price_per_night, daily_price, monthly_price');
+
+      if (fetchError) throw fetchError;
+
+      let updatedCount = 0;
+
+      // Update each property's booking_types based on rental_type
+      for (const property of properties || []) {
+        if (!property.booking_types || property.booking_types.length === 0) {
+          let bookingTypes: string[] = [];
+          
+          // Determine booking types based on rental_type and available prices
+          if (property.rental_type === 'both') {
+            bookingTypes = ['daily', 'monthly'];
+          } else if (property.rental_type === 'daily') {
+            bookingTypes = ['daily'];
+          } else if (property.rental_type === 'monthly') {
+            bookingTypes = ['monthly'];
+          } else {
+            // Fallback: determine from available prices
+            const hasNightlyPrice = property.price_per_night > 0 || property.daily_price > 0;
+            const hasMonthlyPrice = property.monthly_price > 0;
+            
+            if (hasNightlyPrice && hasMonthlyPrice) {
+              bookingTypes = ['daily', 'monthly'];
+            } else if (hasMonthlyPrice) {
+              bookingTypes = ['monthly'];
+            } else if (hasNightlyPrice) {
+              bookingTypes = ['daily'];
+            } else {
+              bookingTypes = ['daily']; // default fallback
+            }
+          }
+
+          const { error: updateError } = await supabase
+            .from('properties')
+            .update({ booking_types: bookingTypes })
+            .eq('id', property.id);
+
+          if (updateError) throw updateError;
+          updatedCount++;
+        }
+      }
+
+      toast.success(`Booking types updated for ${updatedCount} properties!`);
+    } catch (error) {
+      console.error('Error fixing booking types:', error);
+      toast.error('Failed to fix booking types');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const seedPropertiesForHost = async () => {
     setLoading(true);
     
@@ -112,6 +176,7 @@ const DataSeeding = () => {
           price_per_night: 250,
           monthly_price: 6500,
           rental_type: "both" as const,
+          booking_types: ["daily", "monthly"],
           min_nights: 1,
           min_months: 1,
           amenities: ["WiFi", "Kitchen", "Air Conditioning", "TV", "Washing Machine", "Balcony", "Free Parking"],
@@ -134,6 +199,7 @@ const DataSeeding = () => {
           price_per_night: 180,
           monthly_price: 4500,
           rental_type: "both" as const,
+          booking_types: ["daily", "monthly"],
           min_nights: 1,
           min_months: 1,
           amenities: ["WiFi", "Kitchen", "Air Conditioning", "TV", "Netflix", "Workspace", "Closet"],
@@ -160,6 +226,168 @@ const DataSeeding = () => {
           min_months: 1,
           amenities: ["WiFi", "Kitchen", "Air Conditioning", "Heating", "TV", "Netflix", "Sound System", "Gaming Console", "Free Parking", "Private Entrance", "Security", "Balcony"],
           images: ["https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"],
+          host_id: user.id,
+          is_active: true,
+          approval_status: "approved" as const
+        },
+        {
+          title: "Daily Only Beachfront Condo",
+          description: "Beautiful beachfront condo available for daily stays only, perfect for weekend getaways.",
+          property_type: "condo" as const,
+          address: "101 Beach Drive",
+          city: "Hurghada",
+          state: "Red Sea Governorate",
+          country: "Egypt",
+          bedrooms: 2,
+          bathrooms: 2,
+          max_guests: 4,
+          price_per_night: 320,
+          daily_price: 320,
+          rental_type: "daily" as const,
+          booking_types: ["daily"],
+          min_nights: 2,
+          amenities: ["WiFi", "Air Conditioning", "TV", "Balcony", "Free Parking", "Kitchen"],
+          images: ["https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"],
+          host_id: user.id,
+          is_active: true,
+          approval_status: "approved" as const
+        },
+        {
+          title: "Monthly Rental Business Suite",
+          description: "Professional business suite ideal for monthly stays, perfect for business travelers and remote workers.",
+          property_type: "apartment" as const,
+          address: "555 Business District",
+          city: "New Cairo",
+          state: "Cairo Governorate",
+          country: "Egypt",
+          bedrooms: 1,
+          bathrooms: 1,
+          max_guests: 2,
+          monthly_price: 8000,
+          rental_type: "monthly" as const,
+          booking_types: ["monthly"],
+          min_months: 1,
+          amenities: ["WiFi", "Air Conditioning", "TV", "Workspace", "Kitchen", "Washing Machine"],
+          images: ["https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"],
+          host_id: user.id,
+          is_active: true,
+          approval_status: "approved" as const
+        },
+        // Arabic Properties
+        {
+          title: "شاليه على البحر في دهب",
+          description: "شاليه رائع على شاطئ البحر الأحمر مع إطلالة خلابة، مثالي للاسترخاء والغوص.",
+          property_type: "chalet" as const,
+          address: "شارع الكورنيش، دهب",
+          city: "دهب",
+          state: "محافظة جنوب سيناء",
+          country: "مصر",
+          bedrooms: 2,
+          bathrooms: 1,
+          max_guests: 4,
+          price_per_night: 450,
+          daily_price: 450,
+          monthly_price: 12000,
+          rental_type: "both" as const,
+          booking_types: ["daily", "monthly"],
+          min_nights: 1,
+          min_months: 1,
+          amenities: ["WiFi", "Air Conditioning", "TV", "Kitchen", "Balcony", "Free Parking"],
+          images: ["https://images.unsplash.com/photo-1571896349842-33c89424de2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"],
+          host_id: user.id,
+          is_active: true,
+          approval_status: "approved" as const
+        },
+        {
+          title: "شقة حديثة في الغردقة",
+          description: "شقة حديثة ومفروشة بالكامل في قلب الغردقة، قريبة من الشواطئ والمطاعم.",
+          property_type: "apartment" as const,
+          address: "شارع شيراتون، الغردقة",
+          city: "الغردقة",
+          state: "محافظة البحر الأحمر",
+          country: "مصر",
+          bedrooms: 2,
+          bathrooms: 2,
+          max_guests: 5,
+          price_per_night: 380,
+          daily_price: 380,
+          monthly_price: 10000,
+          rental_type: "both" as const,
+          booking_types: ["daily", "monthly"],
+          min_nights: 2,
+          min_months: 1,
+          amenities: ["WiFi", "Air Conditioning", "TV", "Kitchen", "Washing Machine", "Free Parking"],
+          images: ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"],
+          host_id: user.id,
+          is_active: true,
+          approval_status: "approved" as const
+        },
+        {
+          title: "فيلا فاخرة في شرم الشيخ",
+          description: "فيلا فاخرة مع حمام سباحة خاص وحديقة، مثالية للعائلات الكبيرة والمجموعات.",
+          property_type: "villa" as const,
+          address: "نعمة باي، شرم الشيخ",
+          city: "شرم الشيخ",
+          state: "محافظة جنوب سيناء",
+          country: "مصر",
+          bedrooms: 4,
+          bathrooms: 3,
+          max_guests: 8,
+          price_per_night: 750,
+          daily_price: 750,
+          monthly_price: 20000,
+          rental_type: "both" as const,
+          booking_types: ["daily", "monthly"],
+          min_nights: 3,
+          min_months: 1,
+          amenities: ["WiFi", "Air Conditioning", "TV", "Kitchen", "Free Parking", "Private Entrance", "Security", "Balcony", "Netflix", "Sound System"],
+          images: ["https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"],
+          host_id: user.id,
+          is_active: true,
+          approval_status: "approved" as const
+        },
+        {
+          title: "بيت شعبي في أسوان",
+          description: "بيت نوبي تقليدي على ضفاف النيل، يوفر تجربة ثقافية أصيلة مع إطلالة رائعة على النهر.",
+          property_type: "house" as const,
+          address: "جزيرة إلفنتين، أسوان",
+          city: "أسوان",
+          state: "محافظة أسوان",
+          country: "مصر",
+          bedrooms: 3,
+          bathrooms: 2,
+          max_guests: 6,
+          price_per_night: 320,
+          daily_price: 320,
+          rental_type: "daily" as const,
+          booking_types: ["daily"],
+          min_nights: 2,
+          amenities: ["WiFi", "TV", "Kitchen", "Balcony", "Private Entrance"],
+          images: ["https://images.unsplash.com/photo-1493809842364-78817add7ffb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"],
+          host_id: user.id,
+          is_active: true,
+          approval_status: "approved" as const
+        },
+        {
+          title: "استوديو عصري في الإسكندرية",
+          description: "استوديو حديث ومجهز بالكامل في وسط الإسكندرية، مثالي للإقامة قصيرة أو طويلة المدى.",
+          property_type: "studio" as const,
+          address: "شارع صفية زغلول، الإسكندرية",
+          city: "الإسكندرية",
+          state: "محافظة الإسكندرية",
+          country: "مصر",
+          bedrooms: 1,
+          bathrooms: 1,
+          max_guests: 2,
+          price_per_night: 220,
+          daily_price: 220,
+          monthly_price: 5500,
+          rental_type: "both" as const,
+          booking_types: ["daily", "monthly"],
+          min_nights: 1,
+          min_months: 1,
+          amenities: ["WiFi", "Air Conditioning", "TV", "Kitchen", "Washing Machine", "Workspace"],
+          images: ["https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"],
           host_id: user.id,
           is_active: true,
           approval_status: "approved" as const
@@ -357,6 +585,37 @@ const DataSeeding = () => {
                   </>
                 ) : (
                   'Update Existing Amenities'
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Fix Booking Types */}
+          <Card className="border-red-200 bg-red-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-800">
+                <Calendar className="h-5 w-5" />
+                Fix Booking Types
+              </CardTitle>
+              <CardDescription className="text-red-700">
+                Update existing properties with missing booking_types array. This fixes the booking type filtering issue.
+                Run this if properties don't appear when you select daily/monthly/flexible filters.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={fixBookingTypes} 
+                disabled={loading}
+                className="w-full bg-red-600 hover:bg-red-700"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Fixing Booking Types...
+                  </>
+                ) : (
+                  'Fix Booking Types for Existing Properties'
                 )}
               </Button>
             </CardContent>

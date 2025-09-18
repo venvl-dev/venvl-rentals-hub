@@ -66,6 +66,7 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
   const bookingTypes = [
     { id: 'daily', label: 'Daily', icon: Calendar, description: 'Short-term stays' },
     { id: 'monthly', label: 'Monthly', icon: Home, description: 'Long-term rentals' },
+    { id: 'flexible', label: 'Flexible', icon: SlidersHorizontal, description: 'Best available deals' },
   ];
 
   const propertyTypes = [
@@ -219,7 +220,7 @@ const NewAdvancedFilters = ({ isOpen, onClose, onApply, initialFilters }: NewAdv
               {/* Booking Type */}
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Booking Type</h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   {bookingTypes.map((type) => (
                     <motion.button
                       key={type.id}

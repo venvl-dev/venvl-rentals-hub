@@ -11,6 +11,7 @@ import { MapPin, Bed, Bath, Users, Star, Calendar, Clock } from 'lucide-react';
 import Header from '@/components/Header';
 import RefactoredBookingWidget from '@/components/booking/RefactoredBookingWidget';
 import PropertyPriceDisplay from '@/components/PropertyPriceDisplay';
+import BookingFlow from '@/components/booking/BookingFlow';
 import { 
   getRentalType, 
   getDailyPrice, 
@@ -23,11 +24,12 @@ import { getAmenitiesByCategory, getAmenityWithLegacyInterface, getCategoryByAme
 import React from 'react';
 import { 
   ArrowLeft, 
-  ChevronLeft, 
-  ChevronRight,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Play
 } from 'lucide-react';
+import PropertyImageCarousel from '@/components/PropertyImageCarousel';
+import PropertyVideoPlayer from '@/components/PropertyVideoPlayer';
 
 interface Property {
   id: string;
@@ -37,6 +39,7 @@ interface Property {
   monthly_price?: number;
   daily_price?: number;
   images: string[];
+  videos?: string[];
   city: string;
   state: string;
   country: string;
@@ -52,9 +55,11 @@ interface Property {
   min_months?: number;
   blocked_dates?: string[];
 }
-
 const PropertyListing = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+   const [showBookingFlow, setShowBookingFlow] = useState(false);
+  const [bookingData, setBookingData] = useState(null);
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
@@ -83,6 +88,14 @@ const PropertyListing = () => {
       if (error) throw error;
       if (data) {
         data.amenities = cleanAmenityIds(data.amenities || []);
+        // Debug: Log the videos data
+        console.log('Property data:', {
+          id: data.id,
+          title: data.title,
+          videos: data.videos,
+          videosType: typeof data.videos,
+          videosLength: data.videos?.length
+        });
       }
       setProperty(data);
     } catch (error) {
@@ -92,7 +105,7 @@ const PropertyListing = () => {
       setLoading(false);
     }
   };
-
+   
   if (loading) {
     return (
       <div>
@@ -133,7 +146,7 @@ const PropertyListing = () => {
 
   const rentalType = getRentalType(propertyWithDefaults);
   const availableBookingTypes = getAvailableBookingTypes(propertyWithDefaults);
-  const rentalBadge = getRentalTypeBadge(rentalType);
+  const rentalBadge = getRentalTypeBadge(propertyWithDefaults.booking_types || []);
   const dailyPrice = getDailyPrice(propertyWithDefaults);
   const monthlyPrice = getMonthlyPrice(propertyWithDefaults);
 
@@ -143,28 +156,26 @@ const PropertyListing = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            {/* Hero Image */}
-            <div className="mb-6 relative">
-              <img
-                src={property.images[0] || '/placeholder.svg'}
-                alt={property.title}
-                className="w-full h-96 object-cover rounded-2xl shadow-lg"
+            {/* Hero Image Carousel */}
+            <div className="mb-6">
+              <PropertyImageCarousel
+                images={property.images}
+                title={property.title}
+                badges={
+                  <>
+                    {/* Rental Type Badge */}
+                    <Badge className={`${rentalBadge.colorClass} shadow-lg`}>
+                      {rentalBadge.label}
+                    </Badge>
+                    
+                    {/* Rating Badge */}
+                    <Badge className="bg-white/90 text-gray-900 border-0 shadow-lg backdrop-blur-sm">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 mr-1" />
+                      4.9
+                    </Badge>
+                  </>
+                }
               />
-              
-              {/* Rental Type Badge on Image */}
-              <div className="absolute top-4 left-4">
-                <Badge className={`${rentalBadge.color} shadow-lg`}>
-                  {rentalBadge.label}
-                </Badge>
-              </div>
-
-              {/* Rating Badge */}
-              <div className="absolute top-4 right-4">
-                <Badge className="bg-white/90 text-gray-900 border-0 shadow-lg backdrop-blur-sm">
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400 mr-1" />
-                  4.9
-                </Badge>
-              </div>
             </div>
 
             {/* Property Details */}
@@ -336,6 +347,40 @@ const PropertyListing = () => {
               </>
             )}
 
+            {/* Property Videos */}
+            {(() => {
+              console.log('Video section check:', {
+                hasVideos: !!property.videos,
+                videosLength: property.videos?.length,
+                videos: property.videos
+              });
+              return property.videos && property.videos.length > 0;
+            })() && (
+              <>
+                <Separator className="my-6" />
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <Play className="h-6 w-6 text-gray-900" />
+                    <h2 className="text-xl font-semibold">Property Videos</h2>
+                    <div className="flex-1 h-px bg-gray-200"></div>
+                    <Badge variant="outline" className="text-xs px-2 py-1">
+                      {property.videos.length} {property.videos.length === 1 ? 'video' : 'videos'}
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <PropertyVideoPlayer videos={property.videos} />
+                    
+                    {/* Video Description */}
+                    <p className="text-sm text-gray-600 leading-relaxed">
+                      Get a virtual tour of this property and see all the details up close. 
+                      {property.videos.length > 1 && ` Browse through ${property.videos.length} videos to explore different areas and features.`}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Booking Requirements - Show only relevant requirements */}
             {(property.min_nights || property.min_months) && (
               <>
@@ -368,18 +413,42 @@ const PropertyListing = () => {
           </div>
 
           {/* Booking Widget */}
-          <div className="lg:col-span-1">
+          {/* <div className="lg:col-span-1">
             <RefactoredBookingWidget 
               property={propertyWithDefaults} 
               user={user}
               onBookingInitiated={(bookingData) => {
                 console.log('Booking initiated:', bookingData);
+                
+                
               }}
-            />
-          </div>
+            /> */}
+         
+<div className="lg:col-span-1">
+  {showBookingFlow ? (
+    <BookingFlow
+      property={propertyWithDefaults}
+      user={user}
+      bookingData={bookingData}
+      onBack={() => setShowBookingFlow(false)}
+    />
+  ) : (
+    <RefactoredBookingWidget 
+      property={propertyWithDefaults} 
+      user={user}
+      onBookingInitiated={(data) => {
+        console.log('Booking initiated:', data);
+        setBookingData(data);
+        setShowBookingFlow(true); // Go to payment flow
+      }}
+    />
+  )}
+                  </div>
+
+             </div>
         </div>
       </div>
-    </div>
+    
   );
 };
 

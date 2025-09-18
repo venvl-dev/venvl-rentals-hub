@@ -182,39 +182,6 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     }, 30000); // 30 second timeout
 
     try {
-      // First, check if the email exists in the profiles table and get the role
-      const { data: profileCheck, error: profileCheckError } = await supabase
-        .from('profiles')
-        .select('role, first_name, last_name, email')
-        .eq('email', formData.email.trim().toLowerCase())
-        .maybeSingle();
-
-      if (profileCheckError) {
-        console.error('Error checking profile:', profileCheckError);
-        setErrors({ general: 'Unable to verify user account. Please try again or contact support.' });
-        return;
-      }
-
-      if (!profileCheck) {
-        setErrors({ general: 'Account not found. Please check your email or create a new account.' });
-        return;
-      }
-
-      // Check if email starts with 'host' and matches the role in database
-      const emailStartsWithHost = formData.email.trim().toLowerCase().startsWith('host');
-      const isHostRole = profileCheck.role === 'host';
-
-      if (emailStartsWithHost && !isHostRole) {
-        setErrors({ general: 'Email starting with "host" must be associated with a host account. Please contact support.' });
-        return;
-      }
-
-      if (!emailStartsWithHost && isHostRole) {
-        setErrors({ general: 'Host accounts must use an email starting with "host". Please use your host email address.' });
-        return;
-      }
-
-      // Proceed with authentication
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
@@ -237,9 +204,27 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
         return;
       }
 
-      // Use the profile data we already fetched
-      toast.success(`Welcome back, ${profileCheck.first_name}!`);
-      redirectByRole(profileCheck.role as AuthRole);
+      // Get user profile to determine role
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, first_name, last_name, email')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        setErrors({ general: 'Unable to load user profile. Please try again or contact support.' });
+        return;
+      }
+
+      if (!profile) {
+        console.warn('Profile not found for user, this should not happen with the trigger in place');
+        setErrors({ general: 'User profile not found. Please contact support.' });
+        return;
+      }
+
+      toast.success(`Welcome back, ${profile.first_name}!`);
+      redirectByRole(profile.role as AuthRole);
     } catch (error) {
       console.error('Unexpected sign in error:', error);
       setErrors({ general: 'An unexpected error occurred during sign in. Please try again.' });
@@ -251,45 +236,6 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
 
   const createUserProfile = async (userId: string): Promise<boolean> => {
     try {
-      console.log('Checking if profile already exists for user:', userId);
-      
-      // First check if profile already exists (might be created by trigger)
-      const { data: existingProfile, error: checkError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('Error checking existing profile:', checkError);
-        return false;
-      }
-
-      if (existingProfile) {
-        console.log('Profile already exists, updating with user data');
-        // Profile exists, just update it with the form data
-        const { error: updateError } = await supabase
-          .from('profiles')
-          .update({
-            first_name: formData.firstName.trim(),
-            last_name: formData.lastName.trim(),
-            email: formData.email.trim().toLowerCase(),
-            role: formData.role,
-            is_active: true
-          })
-          .eq('id', userId);
-
-        if (updateError) {
-          console.error('Error updating profile:', updateError);
-          return false;
-        }
-        
-        console.log('Profile updated successfully for user:', userId);
-        return true;
-      }
-
-      // Profile doesn't exist, create it
-      console.log('Creating new profile for user:', userId);
       const { error } = await supabase
         .from('profiles')
         .insert({
@@ -298,19 +244,16 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
           last_name: formData.lastName.trim(),
           email: formData.email.trim().toLowerCase(),
           role: formData.role,
-          is_active: true
         });
 
       if (error) {
         console.error('Error creating profile:', error);
-        console.error('Error details:', error.message, error.details, error.code);
         return false;
       }
 
-      console.log('Profile created successfully for user:', userId);
       return true;
     } catch (error) {
-      console.error('Unexpected error in profile creation:', error);
+      console.error('Unexpected error creating profile:', error);
       return false;
     }
   };
@@ -407,27 +350,10 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
   };
 
   const fillTestAccount = (type: AuthRole) => {
-    // SECURITY FIX: Only provide test accounts in development mode
-    // Production credentials should never be hard-coded in source code
-    if (process.env.NODE_ENV !== 'development') {
-      console.warn('Test accounts are only available in development mode');
-      return;
-    }
-
-    // Use environment variables for test credentials when available
     const accounts = {
-      guest: { 
-        email: import.meta.env.VITE_TEST_GUEST_EMAIL || 'guest@venvl.com', 
-        password: import.meta.env.VITE_TEST_GUEST_PASSWORD || 'DemoGuest2024$Secure' 
-      },
-      host: { 
-        email: import.meta.env.VITE_TEST_HOST_EMAIL || 'host@venvl.com', 
-        password: import.meta.env.VITE_TEST_HOST_PASSWORD || 'DemoHost2024$Secure' 
-      },
-      super_admin: { 
-        email: import.meta.env.VITE_TEST_ADMIN_EMAIL || 'superadmin@venvl.com', 
-        password: import.meta.env.VITE_TEST_ADMIN_PASSWORD || 'DemoAdmin2024$Secure' 
-      }
+      guest: { email: 'guest@venvl.com', password: 'DemoGuest2024$Secure' },
+      host: { email: 'host@venvl.com', password: 'DemoHost2024$Secure' },
+      super_admin: { email: 'superadmin@venvl.com', password: 'DemoAdmin2024$Secure' }
     };
     
     setFormData(prev => ({

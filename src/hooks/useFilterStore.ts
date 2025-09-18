@@ -25,9 +25,9 @@ export interface CombinedFilters extends SearchFilters {
 }
 
 const DEFAULT_SEARCH_FILTERS: SearchFilters = {
-  location: '',
+  location: '', // No location filter by default
   guests: 1,
-  bookingType: 'daily', // Keep as daily but don't filter by default
+  bookingType: 'flexible', // Show all properties by default
 };
 
 const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
@@ -57,7 +57,48 @@ export const useFilterStore = () => {
 
   // Update search filters
   const updateSearchFilters = useCallback((filters: Partial<SearchFilters>) => {
-    setSearchFilters(prev => ({ ...prev, ...filters }));
+    console.log('🗂️ useFilterStore - updateSearchFilters called with:', filters);
+    setSearchFilters(prev => {
+      console.log('🗂️ Previous searchFilters:', prev);
+      let updated = { ...prev, ...filters };
+      
+      // Clear incompatible fields when booking type changes
+      if (filters.bookingType && filters.bookingType !== prev.bookingType) {
+        console.log('🎯 BOOKING TYPE CHANGE DETECTED IN STORE:', prev.bookingType, '→', filters.bookingType);
+        
+        if (filters.bookingType === 'monthly') {
+          // Monthly bookings don't use checkIn/checkOut dates
+          updated = {
+            ...updated,
+            checkIn: undefined,
+            checkOut: undefined,
+            flexibleOption: undefined
+          };
+          console.log('🗂️ Monthly mode: cleared date fields');
+        } else if (filters.bookingType === 'daily') {
+          // Daily bookings don't use duration
+          updated = {
+            ...updated,
+            duration: undefined,
+            flexibleOption: undefined
+          };
+          console.log('🗂️ Daily mode: cleared duration fields');
+        } else if (filters.bookingType === 'flexible') {
+          // Flexible bookings might clear specific date constraints
+          updated = {
+            ...updated,
+            checkIn: undefined,
+            checkOut: undefined,
+            duration: undefined
+          };
+          console.log('🗂️ Flexible mode: cleared all date/duration fields');
+        }
+      }
+      
+      console.log('✅ useFilterStore - searchFilters updated from:', prev);
+      console.log('✅ useFilterStore - searchFilters updated to:', updated);
+      return updated;
+    });
   }, []);
 
   // Update advanced filters with better price range handling

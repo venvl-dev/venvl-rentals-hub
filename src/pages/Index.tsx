@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import PropertyCard from '@/components/PropertyCard';
@@ -48,6 +48,7 @@ interface Property {
 
 const Index = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -71,10 +72,32 @@ const Index = () => {
 
   // Use property filtering hook
   const { filteredProperties, filteringStats } = usePropertyFiltering(properties, getCombinedFilters());
+  
+  // Debug filtered properties in Index
+  console.log('🏢 INDEX COMPONENT - Filtered Properties Debug:');
+  console.log(`🏢 Total properties loaded: ${properties.length}`);
+  console.log(`🏢 Filtered properties returned: ${filteredProperties.length}`);
+  console.log('🏢 Current filters:', getCombinedFilters());
+  console.log('🏢 Sample filtered properties for display:');
+  filteredProperties.slice(0, 3).forEach(p => {
+    console.log(`🏠 ${p.id.substring(0, 8)}: ${p.title}`);
+  });
+  
 
   useEffect(() => {
     fetchProperties();
   }, []);
+
+  // Sync URL search parameters with filter store
+  useEffect(() => {
+    const searchQuery = searchParams.get('search');
+    if (searchQuery) {
+      updateSearchFilters({ location: searchQuery });
+    } else {
+      // Clear location filter when search parameter is removed
+      updateSearchFilters({ location: '' });
+    }
+  }, [searchParams, updateSearchFilters]);
 
   // Preload images when properties change or user auth state changes
   useEffect(() => {
@@ -90,11 +113,11 @@ const Index = () => {
     }
   }, [user, refreshImages, properties, authLoading]);
 
-  const fetchProperties = useCallback(async (offset = 0, limit = 20) => {
+  const fetchProperties = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Optimized query - fetch only essential fields with pagination
+      // Optimized query - fetch all essential fields
       const { data, error } = await supabase
         .from('properties')
         .select(`
@@ -125,8 +148,7 @@ const Index = () => {
         `)
         .eq('is_active', true)
         .eq('approval_status', 'approved')
-        .order('created_at', { ascending: false })
-        .range(offset, offset + limit - 1);
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching properties:', error);
@@ -134,25 +156,24 @@ const Index = () => {
         return;
       }
 
-      console.log('Fetched approved properties:', data?.length);
+      
       if (data) {
-        // Clean amenities data
+        
+        // ✅ SIMPLIFIED: Clean amenities and ensure booking_types defaults
         data.forEach(p => {
           p.amenities = cleanAmenityIds(p.amenities || []);
+          
+          // Ensure booking_types has a default value if missing
+          if (!p.booking_types || !Array.isArray(p.booking_types) || p.booking_types.length === 0) {
+            p.booking_types = ['daily']; // Default to daily bookings
+          }
         });
 
         setProperties(data);
-        
-        // Debug: Expose properties for debugging
-        if (typeof window !== 'undefined') {
-          (window as any).allProperties = data;
-          console.log('🔍 DEBUG: Properties exposed to window.allProperties for debugging');
-        }
 
         // Properties loaded successfully - filtering will be handled by components
       }
     } catch (error) {
-      console.error('Error:', error);
       toast.error('Failed to load properties');
     } finally {
       setLoading(false);
@@ -160,7 +181,10 @@ const Index = () => {
   }, []);
 
   const handleSearch = useCallback((filters: any) => {
+    console.log('🏠 Index.tsx - handleSearch received filters:', filters);
+    console.log('🏠 About to call updateSearchFilters...');
     updateSearchFilters(filters);
+    console.log('🏠 updateSearchFilters called successfully');
   }, [updateSearchFilters]);
 
   const handleAdvancedFilters = useCallback((newFilters: any) => {
@@ -191,6 +215,10 @@ const Index = () => {
 
   // Enhanced loading state
   const isFullyLoaded = !loading && !authLoading && imagesPreloaded;
+  
+  // Debug filter state
+  console.log('🏠 Index.tsx render - searchFilters from store:', searchFilters);
+  console.log('🏠 Index.tsx render - searchFilters.bookingType:', searchFilters.bookingType);
 
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
@@ -234,7 +262,11 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <VenvlSearchPill onSearch={handleSearch} initialFilters={searchFilters} />
+              <VenvlSearchPill 
+                onSearch={handleSearch} 
+                initialFilters={searchFilters}
+                key={`search-${searchFilters.bookingType}`}
+              />
               
               {/* Advanced Filters Button with Active Filter Count */}
               <div className="flex justify-center gap-3">
@@ -263,21 +295,6 @@ const Index = () => {
                 )}
               </div>
               
-              {/* Active Filter Badges */}
-              {hasActiveFilters && (
-                <motion.div
-                  className="max-w-4xl mx-auto px-2 sm:px-4"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <FilterBadgeDisplay
-                    advancedFilters={advancedFilters}
-                    onRemoveFilter={handleRemoveFilter}
-                    dbPriceRange={dbPriceRange}
-                  />
-                </motion.div>
-              )}
             </motion.div>
           </div>
         </section>
@@ -347,18 +364,18 @@ const Index = () => {
 
                 {/* Properties Grid */}
                 {filteredProperties.length > 0 ? (
-                  <motion.div
+                  <motion.div 
                     className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6, delay: 0.8 }}
                   >
                     {filteredProperties.map((property, index) => (
                       <motion.div
                         key={property.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
                       >
                         <PropertyCard property={property} />
                       </motion.div>
