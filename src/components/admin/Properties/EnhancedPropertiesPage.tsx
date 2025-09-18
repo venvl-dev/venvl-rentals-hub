@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAdminQueryClient } from '@/hooks/useAdminQueryClient';
 import { ColumnDef } from '@tanstack/react-table';
 import { toast } from 'sonner';
-import { Link } from 'react-router-dom';
 import { 
   MoreHorizontal, 
   CheckCircle, 
@@ -51,15 +50,33 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataTable } from '@/components/ui/data-table';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '../AdminLayout';
-import EnhancedPropertyForm from '@/components/host/EnhancedPropertyForm';
-import { Property as PropertyType } from '@/types/property';
 
-interface Property extends PropertyType {
+interface Property {
+  id: string;
+  title: string;
+  description: string | null;
+  address: string;
+  city: string;
+  state: string | null;
+  country: string;
+  price_per_night: number;
+  daily_price: number | null;
+  monthly_price: number | null;
+  max_guests: number;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  property_type: string;
+  approval_status: 'pending' | 'approved' | 'rejected';
+  is_active: boolean;
+  images: string[];
+  amenities: string[];
+  created_at: string;
+  host_id: string;
   profiles?: {
     first_name: string | null;
     last_name: string | null;
     email: string;
-  } | null;
+  };
 }
 
 interface PropertyStats {
@@ -70,16 +87,10 @@ interface PropertyStats {
   archived: number;
 }
 
-
-
-
-
 const EnhancedPropertiesPage = () => {
   const { queryClient, invalidateAdminQueries } = useAdminQueryClient();
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [activeTab, setActiveTab] = useState('all');
-
 
   // Fetch properties
   const { data: properties = [], isLoading } = useQuery({
@@ -87,7 +98,14 @@ const EnhancedPropertiesPage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('properties')
-        .select('*')
+        .select(`
+          *,
+          profiles!properties_host_id_fkey(
+            first_name,
+            last_name,
+            email
+          )
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -166,22 +184,10 @@ const EnhancedPropertiesPage = () => {
     return property.approval_status === activeTab;
   });
 
-  // Handle property edit form actions
-  const handleEditSave = () => {
-    setEditingProperty(null);
-    // Invalidate queries to refresh the data
-    invalidateAdminQueries([['admin-properties']]);
-  };
-
-  const handleEditCancel = () => {
-    setEditingProperty(null);
-  };
-
   const getHostName = (property: Property) => {
     const profile = property.profiles;
-    if (!profile) return 'Host User';
-    const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
-    return fullName || profile.email?.split('@')[0] || 'Host User';
+    if (!profile) return 'Unknown Host';
+    return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email || 'Unknown Host';
   };
 
   const getStatusBadgeVariant = (status: string, isActive: boolean) => {
@@ -192,7 +198,7 @@ const EnhancedPropertiesPage = () => {
       case 'pending': return 'outline';
       default: return 'outline';
     }
-  }; 
+  };
 
   const columns: ColumnDef<Property>[] = [
     {
@@ -202,12 +208,7 @@ const EnhancedPropertiesPage = () => {
         const property = row.original;
         return (
           <div>
-            <Link 
-              to={`/admin/property/${property.id}`}
-              className="font-medium text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              {property.title}
-            </Link>
+            <div className="font-medium">{property.title}</div>
             <div className="text-sm text-muted-foreground capitalize">
               {property.property_type}
             </div>
@@ -222,7 +223,8 @@ const EnhancedPropertiesPage = () => {
         const property = row.original;
         return (
           <div className="text-sm">
-            <div className="font-medium">{getHostName(property)}</div>
+            <div>{getHostName(property)}</div>
+            <div className="text-muted-foreground">{property.profiles?.email}</div>
           </div>
         );
       },
@@ -316,7 +318,7 @@ const EnhancedPropertiesPage = () => {
                 </DialogTrigger>
               </Dialog>
               
-              <DropdownMenuItem onClick={() => setEditingProperty(property)}>
+              <DropdownMenuItem onClick={() => toast.info('Edit feature coming soon')}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Property
               </DropdownMenuItem>
@@ -530,25 +532,25 @@ const EnhancedPropertiesPage = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  {(selectedProperty.booking_types?.includes('daily') || selectedProperty.daily_price) && (
-                    <div>
-                      <label className="text-sm font-medium">Daily Stay Price</label>
-                      <p className="text-sm text-muted-foreground">${selectedProperty.daily_price || selectedProperty.price_per_night}</p>
-                    </div>
-                  )}
-                  {(selectedProperty.booking_types?.includes('monthly') || selectedProperty.monthly_price) && (
-                    <div>
-                      <label className="text-sm font-medium">Monthly Stay Price</label>
-                      <p className="text-sm text-muted-foreground">${selectedProperty.monthly_price || 'N/A'}</p>
-                    </div>
-                  )}
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-sm font-medium">Price per Night</label>
+                    <p className="text-sm text-muted-foreground">${selectedProperty.price_per_night}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Daily Price</label>
+                    <p className="text-sm text-muted-foreground">${selectedProperty.daily_price || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Monthly Price</label>
+                    <p className="text-sm text-muted-foreground">${selectedProperty.monthly_price || 'N/A'}</p>
+                  </div>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium">Host Information</label>
                   <p className="text-sm text-muted-foreground">
-                    {getHostName(selectedProperty)}
+                    {getHostName(selectedProperty)} ({selectedProperty.profiles?.email})
                   </p>
                 </div>
 
@@ -612,25 +614,6 @@ const EnhancedPropertiesPage = () => {
                   </div>
                 )}
               </div>
-            </DialogContent>
-          </Dialog>
-        )}
-
-        {/* Edit Property Form Modal */}
-        {editingProperty && (
-          <Dialog open={!!editingProperty} onOpenChange={() => setEditingProperty(null)}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Edit Property</DialogTitle>
-                <DialogDescription>
-                  Update property information and settings
-                </DialogDescription>
-              </DialogHeader>
-              <EnhancedPropertyForm
-                property={editingProperty}
-                onSave={handleEditSave}
-                onCancel={handleEditCancel}
-              />
             </DialogContent>
           </Dialog>
         )}

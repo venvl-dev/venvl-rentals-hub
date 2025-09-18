@@ -23,7 +23,7 @@ export interface BlockedDate {
 
 export interface CalendarDay {
   date: Date;
-  status: 'available' | 'booked' | 'blocked' | 'pending';
+  status: 'available' | 'booked' | 'blocked' | 'pending' | 'confirmed' | 'checked_in' | 'completed';
   bookingData?: BookingCalendarData;
   blockedReason?: string;
   isToday: boolean;
@@ -69,8 +69,9 @@ export async function fetchPropertyBookings(propertyId: string): Promise<Booking
         profiles:guest_id(first_name, last_name)
       `)
       .eq('property_id', propertyId)
-      .in('status', ['pending', 'confirmed', 'completed'])
+      .in('status', ['pending', 'confirmed', 'checked_in']) // Removed 'completed' - completed bookings should make dates available again
       .order('check_in', { ascending: true });
+
 
     if (error) throw error;
 
@@ -80,12 +81,13 @@ export async function fetchPropertyBookings(propertyId: string): Promise<Booking
       check_out: booking.check_out,
       status: booking.status as BookingCalendarData['status'],
       guest_id: booking.guest_id,
-      booking_type: booking.booking_type as 'daily' | 'monthly',
+      booking_type: (booking.booking_type as 'daily' | 'monthly') || 'daily',
       total_price: booking.total_price,
       guest_name: (booking as any).profiles ? 
         `${(booking as any).profiles.first_name} ${(booking as any).profiles.last_name}` : 
         'Guest'
     })) || [];
+
 
     setCachedData(cacheKey, bookings);
     return bookings;
@@ -142,6 +144,7 @@ export async function checkDateAvailability(
       p_property_id: propertyId,
       p_check_in: format(checkIn, 'yyyy-MM-dd'),
       p_check_out: format(checkOut, 'yyyy-MM-dd'),
+      p_exclude_booking_id: null
     });
 
     if (error) throw error;
@@ -230,6 +233,9 @@ export async function generateCalendarDays(
   const bookings = await fetchPropertyBookings(propertyId);
   const blockedDates = await fetchBlockedDates(propertyId);
   
+
+  // Removed RLS policy test for performance - only run when debugging
+  
   const startDate = new Date(year, month, 1);
   const endDate = new Date(year, month + 1, 0);
   const today = new Date();
@@ -252,18 +258,47 @@ export async function generateCalendarDays(
       continue;
     }
 
-    // Check if date has booking
+    // Check if date has booking - using same logic as guest booking widget
     const booking = bookings.find(b => {
       const checkIn = parseISO(b.check_in);
       const checkOut = parseISO(b.check_out);
-      return (isEqual(date, checkIn) || isAfter(date, checkIn)) && 
-             isBefore(date, checkOut);
+      
+      // Create date objects with same time (midnight) for accurate comparison
+      const bookingStart = new Date(checkIn);
+      const bookingEnd = new Date(checkOut);
+      const currentDate = new Date(date);
+      
+      bookingStart.setHours(0, 0, 0, 0);
+      bookingEnd.setHours(0, 0, 0, 0);
+      currentDate.setHours(0, 0, 0, 0);
+      
+      // Include dates from check-in up to (but not including) check-out
+      return currentDate >= bookingStart && currentDate < bookingEnd;
     });
 
     if (booking) {
+      // Map booking status to calendar status
+      let calendarStatus: CalendarDay['status'];
+      switch (booking.status) {
+        case 'pending':
+          calendarStatus = 'pending';
+          break;
+        case 'confirmed':
+          calendarStatus = 'confirmed';
+          break;
+        case 'checked_in':
+          calendarStatus = 'checked_in';
+          break;
+        case 'completed':
+          calendarStatus = 'completed';
+          break;
+        default:
+          calendarStatus = 'booked';
+      }
+
       days.push({
         date: new Date(date),
-        status: booking.status === 'pending' ? 'pending' : 'booked',
+        status: calendarStatus,
         bookingData: booking,
         isToday: isEqual(date, today),
         isCurrentMonth: date.getMonth() === month
@@ -278,6 +313,7 @@ export async function generateCalendarDays(
     }
   }
 
+
   setCachedData(cacheKey, days);
   return days;
 }
@@ -289,12 +325,19 @@ export function getCalendarStatusColor(status: CalendarDay['status']): string {
   switch (status) {
     case 'available':
       return 'bg-green-100 text-green-800 border-green-200';
-    case 'booked':
-      return 'bg-red-100 text-red-800 border-red-200';
     case 'pending':
       return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+    case 'confirmed':
+      return 'bg-green-500 text-white border-green-600';
+    case 'checked_in':
+      return 'bg-purple-500 text-white border-purple-600';
+    case 'completed':
+      return 'bg-blue-500 text-white border-blue-600';
     case 'blocked':
       return 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'booked':
+      // Fallback for generic booked status
+      return 'bg-green-500 text-white border-green-600';
     default:
       return 'bg-gray-50 text-gray-500 border-gray-100';
   }
@@ -307,12 +350,18 @@ export function getCalendarStatusLabel(status: CalendarDay['status']): string {
   switch (status) {
     case 'available':
       return 'Available';
-    case 'booked':
-      return 'Booked';
     case 'pending':
       return 'Pending';
+    case 'confirmed':
+      return 'Confirmed';
+    case 'checked_in':
+      return 'Checked In';
+    case 'completed':
+      return 'Completed';
     case 'blocked':
       return 'Blocked';
+    case 'booked':
+      return 'Booked';
     default:
       return '';
   }
@@ -328,8 +377,10 @@ export function clearCalendarCache(propertyId?: string): void {
       key.includes(propertyId)
     );
     keysToDelete.forEach(key => calendarCache.delete(key));
+    console.log(`🧹 Cleared calendar cache for property ${propertyId}`, keysToDelete);
   } else {
     // Clear all cache
     calendarCache.clear();
+    console.log('🧹 Cleared ALL calendar cache');
   }
 } 

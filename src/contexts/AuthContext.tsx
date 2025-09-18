@@ -16,11 +16,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true; // Prevent state updates after unmount
-    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) return; // Prevent race conditions after unmount
-      
       try {
         switch (event) {
           case 'INITIAL_SESSION':
@@ -36,10 +32,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             break;
             
           case 'SIGNED_OUT':
-            // Use session state instead of user state to avoid dependency
-            if (session?.user) {
-              localStorage.removeItem(`user_role_${session.user.id}`);
-              console.log('User signed out:', session.user.id);
+            if (user) {
+              localStorage.removeItem(`user_role_${user.id}`);
+              console.log('User signed out:', user.id);
             }
             setSession(null);
             setUser(null);
@@ -56,52 +51,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         } catch (error) {
           console.error('Authentication state change error:', error);
-          if (isMounted) {
-            setLoading(false);
-          }
+          setLoading(false);
         }
     });
 
     // Initial session check
     const checkInitialSession = async () => {
-      if (!isMounted) return; // Prevent race conditions
-      
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
           console.error('Error getting initial session:', error);
           // Don't treat this as a fatal error - user might just not be logged in
-          if (isMounted) {
-            setSession(null);
-            setUser(null);
-            setLoading(false);
-          }
-          return;
-        }
-        
-        if (isMounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
-      } catch (error) {
-        console.error('Unexpected error during session check:', error);
-        // On network errors, assume user is not logged in rather than getting stuck
-        if (isMounted) {
           setSession(null);
           setUser(null);
           setLoading(false);
+          return;
         }
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      } catch (error) {
+        console.error('Unexpected error during session check:', error);
+        // On network errors, assume user is not logged in rather than getting stuck
+        setSession(null);
+        setUser(null);
+        setLoading(false);
       }
     };
 
     checkInitialSession();
 
     return () => {
-      isMounted = false; // Mark as unmounted to prevent race conditions
       subscription.unsubscribe();
     };
-  }, []); // SECURITY FIX: Removed [user] dependency to prevent infinite loops
+  }, [user]);
 
   return (
     <AuthContext.Provider value={{ user, session, loading }}>

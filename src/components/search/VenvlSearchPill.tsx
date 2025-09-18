@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Search, MapPin, Calendar, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,24 +24,101 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
     checkIn: initialFilters?.checkIn,
     checkOut: initialFilters?.checkOut,
     guests: initialFilters?.guests || 1,
-    bookingType: initialFilters?.bookingType || 'daily',
+    bookingType: initialFilters?.bookingType || 'flexible',
     flexibleOption: initialFilters?.flexibleOption,
     duration: initialFilters?.duration,
   });
+
+  // Debug current filter state
+  console.log('🔍 VenvlSearchPill render - Current filters:', filters);
+  console.log('🔍 VenvlSearchPill render - Current bookingType:', filters.bookingType);
+
+  // Sync internal state with external changes
+  useEffect(() => {
+    if (initialFilters) {
+      setFilters(prev => ({
+        ...prev,
+        location: initialFilters.location || prev.location,
+        checkIn: initialFilters.checkIn || prev.checkIn,
+        checkOut: initialFilters.checkOut || prev.checkOut,
+        guests: initialFilters.guests || prev.guests,
+        bookingType: initialFilters.bookingType || prev.bookingType,
+        flexibleOption: initialFilters.flexibleOption || prev.flexibleOption,
+        duration: initialFilters.duration || prev.duration,
+      }));
+    }
+  }, [initialFilters?.bookingType, initialFilters?.location, initialFilters?.guests]);
+
+  // Trigger search when specific filter properties change
+  useEffect(() => {
+    console.log('🔄 VenvlSearchPill useEffect - Triggering search with current filters');
+    onSearch(filters);
+  }, [filters.bookingType, filters.location, filters.guests, filters.checkIn, filters.checkOut, onSearch]);
 
   const handleSectionClick = (section: string) => {
     setActiveSection(activeSection === section ? null : section);
   };
 
   const handleSearch = () => {
-    console.log('VenvlSearchPill - handleSearch called with filters:', filters);
+    console.log('🔍 VenvlSearchPill - handleSearch called with filters:', filters);
+    console.log('🔍 About to call onSearch prop...');
     onSearch(filters);
+    console.log('🔍 onSearch prop called successfully');
     setActiveSection(null);
   };
 
   const updateFilters = (newFilters: Partial<SearchFilters>) => {
-    console.log('VenvlSearchPill - updateFilters called with:', newFilters);
-    setFilters(prev => ({ ...prev, ...newFilters }));
+    console.log('🔄 VenvlSearchPill - updateFilters called with:', newFilters);
+    console.log('🔄 Current filters before update:', filters);
+    
+    // Special handling for location updates
+    if (newFilters.location !== undefined) {
+      console.log('📍 Location filter update:', 
+        `"${filters.location}" → "${newFilters.location}"`);
+    }
+    
+    let updatedFilters = { ...filters, ...newFilters };
+    
+    // Clear incompatible fields when booking type changes
+    if (newFilters.bookingType && newFilters.bookingType !== filters.bookingType) {
+      console.log('🎯 BOOKING TYPE CHANGED:', filters.bookingType, '→', newFilters.bookingType);
+      
+      if (newFilters.bookingType === 'monthly') {
+        // Monthly bookings don't use checkIn/checkOut dates
+        updatedFilters = {
+          ...updatedFilters,
+          checkIn: undefined,
+          checkOut: undefined,
+          flexibleOption: undefined
+        };
+        console.log('📅 Monthly mode: cleared checkIn/checkOut/flexibleOption');
+      } else if (newFilters.bookingType === 'daily') {
+        // Daily bookings don't use duration
+        updatedFilters = {
+          ...updatedFilters,
+          duration: undefined,
+          flexibleOption: undefined
+        };
+        console.log('📅 Daily mode: cleared duration/flexibleOption');
+      } else if (newFilters.bookingType === 'flexible') {
+        // Flexible bookings might clear specific date constraints
+        updatedFilters = {
+          ...updatedFilters,
+          checkIn: undefined,
+          checkOut: undefined,
+          duration: undefined
+        };
+        console.log('📅 Flexible mode: cleared checkIn/checkOut/duration');
+      }
+    }
+    
+    console.log('✅ Final updated filters:', updatedFilters);
+    
+    setFilters(updatedFilters);
+    console.log('🚀 Calling onSearch with updated filters...');
+    // Immediate search trigger for booking type changes
+    onSearch(updatedFilters);
+    console.log('✅ onSearch called successfully');
   };
 
   const getDateDisplayText = () => {
@@ -71,37 +148,20 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
   if (isMobile) {
     return (
       <div className="w-full px-4">
-        {/* Mobile Optimized Booking Type Selector */}
+        {/* Mobile Booking Type Selector */}
         <motion.div
           className="mb-6"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="w-full max-w-sm mx-auto">
-            <div className="flex p-1 bg-muted rounded-lg">
-              {[
-                { id: 'daily', label: 'Daily' },
-                { id: 'monthly', label: 'Monthly' },
-                { id: 'flexible', label: 'Flexible' }
-              ].map((type) => (
-                <motion.button
-                  key={type.id}
-                  onClick={() => updateFilters({ bookingType: type.id as 'daily' | 'monthly' | 'flexible' })}
-                  className={`
-                    flex-1 h-8 px-2 text-xs font-medium rounded-md transition-all duration-200
-                    ${filters.bookingType === type.id 
-                      ? 'bg-black text-white shadow-sm' 
-                      : 'text-muted-foreground'
-                    }
-                  `}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {type.label}
-                </motion.button>
-              ))}
-            </div>
-          </div>
+          <VenvlBookingTypeSelector
+            selectedType={filters.bookingType}
+            onTypeChange={(type) => {
+              console.log('📱 Mobile booking type changed to:', type);
+              updateFilters({ bookingType: type });
+            }}
+          />
         </motion.div>
 
         {/* Mobile Compact Search Bar */}
@@ -267,7 +327,16 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
       >
         <VenvlBookingTypeSelector
           selectedType={filters.bookingType}
-          onTypeChange={(type) => updateFilters({ bookingType: type })}
+          onTypeChange={(type) => {
+            console.log('🖥️ Desktop booking type changed to:', type);
+            console.log('🖥️ Current filters.bookingType:', filters.bookingType);
+            if (type !== filters.bookingType) {
+              console.log('🖥️ Type actually changed, calling updateFilters...');
+              updateFilters({ bookingType: type });
+            } else {
+              console.log('🖥️ Type is the same, no update needed');
+            }
+          }}
         />
       </motion.div>
 

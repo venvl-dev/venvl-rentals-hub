@@ -69,7 +69,7 @@ BEGIN
     SELECT COUNT(*) INTO conflict_count
     FROM public.bookings
     WHERE property_id = p_property_id
-        AND status IN ('pending', 'confirmed', 'checked_in')
+        AND status IN ('pending', 'confirmed')
         AND (p_exclude_booking_id IS NULL OR id != p_exclude_booking_id)
         AND (
             (check_in <= p_check_in AND check_out > p_check_in) OR

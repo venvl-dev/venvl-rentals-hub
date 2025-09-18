@@ -87,10 +87,8 @@ const AdminPanel = () => {
       let role = profileData?.role || null;
 
       if (profileError || !role) {
-        console.warn('Profile fetch failed for user', session.user.id, '- SECURITY: No metadata fallback for admin panel');
-        // SECURITY FIX: Never trust user metadata for admin access
-        // Admin panel should only work with database-verified roles
-        role = null;
+        console.warn('Profile fetch failed for user', session.user.id, '- falling back to user metadata');
+        role = (session.user.user_metadata as any)?.role || null;
       }
 
       setUserRole(role);
@@ -208,7 +206,7 @@ const AdminPanel = () => {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t('admin.totalUsers')}</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -218,7 +216,7 @@ const AdminPanel = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t('admin.totalProperties')}</CardTitle>
               <Home className="h-4 w-4 text-muted-foreground" />
@@ -228,8 +226,8 @@ const AdminPanel = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-blue-500">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t('admin.totalBookings')}</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -238,13 +236,13 @@ const AdminPanel = () => {
             </CardContent>
           </Card>
 
-          <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">{t('admin.revenue')}</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold ">${stats.totalRevenue.toLocaleString()}</div> 
+              <div className="text-2xl font-bold">${stats.totalRevenue.toLocaleString()}</div>
             </CardContent>
           </Card>
         </div>
@@ -257,7 +255,7 @@ const AdminPanel = () => {
           </TabsList>
 
           <TabsContent value="users">
-            <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+            <Card>
               <CardHeader>
                 <CardTitle>{t('admin.userManagement')}</CardTitle>
                 <CardDescription>Manage platform users and their roles</CardDescription>
@@ -303,7 +301,7 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="properties">
-            <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+            <Card>
               <CardHeader>
                 <CardTitle>{t('admin.propertyManagement')}</CardTitle>
                 <CardDescription>Review and manage property listings</CardDescription>
@@ -376,7 +374,7 @@ const AdminPanel = () => {
           </TabsContent>
 
           <TabsContent value="bookings">
-            <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+            <Card>
               <CardHeader>
                 <CardTitle>{t('admin.bookingManagement')}</CardTitle>
                 <CardDescription>Monitor and manage all bookings</CardDescription>

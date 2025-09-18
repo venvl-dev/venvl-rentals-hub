@@ -201,7 +201,7 @@ const GuestBookings = () => {
 
           <TabsContent value="bookings" className="space-y-6">
             {bookings.length === 0 ? (
-              <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+              <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Calendar className="h-16 w-16 text-gray-400 mb-4" />
                   <h3 className="text-xl font-semibold mb-2">No bookings yet</h3>
@@ -214,7 +214,7 @@ const GuestBookings = () => {
             ) : (
               <div className="space-y-4">
                 {bookings.map((booking) => (
-                  <Card key={booking.id} className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+                  <Card key={booking.id}>
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div className="flex gap-4">
@@ -307,7 +307,7 @@ const GuestBookings = () => {
 
           <TabsContent value="reviews" className="space-y-6">
             {reviews.length === 0 ? (
-              <Card className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+              <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
                   <Star className="h-16 w-16 text-gray-400 mb-4" />
                   <h3 className="text-xl font-semibold mb-2">No reviews yet</h3>
@@ -317,7 +317,7 @@ const GuestBookings = () => {
             ) : (
               <div className="space-y-4">
                 {reviews.map((review) => (
-                  <Card key={review.id} className="rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 bg-white">
+                  <Card key={review.id}>
                     <CardContent className="p-6">
                       <div className="flex gap-4">
                         <div className="aspect-square w-16 h-16 rounded-lg overflow-hidden">

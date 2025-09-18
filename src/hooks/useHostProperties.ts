@@ -3,10 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Property } from '@/types/property';
 import { cleanAmenityIds } from '@/lib/amenitiesUtils';
 
-const fetchHostProperties = async (hostId: string, filter: 'active' | 'archived' | 'all' = 'active'): Promise<Property[]> => {
-  console.log('🔍 Fetching properties for host ID:', hostId, 'with filter:', filter);
-  
-  let query = supabase
+const fetchHostProperties = async (hostId: string): Promise<Property[]> => {
+  const { data, error } = await supabase
     .from('properties')
     .select(
       `
@@ -36,44 +34,24 @@ const fetchHostProperties = async (hostId: string, filter: 'active' | 'archived'
       booking_types,
       created_at,
       updated_at,
-      host_id,
-      deleted_at
+      host_id
       `
     )
-    .eq('host_id', hostId);
+    .eq('host_id', hostId)
+    .order('created_at', { ascending: false })
+    .limit(20);
 
-  // Apply filter based on selection
-  if (filter === 'active') {
-    query = query.is('deleted_at', null); // Only active properties
-  } else if (filter === 'archived') {
-    query = query.not('deleted_at', 'is', null); // Only archived properties
-  }
-  // For 'all', no additional filter is applied
-  
-  const { data, error } = await query
-    .order('created_at', { ascending: false });
-
-  console.log('📊 Raw query result:', { data, error, hostId });
-  
-  if (error) {
-    console.error('❌ Error fetching properties:', error);
-    throw error;
-  }
-  
-  const processedData = (data || []).map((p) => ({
+  if (error) throw error;
+  return (data || []).map((p) => ({
     ...p,
     amenities: cleanAmenityIds(p.amenities || []),
   })) as Property[];
-  
-  console.log('✅ Processed properties:', processedData.length, 'properties found');
-  
-  return processedData;
 };
 
-export const useHostProperties = (hostId?: string, filter: 'active' | 'archived' | 'all' = 'active') =>
+export const useHostProperties = (hostId?: string) =>
   useQuery<Property[]>({
-    queryKey: ['hostProperties', hostId, filter],
-    queryFn: () => fetchHostProperties(hostId as string, filter),
+    queryKey: ['hostProperties', hostId],
+    queryFn: () => fetchHostProperties(hostId as string),
     enabled: !!hostId,
     staleTime: 5 * 60 * 1000,
   });

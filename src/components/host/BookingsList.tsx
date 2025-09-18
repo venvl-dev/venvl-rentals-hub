@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Calendar, User, Home, DollarSign } from 'lucide-react';
+import { Calendar, User, Home, DollarSign, BarChart3 } from 'lucide-react';
 import { Booking, BookingStatus } from '@/types/booking';
+import BookingSaturationDashboard from './BookingSaturationDashboard';
 
 interface BookingWithJoinedData extends Booking {
   properties: {
@@ -26,6 +28,7 @@ const BookingsList = () => {
   const [bookings, setBookings] = useState<BookingWithJoinedData[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [showDashboard, setShowDashboard] = useState(true);
 
   useEffect(() => {
     fetchBookings();
@@ -113,6 +116,7 @@ const BookingsList = () => {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'cancelled': return 'bg-red-100 text-red-800';
       case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'checked_in': return 'bg-purple-100 text-purple-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
@@ -135,19 +139,32 @@ const BookingsList = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Bookings Management</h2>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Bookings</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setShowDashboard(!showDashboard)}
+            className="flex items-center gap-2 rounded-xl"
+          >
+            <BarChart3 className="h-4 w-4" />
+            {showDashboard ? 'Hide Dashboard' : 'Show Dashboard'}
+          </Button>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Bookings</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="checked_in">Checked In</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {showDashboard && <BookingSaturationDashboard />}
 
       {filteredBookings.length === 0 ? (
         <Card>
@@ -250,12 +267,31 @@ const BookingsList = () => {
                           </>
                         )}
                         {booking.status === 'confirmed' && (
+                          <>
+                            <Button
+                              size="sm"
+                              onClick={() => updateBookingStatus(booking.id, 'checked_in')}
+                              className="bg-purple-600 hover:bg-purple-700"
+                            >
+                              Check In
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateBookingStatus(booking.id, 'completed')}
+                            >
+                              Mark Complete
+                            </Button>
+                          </>
+                        )}
+                        {booking.status === 'checked_in' && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => updateBookingStatus(booking.id, 'completed')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white"
                           >
-                            Mark Complete
+                            Check Out
                           </Button>
                         )}
                       </div>

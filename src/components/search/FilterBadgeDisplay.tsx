@@ -23,18 +23,6 @@ const FilterBadgeDisplay = ({ advancedFilters, onRemoveFilter, dbPriceRange }: F
   const badges = useMemo(() => {
     const badgeArray = [];
 
-    // Booking type badge with null checking
-    if (advancedFilters.bookingType && advancedFilters.bookingType !== 'daily') {
-      badgeArray.push(
-        <Badge key="bookingType" variant="secondary" className="flex items-center gap-1">
-          {advancedFilters.bookingType === 'monthly' ? 'Monthly' : advancedFilters.bookingType}
-          <X 
-            className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors" 
-            onClick={() => onRemoveFilter('bookingType')}
-          />
-        </Badge>
-      );
-    }
 
     // Price range badge with enhanced null checking
     if (advancedFilters.priceRange && 

@@ -68,9 +68,8 @@ const BookingWidget = ({ property, user }: BookingWidgetProps) => {
       if (error) throw error;
 
       const dates = data?.map(item => new Date(item.blocked_date)) || [];
-      const propertyBlockedDates = property.blocked_dates?.map(date => new Date(date)) || [];
       
-      setBlockedDates([...dates, ...propertyBlockedDates]);
+      setBlockedDates(dates);
     } catch (error) {
       console.error('Error fetching blocked dates:', error);
     }
@@ -139,7 +138,8 @@ const BookingWidget = ({ property, user }: BookingWidgetProps) => {
       const nights = differenceInDays(checkOut, checkIn);
       return nights * property.price_per_night;
     } else if (bookingType === 'monthly' && property.monthly_price) {
-      return duration * property.monthly_price;
+      // For monthly bookings, user only pays for one month at a time
+      return property.monthly_price;
     }
     return 0;
   };
@@ -460,17 +460,28 @@ const BookingWidget = ({ property, user }: BookingWidgetProps) => {
                       )}
 
                       {bookingType === 'monthly' && property.monthly_price && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span>${property.monthly_price} × {duration} month{duration > 1 ? 's' : ''}</span>
-                          <span className="font-medium">${property.monthly_price * duration}</span>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                            <span>${property.monthly_price} × 1 month</span>
+                            <span className="font-medium">${property.monthly_price}</span>
+                          </div>
+                          {duration > 1 && (
+                            <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded">
+                              <div className="font-medium">Payment Schedule:</div>
+                              <div>• You pay: ${property.monthly_price}/month</div>
+                              <div>• Duration: {duration} months</div>
+                              <div className="font-semibold">• Total amount: ${property.monthly_price * duration}</div>
+                              <div className="text-xs text-blue-500 mt-1">* Charged monthly, not upfront</div>
+                            </div>
+                          )}
                         </div>
                       )}
 
                       <Separator className="my-3" />
                       
                       <div className="flex justify-between items-center font-semibold text-lg">
-                        <span>Total</span>
-                        <span>${calculateTotalPrice()}</span>
+                        <span>{bookingType === 'monthly' ? 'Monthly Payment' : 'Total'}</span>
+                        <span>${bookingType === 'monthly' ? property.monthly_price : calculateTotalPrice()}</span>
                       </div>
                     </motion.div>
                   )}
