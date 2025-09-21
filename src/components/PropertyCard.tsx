@@ -125,8 +125,48 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   const badge = getRentalTypeBadge(bookingTypes);
   const { price, unit } = getPrimaryPrice(property);
 
-  // ✅ SIMPLIFIED: Single pricing display using getPrimaryPrice
+  // ✅ FLEXIBLE: Show both daily and monthly prices when available
   const getPricingDisplay = () => {
+    const hasDaily = bookingTypes.includes('daily');
+    const hasMonthly = bookingTypes.includes('monthly');
+    const dailyPrice = property.daily_price || property.price_per_night || 0;
+    const monthlyPrice = property.monthly_price || 0;
+
+    // If both daily and monthly are available, show both prices
+    if (hasDaily && hasMonthly && dailyPrice > 0 && monthlyPrice > 0) {
+      return (
+        <div className="h-24 flex flex-col justify-center space-y-1">
+          <div className="flex items-baseline space-x-2">
+            <span className="text-lg font-bold text-gray-900">
+              EGP {Math.round(dailyPrice)}
+            </span>
+            <span className="text-gray-600 text-xs">/ night</span>
+          </div>
+          <div className="flex items-baseline space-x-2">
+            <span className="text-lg font-bold text-gray-900">
+              EGP {Math.round(monthlyPrice)}
+            </span>
+            <span className="text-gray-600 text-xs">/ month</span>
+          </div>
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            {property.min_nights && (
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                Min. stay: {property.min_nights} night{property.min_nights > 1 ? 's' : ''}
+              </div>
+            )}
+            {property.min_months && (
+              <div className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Min. lease: {property.min_months} month{property.min_months > 1 ? 's' : ''}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Otherwise, show single price as before
     return (
       <div className="h-24 flex flex-col justify-center space-y-2">
         <div className="flex items-baseline space-x-2">

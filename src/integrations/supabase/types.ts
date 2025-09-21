@@ -714,6 +714,7 @@ export type Database = {
           state: string | null
           title: string
           updated_at: string | null
+          videos: string[] | null
         }
         Insert: {
           address: string
@@ -745,6 +746,7 @@ export type Database = {
           state?: string | null
           title: string
           updated_at?: string | null
+          videos?: string[] | null
         }
         Update: {
           address?: string
@@ -776,6 +778,7 @@ export type Database = {
           state?: string | null
           title?: string
           updated_at?: string | null
+          videos?: string[] | null
         }
         Relationships: []
       }

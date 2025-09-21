@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Home, Calendar, DollarSign, Settings, ArrowLeft, Plus, X } from 'lucide-react';
+import { Home, Calendar, DollarSign, Settings, ArrowLeft, Plus, X, Upload, Image, Video, Play } from 'lucide-react';
 import { Property } from '@/types/property';
 import { 
   getRentalType, 
@@ -43,6 +43,7 @@ const createPropertySchema = (rentalType: RentalType) => {
     max_guests: z.number().min(1),
     amenities: z.array(z.string()).default([]),
     images: z.array(z.string()).default([]),
+    videos: z.array(z.string()).default([]),
   });
 
   // Add conditional validation based on rental type
@@ -80,19 +81,28 @@ interface EnhancedPropertyFormProps {
 }
 
 const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFormProps) => {
+  // Determine if this is a new property or editing existing
+  const isNewProperty = !property || property.id === 'new-property' || Object.keys(property).length === 0;
+  const editingProperty = isNewProperty ? undefined : property;
+
   // Fixed amenities synchronization: form now uses AMENITIES from amenitiesUtils.ts consistently
   if (process.env.NODE_ENV !== 'production') {
-    // Initialize form with property data
+    console.log('🎯 EnhancedPropertyForm: Component starting to load');
+    console.log('🎯 EnhancedPropertyForm: Received property:', property);
+    console.log('🎯 EnhancedPropertyForm: isNewProperty:', isNewProperty);
+    console.log('🎯 EnhancedPropertyForm: editingProperty:', editingProperty);
   }
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>(property?.images || []);
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [imageUrls, setImageUrls] = useState<string[]>(editingProperty?.images || []);
+  const [videoUrls, setVideoUrls] = useState<string[]>(editingProperty?.videos || []);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [uploadingVideos, setUploadingVideos] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
   const [currentRentalType, setCurrentRentalType] = useState<RentalType>('daily');
 
   // Get current rental type for existing property or default for new property
-  const initialRentalType = property ? getRentalType(property as PropertyRentalData) : 'daily';
+  const initialRentalType = editingProperty ? getRentalType(editingProperty as PropertyRentalData) : 'daily';
   if (process.env.NODE_ENV !== 'production') {
     // Set initial rental type
   }
@@ -103,24 +113,25 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   const form = useForm<PropertyFormData>({
     resolver: zodResolver(propertySchema),
     defaultValues: {
-      title: property?.title || '',
-      description: property?.description || '',
-      property_type: (property?.property_type as 'apartment' | 'house' | 'villa' | 'studio' | 'cabin' | 'loft') || 'apartment',
-      address: property?.address || '',
-      city: property?.city || '',
-      state: property?.state || '',
-      country: property?.country || 'US',
-      postal_code: property?.postal_code || '',
+      title: editingProperty?.title || '',
+      description: editingProperty?.description || '',
+      property_type: (editingProperty?.property_type as 'apartment' | 'house' | 'villa' | 'studio' | 'cabin' | 'loft') || 'apartment',
+      address: editingProperty?.address || '',
+      city: editingProperty?.city || '',
+      state: editingProperty?.state || '',
+      country: editingProperty?.country || 'US',
+      postal_code: editingProperty?.postal_code || '',
       rental_type: initialRentalType as RentalType,
-      bedrooms: property?.bedrooms || 1,
-      bathrooms: property?.bathrooms || 1,
-      max_guests: property?.max_guests || 2,
-      price_per_night: property ? getDailyPrice(property as PropertyRentalData) : undefined,
-      monthly_price: property ? getMonthlyPrice(property as PropertyRentalData) : undefined,
-      min_nights: property?.min_nights || 1,
-      min_months: property?.min_months || 1,
-      amenities: property ? cleanAmenityIds(property.amenities || []) : [],
-      images: property?.images || [],
+      bedrooms: editingProperty?.bedrooms || 1,
+      bathrooms: editingProperty?.bathrooms || 1,
+      max_guests: editingProperty?.max_guests || 2,
+      price_per_night: editingProperty ? getDailyPrice(editingProperty as PropertyRentalData) : undefined,
+      monthly_price: editingProperty ? getMonthlyPrice(editingProperty as PropertyRentalData) : undefined,
+      min_nights: editingProperty?.min_nights || 1,
+      min_months: editingProperty?.min_months || 1,
+      amenities: editingProperty ? cleanAmenityIds(editingProperty.amenities || []) : [],
+      images: editingProperty?.images || [],
+      videos: editingProperty?.videos || [],
     },
   });
 
@@ -180,10 +191,12 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         min_months: property.min_months || 1,
         amenities: cleanAmenityIds(property.amenities || []),
         images: property.images || [],
+        videos: property.videos || [],
       };
       
       form.reset(formData);
       setImageUrls(property.images || []);
+      setVideoUrls(property.videos || []);
     }
   }, [property, form]);
 
@@ -196,12 +209,115 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     form.setValue('amenities', updated);
   };
 
-  const addImage = () => {
-    if (newImageUrl && !imageUrls.includes(newImageUrl)) {
-      const updated = [...imageUrls, newImageUrl];
-      setImageUrls(updated);
-      form.setValue('images', updated);
-      setNewImageUrl('');
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploadingImages(true);
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          throw new Error(`${file.name} is not a valid image file`);
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          throw new Error(`${file.name} is too large. Maximum size is 5MB`);
+        }
+
+        // Create a unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('property-images')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) {
+          throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('property-images')
+          .getPublicUrl(fileName);
+
+        return publicUrl;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const updatedImages = [...imageUrls, ...uploadedUrls];
+
+      setImageUrls(updatedImages);
+      form.setValue('images', updatedImages);
+
+      toast.success(`Successfully uploaded ${uploadedUrls.length} image(s)`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload images';
+      toast.error(errorMessage);
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const handleVideoUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploadingVideos(true);
+
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // Validate file type
+        if (!file.type.startsWith('video/')) {
+          throw new Error(`${file.name} is not a valid video file`);
+        }
+
+        // Validate file size (max 50MB)
+        if (file.size > 50 * 1024 * 1024) {
+          throw new Error(`${file.name} is too large. Maximum size is 50MB`);
+        }
+
+        // Create a unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('property-videos')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) {
+          throw new Error(`Failed to upload ${file.name}: ${error.message}`);
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('property-videos')
+          .getPublicUrl(fileName);
+
+        return publicUrl;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const updatedVideos = [...videoUrls, ...uploadedUrls];
+
+      setVideoUrls(updatedVideos);
+      form.setValue('videos', updatedVideos);
+
+      toast.success(`Successfully uploaded ${uploadedUrls.length} video(s)`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload videos';
+      toast.error(errorMessage);
+    } finally {
+      setUploadingVideos(false);
     }
   };
 
@@ -209,6 +325,12 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     const updated = imageUrls.filter((_, i) => i !== index);
     setImageUrls(updated);
     form.setValue('images', updated);
+  };
+
+  const removeVideo = (index: number) => {
+    const updated = videoUrls.filter((_, i) => i !== index);
+    setVideoUrls(updated);
+    form.setValue('videos', updated);
   };
 
   const onSubmit = async (data: PropertyFormData) => {
@@ -279,10 +401,11 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         host_id: user.id,
         amenities: normalizedAmenityIds,
         images: imageUrls,
+        videos: videoUrls,
         // Ensure booking_types is always an array for consistency
         booking_types: rentalType === 'both' ? ['daily', 'monthly'] : [rentalType],
         is_active: true,
-        approval_status: 'pending'
+        approval_status: 'approved'
       };
 
       // Only include relevant price fields based on rental type
@@ -306,22 +429,22 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       }
 
       // Save property with synchronized amenities data
-      if (property && property.id) {
+      if (editingProperty && editingProperty.id && editingProperty.id !== 'new-property') {
         // Remove fields that shouldn't be updated
         const updateData = { ...propertyData };
         delete updateData.host_id; // Don't update host_id on edit
         delete updateData.approval_status; // Don't reset approval status on edit
-        
+
         const { data: result, error } = await supabase
           .from('properties')
           .update(updateData)
-          .eq('id', property.id)
+          .eq('id', editingProperty.id)
           .select();
-        
+
         if (error) {
           throw new Error(`Update failed: ${error.message}`);
         }
-        
+
         toast.success('Property updated successfully!');
       } else {
         const { data: result, error } = await supabase
@@ -370,10 +493,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
             </Button>
             <div>
               <h1 className="text-3xl font-bold">
-                {property ? 'Edit Property' : 'Add New Property'}
+                {editingProperty ? 'Edit Property' : 'Add New Property'}
               </h1>
               <p className="text-gray-600">
-                {property ? 'Update your property details' : 'Create a new listing for your property'}
+                {editingProperty ? 'Update your property details' : 'Create a new listing for your property'}
               </p>
             </div>
           </div>
@@ -842,56 +965,236 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                   <CardHeader>
                     <CardTitle className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                        <Plus className="h-5 w-5 text-white" />
+                        <Image className="h-5 w-5 text-white" />
                       </div>
                       Property Images
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="flex gap-4">
-                      <Input
-                        value={newImageUrl}
-                        onChange={(e) => setNewImageUrl(e.target.value)}
-                        placeholder="Enter image URL"
-                        className="rounded-xl border-gray-200 focus:border-black"
+                    {/* File Upload Area */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-gray-400 transition-colors">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => handleFileUpload(e.target.files)}
+                        className="hidden"
+                        id="image-upload"
+                        disabled={uploadingImages}
                       />
+                      <label htmlFor="image-upload" className="cursor-pointer block">
+                        <div className="space-y-4">
+                          <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                            <Upload className="h-8 w-8 text-gray-600" />
+                          </div>
+                          <div>
+                            <p className="text-lg font-medium text-gray-900">
+                              {uploadingImages ? 'Uploading...' : 'Upload property images'}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Drag and drop images here, or click to browse
+                            </p>
+                            <p className="text-xs text-gray-400 mt-2">
+                              Supports: JPG, PNG, GIF • Max size: 5MB per image
+                            </p>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Alternative Upload Button */}
+                    <div className="flex justify-center">
                       <Button
                         type="button"
-                        onClick={addImage}
+                        onClick={() => document.getElementById('image-upload')?.click()}
+                        disabled={uploadingImages}
                         className="rounded-xl bg-black text-white hover:bg-gray-800"
                       >
-                        Add Image
+                        <Upload className="h-4 w-4 mr-2" />
+                        {uploadingImages ? 'Uploading...' : 'Choose Files'}
                       </Button>
                     </div>
 
+                    {/* Image Preview Grid */}
                     {imageUrls.length > 0 && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {imageUrls.map((url, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                            className="relative group"
-                          >
-                            <img
-                              src={url}
-                              alt={`Property ${index + 1}`}
-                              className="w-full h-48 object-cover rounded-xl"
-                            />
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => removeImage(index)}
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-8 h-8 p-0"
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-gray-900">
+                            Uploaded Images ({imageUrls.length})
+                          </h4>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {imageUrls.map((url, index) => (
+                            <motion.div
+                              key={index}
+                              initial={{ opacity: 0, scale: 0.8 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0.8 }}
+                              className="relative group"
                             >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </motion.div>
-                        ))}
+                              <img
+                                src={url}
+                                alt={`Property ${index + 1}`}
+                                className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-xl flex items-center justify-center">
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => removeImage(index)}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-8 h-8 p-0"
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              {index === 0 && (
+                                <div className="absolute top-2 left-2">
+                                  <Badge className="bg-blue-600 text-white text-xs">
+                                    Cover Photo
+                                  </Badge>
+                                </div>
+                              )}
+                            </motion.div>
+                          ))}
+                        </div>
                       </div>
                     )}
+
+                    {imageUrls.length === 0 && (
+                      <div className="text-center py-8">
+                        <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                          <Image className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <p className="text-gray-500 text-sm">No images uploaded yet</p>
+                        <p className="text-gray-400 text-xs mt-1">Upload at least one image to showcase your property</p>
+                      </div>
+                    )}
+
+                    {/* Video Upload Section */}
+                    <div className="border-t border-gray-200 pt-6">
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <Video className="h-4 w-4 text-purple-600" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900">Property Videos</h3>
+                        <Badge variant="outline" className="text-xs">Optional</Badge>
+                      </div>
+
+                      {/* Video Upload Area */}
+                      <div className="border-2 border-dashed border-purple-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors bg-purple-50/50">
+                        <input
+                          type="file"
+                          multiple
+                          accept="video/*"
+                          onChange={(e) => handleVideoUpload(e.target.files)}
+                          className="hidden"
+                          id="video-upload"
+                          disabled={uploadingVideos}
+                        />
+                        <label htmlFor="video-upload" className="cursor-pointer block">
+                          <div className="space-y-3">
+                            <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                              <Video className="h-6 w-6 text-purple-600" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {uploadingVideos ? 'Uploading videos...' : 'Upload property videos'}
+                              </p>
+                              <p className="text-sm text-gray-500 mt-1">
+                                Add video tours or walkthroughs
+                              </p>
+                              <p className="text-xs text-gray-400 mt-2">
+                                Supports: MP4, MOV, AVI • Max size: 50MB per video
+                              </p>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+
+                      {/* Alternative Video Upload Button */}
+                      <div className="flex justify-center mt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('video-upload')?.click()}
+                          disabled={uploadingVideos}
+                          className="rounded-xl border-purple-200 text-purple-700 hover:bg-purple-50"
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          {uploadingVideos ? 'Uploading...' : 'Choose Videos'}
+                        </Button>
+                      </div>
+
+                      {/* Video Preview Grid */}
+                      {videoUrls.length > 0 && (
+                        <div className="space-y-4 mt-6">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-gray-900">
+                              Uploaded Videos ({videoUrls.length})
+                            </h4>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {videoUrls.map((url, index) => (
+                              <motion.div
+                                key={index}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                className="relative group"
+                              >
+                                <div className="relative w-full h-48 bg-gray-100 rounded-xl border border-gray-200 overflow-hidden">
+                                  <video
+                                    src={url}
+                                    className="w-full h-full object-cover"
+                                    muted
+                                    preload="metadata"
+                                  />
+                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <div className="bg-black bg-opacity-50 rounded-full p-3">
+                                        <Play className="h-6 w-6 text-white" />
+                                      </div>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="sm"
+                                      onClick={() => removeVideo(index)}
+                                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-8 h-8 p-0"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="mt-2 px-1">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    Video {index + 1}
+                                  </p>
+                                  <p className="text-xs text-gray-500">
+                                    Property walkthrough
+                                  </p>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {videoUrls.length === 0 && (
+                        <div className="text-center py-6 mt-4">
+                          <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
+                            <Video className="h-6 w-6 text-purple-400" />
+                          </div>
+                          <p className="text-gray-500 text-sm">No videos uploaded yet</p>
+                          <p className="text-gray-400 text-xs mt-1">Videos help showcase your property better</p>
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </motion.div>
@@ -917,7 +1220,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                 disabled={isSubmitting}
                 className="rounded-xl px-8 bg-black text-white hover:bg-gray-800"
               >
-                {isSubmitting ? 'Saving...' : property ? 'Update Property' : 'Create Property'}
+                {isSubmitting ? 'Saving...' : editingProperty ? 'Update Property' : 'Create Property'}
               </Button>
             </motion.div>
           </Tabs>

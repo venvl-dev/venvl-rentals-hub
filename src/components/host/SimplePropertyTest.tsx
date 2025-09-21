@@ -38,7 +38,7 @@ const SimplePropertyTest = () => {
         host_id: user.id,
         booking_types: ['daily'] as string[],
         is_active: true,
-        approval_status: 'pending' as const,
+        approval_status: 'approved' as const,
         amenities: [] as string[],
         images: [] as string[]
       };
