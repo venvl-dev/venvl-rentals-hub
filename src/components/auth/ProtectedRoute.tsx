@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import { useSecureQuery } from "@/hooks/useSecureApi";
+import { supabase } from "@/integrations/supabase/client";
 // import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
 
 interface ProtectedRouteProps {
@@ -99,16 +100,12 @@ const ProtectedRoute = ({
       // Always fetch fresh role data for security-critical route access
       let role: string | null = null;
       try {
-        // Direct query to profiles table - bypassing useSecureQuery due to issues
-        const { data: profile, error } = await import(
-          "@/integrations/supabase/client"
-        ).then((module) =>
-          module.supabase
-            .from("profiles")
-            .select("id, email, role")
-            .eq("id", user!.id)
-            .maybeSingle()
-        );
+        // Direct query to profiles table - using static import
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("id, email, role")
+          .eq("id", user!.id)
+          .maybeSingle();
 
         if (error) {
           console.error("Profile query error:", error);
