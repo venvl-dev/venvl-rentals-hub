@@ -56,7 +56,7 @@ describe('useFilterStore', () => {
     const { result } = renderHook(() => useFilterStore());
     
     // Should have default values and auto-sync should set price range
-    expect(result.current.searchFilters.bookingType).toBe('daily');
+    expect(result.current.searchFilters.bookingType).toBe('flexible'); // updated from "daily" to "flexible" -- flexible is default
     expect(result.current.advancedFilters.priceRange).toEqual([100, 1000]);
     expect(result.current.isInitialized).toBe(true);
   });

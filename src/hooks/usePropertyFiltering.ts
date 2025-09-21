@@ -134,6 +134,7 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
 
     // ✅ SIMPLIFIED: Booking type filter - now just 8 lines instead of 63!
     const activeBookingType = advancedFilters.bookingType || filters.bookingType;
+
     
     if (activeBookingType) {
       console.log(`🔍 Filtering ${filtered.length} properties for booking type: ${activeBookingType}`);
@@ -141,23 +142,29 @@ export const usePropertyFiltering = (properties: Property[], filters: CombinedFi
       // Debug: Show booking types of first few properties
       console.log('🏠 Sample property booking types:');
       filtered.slice(0, 5).forEach(p => {
-        console.log(`   ${p.id.substring(0, 8)}: booking_types=${JSON.stringify(p.booking_types)}`);
+        console.log(`   ${p.id.substring(0, 8)}: booking_types=${JSON.stringify(p.rental_type)}`);
       });
+
+       filtered = filtered.filter ( p => p.rental_type == "both" || p.rental_type == activeBookingType)
+
       
-      filtered = filtered.filter(property => {
-        const supports = supportsBookingType(property as PropertyRentalData, activeBookingType as BookingType);
-        if (activeBookingType === 'monthly') {
-          console.log(`🔍 Monthly check for ${property.id.substring(0, 8)}: booking_types=${JSON.stringify(property.booking_types)}, supports=${supports}`);
-        }
-        return supports;
-      });
+      // filtered = filtered.filter(property => {
+      //   const supports = supportsBookingType(property as PropertyRentalData, activeBookingType as BookingType);
+      //   if (activeBookingType === 'monthly') {
+      //     console.log(`🔍 Monthly check for ${property.id.substring(0, 8)}: booking_types=${JSON.stringify(property.booking_types)}, supports=${supports}`);
+      //   }
+      //   return supports;
+      // });
       
       console.log(`🔍 After booking type filter: ${filtered.length} properties remaining`);
     }
 
     // 🎯 ENHANCED PRICE RANGE FILTER with improved accuracy and debugging
     // TEMPORARILY DISABLE price range filter for monthly bookings to test
-    if (advancedFilters.priceRange && Array.isArray(advancedFilters.priceRange) && advancedFilters.priceRange.length === 2 && activeBookingType !== 'monthly') {
+   
+    if (advancedFilters.priceRange && Array.isArray(advancedFilters.priceRange) && advancedFilters.priceRange.length === 2 
+  //  && activeBookingType !== 'monthly'
+  ) {
       const [minPrice, maxPrice] = advancedFilters.priceRange;
       
       console.log('🔍 Price range filter activated:', {

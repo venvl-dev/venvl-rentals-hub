@@ -77,6 +77,7 @@ const PropertyListing = () => {
     }
   }, [id]);
 
+
   const fetchProperty = async () => {
     try {
       const { data, error } = await supabase

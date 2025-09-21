@@ -7,12 +7,21 @@ interface PriceRange {
   distribution: number[];
 }
 
+
+
 export const usePriceRange = (bookingType?: 'daily' | 'monthly', debug = true) => {
   const [priceRange, setPriceRange] = useState<PriceRange>({
     min: 0,
     max: 10000,
     distribution: []
   });
+
+    // More realistic fallback ranges based on typical Egyptian rental market
+          const fallbackRange = {
+            min: bookingType === 'monthly' ? 3000 : 100,  // Updated minimums
+            max: bookingType === 'monthly' ? 50000 : 3000, // Updated maximums
+            distribution: []
+          };
   
   // Add a force refresh capability
   const forceRefresh = useRef(false);
@@ -121,16 +130,12 @@ export const usePriceRange = (bookingType?: 'daily' | 'monthly', debug = true) =
 
         console.log('Extracted prices:', prices);
 
+       
         if (prices.length === 0) {
           console.log('⚠️ No prices found for booking type:', bookingType);
           console.log('📊 Using fallback range due to no valid prices');
           
-          // More realistic fallback ranges based on typical Egyptian rental market
-          const fallbackRange = {
-            min: bookingType === 'monthly' ? 3000 : 100,  // Updated minimums
-            max: bookingType === 'monthly' ? 50000 : 3000, // Updated maximums
-            distribution: []
-          };
+         
           
           console.log('🔄 Fallback range set:', fallbackRange);
           
@@ -157,11 +162,7 @@ export const usePriceRange = (bookingType?: 'daily' | 'monthly', debug = true) =
         console.error('Price range fetch error:', error);
         if (mounted) {
           // Fallback range based on booking type
-          setPriceRange({
-            min: bookingType === 'monthly' ? 1000 : 50,
-            max: bookingType === 'monthly' ? 20000 : 2000,
-            distribution: []
-          });
+          setPriceRange(fallbackRange);
         }
       } finally {
         // Add a small delay to prevent rapid state changes

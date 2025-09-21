@@ -24,6 +24,8 @@ describe('usePropertyFiltering', () => {
       is_active: true,
       created_at: '',
       updated_at: '',
+      rental_type :"both"
+
     },
     {
       id: '2',
@@ -44,6 +46,7 @@ describe('usePropertyFiltering', () => {
       is_active: true,
       created_at: '',
       updated_at: '',
+      rental_type :"monthly"
     },
     {
       id: '3',
@@ -64,6 +67,8 @@ describe('usePropertyFiltering', () => {
       is_active: true,
       created_at: '',
       updated_at: '',
+      rental_type :"daily"
+
     },
   ];
 
@@ -90,8 +95,9 @@ describe('usePropertyFiltering', () => {
     const filters = {
       ...baseFilters,
       location: 'city',
-      advancedFilters: { ...baseFilters.advancedFilters, priceRange: [140, 160] as [number, number] },
+      advancedFilters: { ...baseFilters.advancedFilters, priceRange: [2500, 4000] as [number, number] ,bookingType :"monthly" },
     };
+  
     const { result } = renderHook(() => usePropertyFiltering(properties, filters));
     expect(result.current.filteredProperties.length).toBe(1);
     expect(result.current.filteredProperties[0].id).toBe('2');
@@ -104,6 +110,7 @@ describe('usePropertyFiltering', () => {
       advancedFilters: { ...baseFilters.advancedFilters, bookingType: 'monthly', priceRange: [1000, 4000] as [number, number] },
     };
     const { result } = renderHook(() => usePropertyFiltering(properties, filters));
+    
     expect(result.current.filteredProperties.length).toBe(2);
     const ids = result.current.filteredProperties.map(p => p.id);
     expect(ids).toContain('1');

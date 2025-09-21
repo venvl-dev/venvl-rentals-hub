@@ -30,7 +30,7 @@ describe('usePriceRange', () => {
     mockSupabaseResponse([]);
     const { result } = renderHook(() => usePriceRange('daily'));
     await waitFor(() => !result.current.loading);
-    expect(result.current.priceRange).toEqual({ min: 50, max: 2000, distribution: [] });
+    expect(result.current.priceRange).toEqual({ min: 100, max: 3000, distribution: [] });// updated min and max to match fallback
   });
 
   it('computes exact min and max from data without padding', async () => {
