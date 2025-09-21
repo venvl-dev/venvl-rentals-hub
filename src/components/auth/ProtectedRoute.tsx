@@ -112,6 +112,12 @@ const ProtectedRoute = ({
 
         if (error) {
           console.error("Profile query error:", error);
+          console.error("Error details:", {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
           throw error;
         }
 
@@ -144,8 +150,26 @@ const ProtectedRoute = ({
         localStorage.setItem(roleKey, JSON.stringify(secureCache));
       } catch (error) {
         console.error("Profile fetch error for user:", user!.id, error);
-        toast.error("Unable to fetch user profile");
-        navigate("/");
+
+        // More detailed error handling
+        if (error instanceof Error) {
+          console.error("Error message:", error.message);
+          console.error("Error stack:", error.stack);
+        }
+
+        // Check if it's a database connection issue
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('connection') || errorMessage.includes('network')) {
+          toast.error("Network error. Please check your connection and try again.");
+        } else if (errorMessage.includes('permission') || errorMessage.includes('access')) {
+          toast.error("Access denied. Please contact support if this persists.");
+        } else {
+          toast.error("Unable to fetch user profile. Please try logging in again.");
+        }
+
+        // Don't navigate away immediately, give users a chance to retry
+        setAuthorized(false);
+        setLoading(false);
         return;
       }
 
@@ -208,17 +232,38 @@ const ProtectedRoute = ({
       <div>
         <Header />
         <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-            <p className="text-gray-600 mb-4">
-              You do not have permission to view this page.
+          <div className="text-center max-w-md mx-auto">
+            <h1 className="text-2xl font-bold mb-4">Profile Loading Error</h1>
+            <p className="text-gray-600 mb-6">
+              There was an issue loading your profile. This could be due to a temporary network issue.
             </p>
-            <button
-              onClick={() => navigate("/")}
-              className="bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-colors font-medium"
-            >
-              Go Home
-            </button>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setLoading(true);
+                  checkAuth();
+                }}
+                className="w-full bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors font-medium"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => navigate("/")}
+                className="w-full bg-gray-600 text-white px-6 py-3 rounded-xl hover:bg-gray-700 transition-colors font-medium"
+              >
+                Go Home
+              </button>
+              <button
+                onClick={() => {
+                  // Clear local storage and try to re-authenticate
+                  localStorage.clear();
+                  window.location.reload();
+                }}
+                className="w-full bg-orange-600 text-white px-6 py-3 rounded-xl hover:bg-orange-700 transition-colors font-medium"
+              >
+                Clear Cache & Reload
+              </button>
+            </div>
           </div>
         </div>
       </div>
