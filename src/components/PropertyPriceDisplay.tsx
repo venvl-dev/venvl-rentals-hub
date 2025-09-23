@@ -28,7 +28,7 @@ const PropertyPriceDisplay = ({ property, className = "" }: PropertyPriceDisplay
       {(rentalType === 'daily' || rentalType === 'both') && (
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-gray-900">
-            EGP {dailyPrice}
+            EGP {dailyPrice.toLocaleString()}
           </span>
           <span className="text-gray-600">/ night</span>
         </div>
@@ -37,7 +37,7 @@ const PropertyPriceDisplay = ({ property, className = "" }: PropertyPriceDisplay
       {(rentalType === 'monthly' || rentalType === 'both') && monthlyPrice && (
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-gray-900">
-            EGP {monthlyPrice}
+            EGP {monthlyPrice.toLocaleString()}
           </span>
           <span className="text-gray-600">/ month</span>
         </div>

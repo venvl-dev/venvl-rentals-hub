@@ -241,7 +241,7 @@ const BookingDateSelector = ({
             <h3 className="text-lg font-bold text-gray-900">
               {bookingMode === 'daily' ? 'Select Your Dates' : 'Choose Duration'}
             </h3>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-black">
               {bookingMode === 'daily' ? 'Pick check-in and check-out dates' : 'Select start date and duration'}
             </p>
           </div>
@@ -259,7 +259,7 @@ const BookingDateSelector = ({
             className="space-y-4"
           >
             <div ref={dailyCalendarRef} className="relative overflow-hidden rounded-xl border border-gray-200/50 bg-gradient-to-b from-white to-gray-50/30 shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-600/5"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/5 to-black/10"></div>
               <div className="relative p-3 flex justify-center">
               <Calendar
                 mode="range"
@@ -300,25 +300,25 @@ const BookingDateSelector = ({
                 numberOfMonths={1}
                 className=""
                 classNames={{
-                  months: "flex flex-col space-y-2",
-                  month: "space-y-2",
-                  caption: "flex justify-center pt-1 relative items-center",
-                  caption_label: "text-sm font-bold text-gray-800",
+                  months: "flex flex-col space-y-3",
+                  month: "space-y-3",
+                  caption: "flex justify-center pt-2 relative items-center",
+                  caption_label: "text-lg font-bold text-black",
                   nav: "space-x-1 flex items-center",
-                  nav_button: "h-6 w-6 bg-white hover:bg-gray-50 rounded-md border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md",
+                  nav_button: "h-8 w-8 bg-white hover:bg-black hover:text-white rounded-md border border-black shadow-sm transition-all duration-200 hover:shadow-md",
                   nav_button_previous: "absolute left-1",
                   nav_button_next: "absolute right-1",
-                  table: "border-collapse space-y-1",
-                  head_row: "flex mb-1",
-                  head_cell: "text-gray-500 rounded-md w-7 font-medium text-xs uppercase tracking-wide",
-                  row: "flex mt-0.5 gap-0.5",
-                  cell: "h-7 w-7 text-center text-sm p-0 relative",
-                  day: "h-7 w-7 p-0 font-medium text-xs hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-md transition-all duration-200 hover:shadow-sm",
-                  day_selected: "bg-gradient-to-br from-gray-800 to-black text-white border-gray-700 shadow-md hover:from-black hover:to-gray-800 [&[aria-selected=false]]:bg-transparent [&[aria-selected=false]]:text-gray-800 [&[aria-selected=false]]:border-transparent",
-                  day_today: "bg-blue-50 text-blue-800 border-blue-200 font-bold",
-                  day_outside: "text-gray-300 opacity-40",
+                  table: "border-collapse space-y-2",
+                  head_row: "flex mb-2",
+                  head_cell: "text-black rounded-md w-10 font-medium text-sm uppercase tracking-wide",
+                  row: "flex mt-1 gap-1",
+                  cell: "h-10 w-10 text-center text-sm p-0 relative",
+                  day: "h-10 w-10 p-0 font-medium text-sm hover:bg-black hover:text-white hover:border-black border border-transparent rounded-md transition-all duration-200 hover:shadow-sm",
+                  day_selected: "bg-gradient-to-br from-gray-800 to-black text-white border-gray-700 shadow-md hover:from-black hover:to-gray-800 [&[aria-selected=false]]:bg-transparent [&[aria-selected=false]]:text-black [&[aria-selected=false]]:border-transparent",
+                  day_today: "bg-white text-black border-black font-bold",
+                  day_outside: "text-gray-400 opacity-40",
                   day_disabled: "bg-gray-100 text-gray-400 opacity-60 cursor-not-allowed border-gray-200",
-                  day_range_middle: "aria-selected:bg-blue-100 aria-selected:text-blue-800 aria-selected:border-blue-300",
+                  day_range_middle: "aria-selected:bg-gray-800 aria-selected:text-white aria-selected:border-black",
                 }}
               />
               </div>
@@ -358,13 +358,13 @@ const BookingDateSelector = ({
                     ? 'text-red-800'
                     : 'text-blue-800'
                 }`}>
-                  <span className="font-semibold">{differenceInDays(checkOut, checkIn)} nights</span>
+                  <span className="font-semibold">{differenceInDays(checkOut, checkIn).toLocaleString()} nights</span>
                   <span className="text-gray-600 ml-2">
                     {format(checkIn, 'MMM dd')} - {format(checkOut, 'MMM dd')}
                   </span>
                   {minNights && differenceInDays(checkOut, checkIn) < minNights && (
                     <div className="text-red-600 mt-2 text-sm font-medium">
-                      ⚠️ Minimum stay required: {minNights} night{minNights > 1 ? 's' : ''}
+                      ⚠️ Minimum stay required: {minNights?.toLocaleString()} night{minNights && minNights > 1 ? 's' : ''}
                     </div>
                   )}
                 </div>
@@ -383,7 +383,7 @@ const BookingDateSelector = ({
             className="space-y-4"
           >
             <div ref={monthlyCalendarRef} className="relative overflow-hidden rounded-xl border border-gray-200/50 bg-gradient-to-b from-white to-gray-50/30 shadow-sm hover:shadow-md transition-all duration-300">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-600/5"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-black/5 to-black/10"></div>
               <div className="relative p-3 flex justify-center">
               <Calendar
                 mode="single"
@@ -421,23 +421,23 @@ const BookingDateSelector = ({
                 numberOfMonths={1}
                 className=""
                 classNames={{
-                  months: "flex flex-col space-y-2",
-                  month: "space-y-2",
-                  caption: "flex justify-center pt-1 relative items-center",
-                  caption_label: "text-sm font-bold text-gray-800",
+                  months: "flex flex-col space-y-3",
+                  month: "space-y-3",
+                  caption: "flex justify-center pt-2 relative items-center",
+                  caption_label: "text-lg font-bold text-black",
                   nav: "space-x-1 flex items-center",
-                  nav_button: "h-6 w-6 bg-white hover:bg-gray-50 rounded-md border border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md",
+                  nav_button: "h-8 w-8 bg-white hover:bg-black hover:text-white rounded-md border border-black shadow-sm transition-all duration-200 hover:shadow-md",
                   nav_button_previous: "absolute left-1",
                   nav_button_next: "absolute right-1",
-                  table: "border-collapse space-y-1",
-                  head_row: "flex mb-1",
-                  head_cell: "text-gray-500 rounded-md w-7 font-medium text-xs uppercase tracking-wide",
-                  row: "flex mt-0.5 gap-0.5",
-                  cell: "h-7 w-7 text-center text-sm p-0 relative",
-                  day: "h-7 w-7 p-0 font-medium text-xs hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-md transition-all duration-200 hover:shadow-sm",
-                  day_selected: "bg-gradient-to-br from-gray-800 to-black text-white border-gray-700 shadow-md hover:from-black hover:to-gray-800 [&[aria-selected=false]]:bg-transparent [&[aria-selected=false]]:text-gray-800 [&[aria-selected=false]]:border-transparent",
-                  day_today: "bg-blue-50 text-blue-800 border-blue-200 font-bold",
-                  day_outside: "text-gray-300 opacity-40",
+                  table: "border-collapse space-y-2",
+                  head_row: "flex mb-2",
+                  head_cell: "text-black rounded-md w-10 font-medium text-sm uppercase tracking-wide",
+                  row: "flex mt-1 gap-1",
+                  cell: "h-10 w-10 text-center text-sm p-0 relative",
+                  day: "h-10 w-10 p-0 font-medium text-sm hover:bg-black hover:text-white hover:border-black border border-transparent rounded-md transition-all duration-200 hover:shadow-sm",
+                  day_selected: "bg-gradient-to-br from-gray-800 to-black text-white border-gray-700 shadow-md hover:from-black hover:to-gray-800 [&[aria-selected=false]]:bg-transparent [&[aria-selected=false]]:text-black [&[aria-selected=false]]:border-transparent",
+                  day_today: "bg-white text-black border-black font-bold",
+                  day_outside: "text-gray-400 opacity-40",
                   day_disabled: "bg-gray-100 text-gray-400 opacity-60 cursor-not-allowed border-gray-200",
                 }}
               />
@@ -491,7 +491,7 @@ const BookingDateSelector = ({
               </div>
               
               <div className="text-sm text-gray-600 text-center">
-                <span className="font-medium">{monthlyDuration} month{monthlyDuration > 1 ? 's' : ''}</span>
+                <span className="font-medium">{monthlyDuration.toLocaleString()} month{monthlyDuration > 1 ? 's' : ''}</span>
                 {monthlyStartDate && (
                   <span className="block text-xs mt-0.5">
                     Starting {format(monthlyStartDate, 'MMM dd')}
@@ -499,7 +499,7 @@ const BookingDateSelector = ({
                 )}
                 {minMonths && monthlyDuration < minMonths && (
                   <div className="text-red-600 mt-2 text-sm font-medium">
-                    ⚠️ Minimum stay required: {minMonths} month{minMonths > 1 ? 's' : ''}
+                    ⚠️ Minimum stay required: {minMonths?.toLocaleString()} month{minMonths && minMonths > 1 ? 's' : ''}
                   </div>
                 )}
               </div>
@@ -538,13 +538,13 @@ const BookingDateSelector = ({
                     ? 'text-red-800'
                     : 'text-green-800'
                 }`}>
-                  <span className="font-semibold">{monthlyDuration} month{monthlyDuration > 1 ? 's' : ''}</span>
+                  <span className="font-semibold">{monthlyDuration.toLocaleString()} month{monthlyDuration > 1 ? 's' : ''}</span>
                   <span className="text-gray-600 ml-2">
                     Starting {format(monthlyStartDate, 'MMM dd')}
                   </span>
                   {minMonths && monthlyDuration < minMonths && (
                     <div className="text-red-600 mt-2 text-sm font-medium">
-                      ⚠️ Minimum stay required: {minMonths} month{minMonths > 1 ? 's' : ''}
+                      ⚠️ Minimum stay required: {minMonths?.toLocaleString()} month{minMonths && minMonths > 1 ? 's' : ''}
                     </div>
                   )}
                 </div>

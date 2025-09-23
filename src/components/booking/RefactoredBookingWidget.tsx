@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { User } from '@supabase/supabase-js';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -62,6 +63,7 @@ interface RefactoredBookingWidgetProps {
 }
 
 const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: RefactoredBookingWidgetProps) => {
+  const navigate = useNavigate();
   const [bookingMode, setBookingMode] = useState<'daily' | 'monthly'>('daily');
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
@@ -284,7 +286,7 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
 
   const handleBooking = async () => {
     if (!user) {
-      toast.error('Please login to make a booking');
+      navigate('/auth');
       return;
     }
 
@@ -501,12 +503,12 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
           className="pt-1"
         >
           <Button
-            onClick={handleBooking}
-            disabled={isSubmitting || !validation.isValid}
+            onClick={!user ? () => navigate('/auth') : handleBooking}
+            disabled={user && (isSubmitting || !validation.isValid)}
             className={`
               w-full font-semibold py-3.5 px-6 rounded-xl shadow-lg transition-all duration-300 text-base
-              ${validation.isValid 
-                ? 'bg-black hover:bg-gray-800 text-white' 
+              ${!user || validation.isValid
+                ? 'bg-black hover:bg-gray-800 text-white'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300'
               }
             `}

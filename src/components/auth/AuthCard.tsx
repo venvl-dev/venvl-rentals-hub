@@ -238,7 +238,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .insert({
+        .upsert({
           id: userId,
           first_name: formData.firstName.trim(),
           last_name: formData.lastName.trim(),

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,14 +11,16 @@ interface PropertyImageCarouselProps {
   badges?: React.ReactNode;
 }
 
-const PropertyImageCarousel = ({ 
-  images, 
-  title, 
-  className = "", 
+const PropertyImageCarousel = ({
+  images,
+  title,
+  className = "",
   showBadges = true,
-  badges 
+  badges
 }: PropertyImageCarouselProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -30,6 +32,30 @@ const PropertyImageCarousel = ({
 
   const goToImage = (index: number) => {
     setCurrentImageIndex(index);
+  };
+
+  // Touch handlers for swipe functionality
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX;
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return;
+
+    const distance = touchStartX.current - touchEndX.current;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && images.length > 1) {
+      nextImage();
+    }
+    if (isRightSwipe && images.length > 1) {
+      prevImage();
+    }
   };
 
   // Handle case where there are no images
@@ -68,6 +94,9 @@ const PropertyImageCarousel = ({
         src={images[currentImageIndex] || '/placeholder.svg'}
         alt={`${title} - Image ${currentImageIndex + 1}`}
         className="w-full h-96 object-cover rounded-2xl shadow-lg"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       />
       
       {/* Badges */}
@@ -121,7 +150,7 @@ const PropertyImageCarousel = ({
         ))}
       </div>
 
-      {/* Keyboard Navigation */}
+      {/* Keyboard Navigation & Touch Area */}
       <div
         className="absolute inset-0 focus:outline-none"
         tabIndex={0}
@@ -134,7 +163,10 @@ const PropertyImageCarousel = ({
             nextImage();
           }
         }}
-        aria-label="Image carousel. Use arrow keys to navigate."
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        aria-label="Image carousel. Use arrow keys to navigate or swipe to change images."
       />
     </div>
   );
