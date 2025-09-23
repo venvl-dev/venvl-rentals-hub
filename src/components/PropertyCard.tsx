@@ -1,16 +1,32 @@
-import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, MapPin, Bed, Bath, Users, Star, Calendar, Clock } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { 
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Bed,
+  Bath,
+  Users,
+  Star,
+  Calendar,
+  Clock,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
   getBookingTypeLabel,
   getRentalTypeBadge,
   getPrimaryPrice,
-  type PropertyRentalData 
-} from '@/lib/rentalTypeUtils';
-import { getTopAmenities, cleanAmenityIds } from '@/lib/amenitiesUtils';
-import OptimizedImage from '@/components/ui/OptimizedImage';
+  type PropertyRentalData,
+} from "@/lib/rentalTypeUtils";
+import { getTopAmenities, cleanAmenityIds } from "@/lib/amenitiesUtils";
+import OptimizedImage from "@/components/ui/OptimizedImage";
 
 interface PropertyCardProps {
   property: {
@@ -37,10 +53,10 @@ interface PropertyCardProps {
 
 const PropertyCard = ({ property }: PropertyCardProps) => {
   const navigate = useNavigate();
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
-    const [touchStart, setTouchStart] = useState<number | null>(null);
-    const [touchEnd, setTouchEnd] = useState<number | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const cleanedAmenities = useMemo(
     () => cleanAmenityIds(property.amenities || []),
     [property.amenities]
@@ -50,22 +66,35 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     () => getTopAmenities(cleanedAmenities, 3),
     [cleanedAmenities]
   );
-  
+
   const handleClick = () => {
     navigate(`/property/${property.id}`);
   };
 
-  const images = property.images?.length > 0 ? property.images : ['https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'];
+  const images =
+    property.images?.length > 0
+      ? property.images
+      : [
+          "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80",
+        ];
 
-  const nextImage = useCallback((e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev + 1) % images.length);
-  }, [images.length]);
+  const nextImage = useCallback(
+    (e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    },
+    [images.length]
+  );
 
-  const prevImage = useCallback((e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  }, [images.length]);
+  const prevImage = useCallback(
+    (e?: React.MouseEvent) => {
+      if (e) e.stopPropagation();
+      setCurrentImageIndex(
+        (prev) => (prev - 1 + images.length) % images.length
+      );
+    },
+    [images.length]
+  );
 
   // Touch handlers for swipe gestures
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -79,56 +108,59 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     setTouchEnd(e.targetTouches[0].clientX);
   }, []);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation();
-    if (!touchStart || !touchEnd) return;
-    
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
+  const handleTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      e.stopPropagation();
+      if (!touchStart || !touchEnd) return;
 
-    if (isLeftSwipe && images.length > 1) {
-      nextImage();
-    }
-    if (isRightSwipe && images.length > 1) {
-      prevImage();
-    }
-  }, [touchStart, touchEnd, images.length, nextImage, prevImage]);
+      const distance = touchStart - touchEnd;
+      const isLeftSwipe = distance > 50;
+      const isRightSwipe = distance < -50;
+
+      if (isLeftSwipe && images.length > 1) {
+        nextImage();
+      }
+      if (isRightSwipe && images.length > 1) {
+        prevImage();
+      }
+    },
+    [touchStart, touchEnd, images.length, nextImage, prevImage]
+  );
 
   // Preload next and previous images for smoother transitions
   useEffect(() => {
     if (images.length > 1) {
       const nextIndex = (currentImageIndex + 1) % images.length;
       const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
-      
+
       // Preload next image with error handling
       try {
         const nextImg = new Image();
         nextImg.src = images[nextIndex];
       } catch (error) {
-        console.warn('Failed to preload next image:', error);
+        console.warn("Failed to preload next image:", error);
       }
-      
+
       // Preload previous image with error handling
       try {
         const prevImg = new Image();
         prevImg.src = images[prevIndex];
       } catch (error) {
-        console.warn('Failed to preload previous image:', error);
+        console.warn("Failed to preload previous image:", error);
       }
     }
   }, [currentImageIndex, images]);
 
   // ✅ SIMPLIFIED: Use new booking type utilities
-  const bookingTypes = property.booking_types || ['daily'];
+  const bookingTypes = property.booking_types || ["daily"];
   const bookingTypeLabel = getBookingTypeLabel(bookingTypes);
   const badge = getRentalTypeBadge(bookingTypes);
   const { price, unit } = getPrimaryPrice(property);
 
   // ✅ FLEXIBLE: Show both daily and monthly prices when available
   const getPricingDisplay = () => {
-    const hasDaily = bookingTypes.includes('daily');
-    const hasMonthly = bookingTypes.includes('monthly');
+    const hasDaily = bookingTypes.includes("daily");
+    const hasMonthly = bookingTypes.includes("monthly");
     const dailyPrice = property.daily_price || property.price_per_night || 0;
     const monthlyPrice = property.monthly_price || 0;
 
@@ -152,13 +184,15 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             {property.min_nights && (
               <div className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                Min. stay: {property.min_nights} night{property.min_nights > 1 ? 's' : ''}
+                Min. stay: {property.min_nights} night
+                {property.min_nights > 1 ? "s" : ""}
               </div>
             )}
             {property.min_months && (
               <div className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                Min. lease: {property.min_months} month{property.min_months > 1 ? 's' : ''}
+                Min. lease: {property.min_months} month
+                {property.min_months > 1 ? "s" : ""}
               </div>
             )}
           </div>
@@ -176,16 +210,18 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           <span className="text-gray-600 text-sm">/ {unit}</span>
         </div>
         {/* Show min requirements based on booking types */}
-        {unit === 'night' && property.min_nights && (
+        {unit === "night" && property.min_nights && (
           <div className="text-xs text-gray-500 flex items-center gap-1">
             <Calendar className="h-3 w-3" />
-            Min. stay: {property.min_nights} night{property.min_nights > 1 ? 's' : ''}
+            Min. stay: {property.min_nights} night
+            {property.min_nights > 1 ? "s" : ""}
           </div>
         )}
-        {unit === 'month' && property.min_months && (
+        {unit === "month" && property.min_months && (
           <div className="text-xs text-gray-500 flex items-center gap-1">
             <Clock className="h-3 w-3" />
-            Min. stay: {property.min_months} month{property.min_months > 1 ? 's' : ''}
+            Min. stay: {property.min_months} month
+            {property.min_months > 1 ? "s" : ""}
           </div>
         )}
       </div>
@@ -194,18 +230,18 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
 
   // ✅ SIMPLIFIED: Single badge using booking type label
   const getBadgeIcon = () => {
-    if (bookingTypeLabel === 'Monthly') return Clock;
-    if (bookingTypeLabel === 'Flexible') return Calendar; // Could use both icons but keep simple
+    if (bookingTypeLabel === "Monthly") return Clock;
+    if (bookingTypeLabel === "Flexible") return Calendar; // Could use both icons but keep simple
     return Calendar; // Default for Daily
   };
 
   return (
-    <Card 
+    <Card
       className="cursor-pointer overflow-hidden rounded-3xl border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white h-full flex flex-col"
       onClick={handleClick}
     >
       {/* Image Carousel Container */}
-      <div 
+      <div
         className="aspect-[4/3] relative overflow-hidden flex-shrink-0 group select-none"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -221,11 +257,14 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           quality={85}
           width={400}
           height={300}
-          style={{ 
-            transform: touchEnd && touchStart ? `translateX(${(touchEnd - touchStart) * 0.1}px)` : 'translateX(0)'
+          style={{
+            transform:
+              touchEnd && touchStart
+                ? `translateX(${(touchEnd - touchStart) * 0.1}px)`
+                : "translateX(0)",
           }}
         />
-        
+
         {/* Image Navigation */}
         {images.length > 1 && (
           <>
@@ -243,7 +282,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
             >
               <ChevronRight className="h-4 w-4 text-gray-900" />
             </button>
-            
+
             {/* Image Indicators */}
             <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10">
               {images.map((_, index) => (
@@ -254,22 +293,25 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
                     setCurrentImageIndex(index);
                   }}
                   className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    index === currentImageIndex 
-                      ? 'bg-white shadow-lg' 
-                      : 'bg-white/50 hover:bg-white/75'
+                    index === currentImageIndex
+                      ? "bg-white shadow-lg"
+                      : "bg-white/50 hover:bg-white/75"
                   }`}
                 />
               ))}
             </div>
           </>
         )}
-        
+
         {/* Rental Type Badge */}
         <div className="absolute top-3 left-3 z-10">
-          <Badge className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm ${badge.colorClass}`}>
-            {getBadgeIcon() && React.createElement(getBadgeIcon(), { className: "h-3 w-3" })}
+          <Badge
+            className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm ${badge.colorClass}`}
+          >
+            {getBadgeIcon() &&
+              React.createElement(getBadgeIcon(), { className: "h-3 w-3" })}
             <span className="hidden sm:inline">{badge.label}</span>
-            <span className="sm:hidden">{badge.label.split(' ')[0]}</span>
+            <span className="sm:hidden">{badge.label.split(" ")[0]}</span>
           </Badge>
         </div>
 
@@ -295,14 +337,19 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           {/* Location */}
           <div className="flex items-center text-gray-600">
             <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span className="text-sm font-medium truncate">{property.city}, {property.state}</span>
+            <span className="text-sm font-medium truncate">
+              {property.city}, {property.state}
+            </span>
           </div>
 
           {/* Title - Single line only */}
-          <h3 className="font-bold text-lg sm:text-lg lg:text-xl text-gray-900 truncate leading-tight" title={property.title}>
+          <h3
+            className="font-bold text-lg sm:text-lg lg:text-xl text-gray-900 truncate leading-tight"
+            title={property.title}
+          >
             {property.title}
           </h3>
-          
+
           {/* Property Details */}
           <div className="flex items-center gap-3 text-sm text-gray-600 flex-wrap">
             <div className="flex items-center gap-1">
@@ -317,7 +364,10 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
               <Users className="h-4 w-4" />
               <span>{property.max_guests}</span>
             </div>
-            <Badge variant="outline" className="text-xs rounded-full capitalize ml-auto">
+            <Badge
+              variant="outline"
+              className="text-xs rounded-full capitalize ml-auto"
+            >
               {property.property_type}
             </Badge>
           </div>
@@ -338,7 +388,10 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
                       >
                         <div className="w-3 h-3 flex items-center justify-center flex-shrink-0">
                           {IconComponent ? (
-                            <IconComponent className="h-2.5 w-2.5 text-gray-700" strokeWidth={1.5} />
+                            <IconComponent
+                              className="h-2.5 w-2.5 text-gray-700"
+                              strokeWidth={1.5}
+                            />
                           ) : (
                             <div className="w-2.5 h-2.5 rounded-full bg-gray-700"></div>
                           )}
@@ -351,7 +404,9 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
                   })}
                   {cleanedAmenities.length > 5 && (
                     <div className="flex items-center text-xs text-gray-500 rounded-full px-2 py-1 flex-shrink-0 bg-gray-100 hover:bg-gray-200 transition-colors duration-200">
-                      <span className="font-medium whitespace-nowrap">+{cleanedAmenities.length - 5}</span>
+                      <span className="font-medium whitespace-nowrap">
+                        +{cleanedAmenities.length - 5}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -369,9 +424,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           </p>
 
           {/* Pricing Section */}
-          <div className="mt-auto">
-            {getPricingDisplay()}
-          </div>
+          <div className="mt-auto">{getPricingDisplay()}</div>
         </div>
 
         {/* Book Now Button */}
@@ -389,4 +442,4 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
   );
 };
 
-export default PropertyCard; 
+export default PropertyCard;

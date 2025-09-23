@@ -113,7 +113,7 @@ const ProtectedRoute = ({
             message: error.message,
             details: error.details,
             hint: error.hint,
-            code: error.code
+            code: error.code,
           });
           throw error;
         }
@@ -155,13 +155,26 @@ const ProtectedRoute = ({
         }
 
         // Check if it's a database connection issue
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        if (errorMessage.includes('connection') || errorMessage.includes('network')) {
-          toast.error("Network error. Please check your connection and try again.");
-        } else if (errorMessage.includes('permission') || errorMessage.includes('access')) {
-          toast.error("Access denied. Please contact support if this persists.");
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        if (
+          errorMessage.includes("connection") ||
+          errorMessage.includes("network")
+        ) {
+          toast.error(
+            "Network error. Please check your connection and try again."
+          );
+        } else if (
+          errorMessage.includes("permission") ||
+          errorMessage.includes("access")
+        ) {
+          toast.error(
+            "Access denied. Please contact support if this persists."
+          );
         } else {
-          toast.error("Unable to fetch user profile. Please try logging in again.");
+          toast.error(
+            "Unable to fetch user profile. Please try logging in again."
+          );
         }
 
         // Don't navigate away immediately, give users a chance to retry
@@ -232,7 +245,8 @@ const ProtectedRoute = ({
           <div className="text-center max-w-md mx-auto">
             <h1 className="text-2xl font-bold mb-4">Profile Loading Error</h1>
             <p className="text-gray-600 mb-6">
-              There was an issue loading your profile. This could be due to a temporary network issue.
+              There was an issue loading your profile. This could be due to a
+              temporary network issue.
             </p>
             <div className="space-y-3">
               <button

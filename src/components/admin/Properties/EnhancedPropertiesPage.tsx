@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useAdminQueryClient } from '@/hooks/useAdminQueryClient';
-import { ColumnDef } from '@tanstack/react-table';
-import { toast } from 'sonner';
-import { 
-  MoreHorizontal, 
-  CheckCircle, 
-  XCircle, 
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAdminQueryClient } from "@/hooks/useAdminQueryClient";
+import { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
+import {
+  MoreHorizontal,
+  CheckCircle,
+  XCircle,
   Archive,
   Eye,
   MapPin,
@@ -14,19 +14,25 @@ import {
   Users,
   Bed,
   Bath,
-  Edit
-} from 'lucide-react';
+  Edit,
+} from "lucide-react";
 
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { 
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,7 +43,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -45,11 +51,11 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { DataTable } from '@/components/ui/data-table';
-import { supabase } from '@/integrations/supabase/client';
-import AdminLayout from '../AdminLayout';
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DataTable } from "@/components/ui/data-table";
+import { supabase } from "@/integrations/supabase/client";
+import AdminLayout from "../AdminLayout";
 
 interface Property {
   id: string;
@@ -66,7 +72,7 @@ interface Property {
   bedrooms: number | null;
   bathrooms: number | null;
   property_type: string;
-  approval_status: 'pending' | 'approved' | 'rejected';
+  approval_status: "pending" | "approved" | "rejected";
   is_active: boolean;
   images: string[];
   amenities: string[];
@@ -89,121 +95,151 @@ interface PropertyStats {
 
 const EnhancedPropertiesPage = () => {
   const { queryClient, invalidateAdminQueries } = useAdminQueryClient();
-  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
-  const [activeTab, setActiveTab] = useState('all');
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(
+    null
+  );
+  const [activeTab, setActiveTab] = useState("all");
 
   // Fetch properties
   const { data: properties = [], isLoading } = useQuery({
-    queryKey: ['admin-properties'],
+    queryKey: ["admin-properties"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('properties')
-        .select(`
-          *,
-          profiles!properties_host_id_fkey(
-            first_name,
-            last_name,
-            email
+      try {
+        const { data, error } = await supabase
+          .from("properties")
+          .select(
+            ` * ,profiles!fk_properties_host_id(
+    first_name,
+    last_name,
+    email
+  )  `
           )
-        `)
-        .order('created_at', { ascending: false });
+          .order("created_at", { ascending: false });
+        console.log("done");
 
-      if (error) throw error;
-      return data as Property[];
+        if (error) throw error;
+        return data as Property[];
+      } catch (err) {
+        console.log(err);
+      }
     },
   });
 
   // Update property status mutation
   const updatePropertyStatusMutation = useMutation({
-    mutationFn: async ({ propertyId, status }: { propertyId: string; status: 'approved' | 'rejected' }) => {
+    mutationFn: async ({
+      propertyId,
+      status,
+    }: {
+      propertyId: string;
+      status: "approved" | "rejected";
+    }) => {
       const { error } = await supabase
-        .from('properties')
+        .from("properties")
         .update({ approval_status: status })
-        .eq('id', propertyId);
+        .eq("id", propertyId);
 
       if (error) throw error;
 
-      await supabase.rpc('log_admin_action', {
+      await supabase.rpc("log_admin_action", {
         p_action: `property_${status}`,
-        p_resource_type: 'property',
+        p_resource_type: "property",
         p_resource_id: propertyId,
-        p_metadata: { status }
+        p_metadata: { status },
       });
     },
     onSuccess: (_, { status }) => {
-      invalidateAdminQueries([['admin-properties']]);
+      invalidateAdminQueries([["admin-properties"]]);
       toast.success(`Property ${status} successfully`);
     },
     onError: (error) => {
-      toast.error('Failed to update property status');
-      console.error('Property status update error:', error);
+      toast.error("Failed to update property status");
+      console.error("Property status update error:", error);
     },
   });
 
   // Toggle property active status mutation
   const togglePropertyActiveMutation = useMutation({
-    mutationFn: async ({ propertyId, isActive }: { propertyId: string; isActive: boolean }) => {
+    mutationFn: async ({
+      propertyId,
+      isActive,
+    }: {
+      propertyId: string;
+      isActive: boolean;
+    }) => {
       const { error } = await supabase
-        .from('properties')
+        .from("properties")
         .update({ is_active: !isActive })
-        .eq('id', propertyId);
+        .eq("id", propertyId);
 
       if (error) throw error;
 
-      await supabase.rpc('log_admin_action', {
-        p_action: isActive ? 'property_archived' : 'property_activated',
-        p_resource_type: 'property',
+      await supabase.rpc("log_admin_action", {
+        p_action: isActive ? "property_archived" : "property_activated",
+        p_resource_type: "property",
         p_resource_id: propertyId,
-        p_metadata: { is_active: !isActive }
+        p_metadata: { is_active: !isActive },
       });
     },
     onSuccess: (_, { isActive }) => {
-      invalidateAdminQueries([['admin-properties']]);
-      toast.success(`Property ${!isActive ? 'activated' : 'archived'} successfully`);
+      invalidateAdminQueries([["admin-properties"]]);
+      toast.success(
+        `Property ${!isActive ? "activated" : "archived"} successfully`
+      );
     },
     onError: (error) => {
-      toast.error('Failed to update property status');
-      console.error('Property toggle error:', error);
+      toast.error("Failed to update property status");
+      console.error("Property toggle error:", error);
     },
   });
 
   // Calculate stats
   const stats: PropertyStats = {
     totalProperties: properties.length,
-    pendingApproval: properties.filter(p => p.approval_status === 'pending').length,
-    approved: properties.filter(p => p.approval_status === 'approved').length,
-    rejected: properties.filter(p => p.approval_status === 'rejected').length,
-    archived: properties.filter(p => !p.is_active).length,
+    pendingApproval: properties.filter((p) => p.approval_status === "pending")
+      .length,
+    approved: properties.filter((p) => p.approval_status === "approved").length,
+    rejected: properties.filter((p) => p.approval_status === "rejected").length,
+    archived: properties.filter((p) => !p.is_active).length,
   };
 
   // Filter properties based on active tab
-  const filteredProperties = properties.filter(property => {
-    if (activeTab === 'all') return true;
-    if (activeTab === 'active') return property.is_active && property.approval_status === 'approved';
-    if (activeTab === 'archived') return !property.is_active;
+  const filteredProperties = properties.filter((property) => {
+    if (activeTab === "all") return true;
+    if (activeTab === "active")
+      return property.is_active && property.approval_status === "approved";
+    if (activeTab === "archived") return !property.is_active;
     return property.approval_status === activeTab;
   });
 
   const getHostName = (property: Property) => {
     const profile = property.profiles;
-    if (!profile) return 'Unknown Host';
-    return `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || profile.email || 'Unknown Host';
+    if (!profile) return "Unknown Host";
+    return (
+      `${profile.first_name || ""} ${profile.last_name || ""}`.trim() ||
+      profile.email ||
+      "Unknown Host"
+    );
   };
 
   const getStatusBadgeVariant = (status: string, isActive: boolean) => {
-    if (!isActive) return 'secondary';
+    if (!isActive) return "secondary";
     switch (status) {
-      case 'approved': return 'default';
-      case 'rejected': return 'destructive';
-      case 'pending': return 'outline';
-      default: return 'outline';
+      case "approved":
+        return "default";
+      case "rejected":
+        return "destructive";
+      case "pending":
+        return "outline";
+      default:
+        return "outline";
     }
   };
 
   const columns: ColumnDef<Property>[] = [
     {
-      accessorKey: 'title',
-      header: 'Property',
+      accessorKey: "title",
+      header: "Property",
       cell: ({ row }) => {
         const property = row.original;
         return (
@@ -217,21 +253,23 @@ const EnhancedPropertiesPage = () => {
       },
     },
     {
-      id: 'host',
-      header: 'Host',
+      id: "host",
+      header: "Host",
       cell: ({ row }) => {
         const property = row.original;
         return (
           <div className="text-sm">
             <div>{getHostName(property)}</div>
-            <div className="text-muted-foreground">{property.profiles?.email}</div>
+            <div className="text-muted-foreground">
+              {property.profiles?.email}
+            </div>
           </div>
         );
       },
     },
     {
-      id: 'location',
-      header: 'Location',
+      id: "location",
+      header: "Location",
       cell: ({ row }) => {
         const property = row.original;
         return (
@@ -243,8 +281,8 @@ const EnhancedPropertiesPage = () => {
       },
     },
     {
-      id: 'details',
-      header: 'Details',
+      id: "details",
+      header: "Details",
       cell: ({ row }) => {
         const property = row.original;
         return (
@@ -266,10 +304,10 @@ const EnhancedPropertiesPage = () => {
       },
     },
     {
-      accessorKey: 'price_per_night',
-      header: 'Price',
+      accessorKey: "price_per_night",
+      header: "Price",
       cell: ({ row }) => {
-        const price = row.getValue('price_per_night') as number;
+        const price = row.getValue("price_per_night") as number;
         return (
           <div className="flex items-center text-sm">
             <DollarSign className="h-3 w-3" />
@@ -279,23 +317,28 @@ const EnhancedPropertiesPage = () => {
       },
     },
     {
-      id: 'status',
-      header: 'Status',
+      id: "status",
+      header: "Status",
       cell: ({ row }) => {
         const property = row.original;
         return (
-          <Badge variant={getStatusBadgeVariant(property.approval_status, property.is_active)}>
-            {!property.is_active ? 'Archived' : property.approval_status}
+          <Badge
+            variant={getStatusBadgeVariant(
+              property.approval_status,
+              property.is_active
+            )}
+          >
+            {!property.is_active ? "Archived" : property.approval_status}
           </Badge>
         );
       },
     },
     {
-      id: 'actions',
-      header: 'Actions',
+      id: "actions",
+      header: "Actions",
       cell: ({ row }) => {
         const property = row.original;
-        
+
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -317,30 +360,36 @@ const EnhancedPropertiesPage = () => {
                   </DropdownMenuItem>
                 </DialogTrigger>
               </Dialog>
-              
-              <DropdownMenuItem onClick={() => toast.info('Edit feature coming soon')}>
+
+              <DropdownMenuItem
+                onClick={() => toast.info("Edit feature coming soon")}
+              >
                 <Edit className="mr-2 h-4 w-4" />
                 Edit Property
               </DropdownMenuItem>
-              
-              {property.approval_status === 'pending' && (
+
+              {property.approval_status === "pending" && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => updatePropertyStatusMutation.mutate({ 
-                      propertyId: property.id, 
-                      status: 'approved' 
-                    })}
+                    onClick={() =>
+                      updatePropertyStatusMutation.mutate({
+                        propertyId: property.id,
+                        status: "approved",
+                      })
+                    }
                     className="text-green-600"
                   >
                     <CheckCircle className="mr-2 h-4 w-4" />
                     Approve
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => updatePropertyStatusMutation.mutate({ 
-                      propertyId: property.id, 
-                      status: 'rejected' 
-                    })}
+                    onClick={() =>
+                      updatePropertyStatusMutation.mutate({
+                        propertyId: property.id,
+                        status: "rejected",
+                      })
+                    }
                     className="text-red-600"
                   >
                     <XCircle className="mr-2 h-4 w-4" />
@@ -348,38 +397,45 @@ const EnhancedPropertiesPage = () => {
                   </DropdownMenuItem>
                 </>
               )}
-              
+
               <DropdownMenuSeparator />
-              
+
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <DropdownMenuItem
                     onSelect={(e) => e.preventDefault()}
-                    className={property.is_active ? 'text-orange-600' : 'text-green-600'}
+                    className={
+                      property.is_active ? "text-orange-600" : "text-green-600"
+                    }
                   >
                     <Archive className="mr-2 h-4 w-4" />
-                    {property.is_active ? 'Archive' : 'Unarchive'}
+                    {property.is_active ? "Archive" : "Unarchive"}
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
                     <AlertDialogTitle>
-                      {property.is_active ? 'Archive' : 'Unarchive'} Property
+                      {property.is_active ? "Archive" : "Unarchive"} Property
                     </AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to {property.is_active ? 'archive' : 'unarchive'} this property?
-                      {property.is_active && ' It will no longer be visible to guests.'}
+                      Are you sure you want to{" "}
+                      {property.is_active ? "archive" : "unarchive"} this
+                      property?
+                      {property.is_active &&
+                        " It will no longer be visible to guests."}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => togglePropertyActiveMutation.mutate({ 
-                        propertyId: property.id, 
-                        isActive: property.is_active 
-                      })}
+                      onClick={() =>
+                        togglePropertyActiveMutation.mutate({
+                          propertyId: property.id,
+                          isActive: property.is_active,
+                        })
+                      }
                     >
-                      {property.is_active ? 'Archive' : 'Unarchive'}
+                      {property.is_active ? "Archive" : "Unarchive"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -408,40 +464,50 @@ const EnhancedPropertiesPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Properties
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalProperties}</div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Pending Approval
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats.pendingApproval}</div>
+              <div className="text-2xl font-bold text-orange-600">
+                {stats.pendingApproval}
+              </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Approved</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats.approved}
+              </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Rejected</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.rejected}</div>
+              <div className="text-2xl font-bold text-red-600">
+                {stats.rejected}
+              </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Archived</CardTitle>
@@ -485,7 +551,10 @@ const EnhancedPropertiesPage = () => {
 
         {/* Property Details Dialog */}
         {selectedProperty && (
-          <Dialog open={!!selectedProperty} onOpenChange={() => setSelectedProperty(null)}>
+          <Dialog
+            open={!!selectedProperty}
+            onOpenChange={() => setSelectedProperty(null)}
+          >
             <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Property Details</DialogTitle>
@@ -497,60 +566,84 @@ const EnhancedPropertiesPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium">Title</label>
-                    <p className="text-sm text-muted-foreground">{selectedProperty.title}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedProperty.title}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Type</label>
-                    <p className="text-sm text-muted-foreground capitalize">{selectedProperty.property_type}</p>
+                    <p className="text-sm text-muted-foreground capitalize">
+                      {selectedProperty.property_type}
+                    </p>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium">Description</label>
-                  <p className="text-sm text-muted-foreground">{selectedProperty.description || 'No description provided'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedProperty.description || "No description provided"}
+                  </p>
                 </div>
-                
+
                 <div>
                   <label className="text-sm font-medium">Address</label>
                   <p className="text-sm text-muted-foreground">
-                    {selectedProperty.address}, {selectedProperty.city}, {selectedProperty.state} {selectedProperty.country}
+                    {selectedProperty.address}, {selectedProperty.city},{" "}
+                    {selectedProperty.state} {selectedProperty.country}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="text-sm font-medium">Max Guests</label>
-                    <p className="text-sm text-muted-foreground">{selectedProperty.max_guests}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedProperty.max_guests}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Bedrooms</label>
-                    <p className="text-sm text-muted-foreground">{selectedProperty.bedrooms || 0}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedProperty.bedrooms || 0}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Bathrooms</label>
-                    <p className="text-sm text-muted-foreground">{selectedProperty.bathrooms || 0}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedProperty.bathrooms || 0}
+                    </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="text-sm font-medium">Price per Night</label>
-                    <p className="text-sm text-muted-foreground">${selectedProperty.price_per_night}</p>
+                    <label className="text-sm font-medium">
+                      Price per Night
+                    </label>
+                    <p className="text-sm text-muted-foreground">
+                      ${selectedProperty.price_per_night}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Daily Price</label>
-                    <p className="text-sm text-muted-foreground">${selectedProperty.daily_price || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">
+                      ${selectedProperty.daily_price || "N/A"}
+                    </p>
                   </div>
                   <div>
                     <label className="text-sm font-medium">Monthly Price</label>
-                    <p className="text-sm text-muted-foreground">${selectedProperty.monthly_price || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">
+                      ${selectedProperty.monthly_price || "N/A"}
+                    </p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium">Host Information</label>
+                  <label className="text-sm font-medium">
+                    Host Information
+                  </label>
                   <p className="text-sm text-muted-foreground">
-                    {getHostName(selectedProperty)} ({selectedProperty.profiles?.email})
+                    {getHostName(selectedProperty)} (
+                    {selectedProperty.profiles?.email})
                   </p>
                 </div>
 
@@ -569,8 +662,15 @@ const EnhancedPropertiesPage = () => {
                   <div>
                     <label className="text-sm font-medium">Status</label>
                     <p className="text-sm text-muted-foreground">
-                      <Badge variant={getStatusBadgeVariant(selectedProperty.approval_status, selectedProperty.is_active)}>
-                        {!selectedProperty.is_active ? 'Archived' : selectedProperty.approval_status}
+                      <Badge
+                        variant={getStatusBadgeVariant(
+                          selectedProperty.approval_status,
+                          selectedProperty.is_active
+                        )}
+                      >
+                        {!selectedProperty.is_active
+                          ? "Archived"
+                          : selectedProperty.approval_status}
                       </Badge>
                     </p>
                   </div>
@@ -582,13 +682,13 @@ const EnhancedPropertiesPage = () => {
                   </div>
                 </div>
 
-                {selectedProperty.approval_status === 'pending' && (
+                {selectedProperty.approval_status === "pending" && (
                   <div className="flex space-x-2 pt-4">
                     <Button
                       onClick={() => {
-                        updatePropertyStatusMutation.mutate({ 
-                          propertyId: selectedProperty.id, 
-                          status: 'approved' 
+                        updatePropertyStatusMutation.mutate({
+                          propertyId: selectedProperty.id,
+                          status: "approved",
                         });
                         setSelectedProperty(null);
                       }}
@@ -600,9 +700,9 @@ const EnhancedPropertiesPage = () => {
                     <Button
                       variant="destructive"
                       onClick={() => {
-                        updatePropertyStatusMutation.mutate({ 
-                          propertyId: selectedProperty.id, 
-                          status: 'rejected' 
+                        updatePropertyStatusMutation.mutate({
+                          propertyId: selectedProperty.id,
+                          status: "rejected",
                         });
                         setSelectedProperty(null);
                       }}

@@ -1,9 +1,9 @@
-import { 
-  getRentalType, 
-  getDailyPrice, 
-  getMonthlyPrice, 
-  type PropertyRentalData 
-} from '@/lib/rentalTypeUtils';
+import {
+  getRentalType,
+  getDailyPrice,
+  getMonthlyPrice,
+  type PropertyRentalData,
+} from "@/lib/rentalTypeUtils";
 
 interface Property {
   price_per_night: number;
@@ -18,14 +18,17 @@ interface PropertyPriceDisplayProps {
   className?: string;
 }
 
-const PropertyPriceDisplay = ({ property, className = "" }: PropertyPriceDisplayProps) => {
+const PropertyPriceDisplay = ({
+  property,
+  className = "",
+}: PropertyPriceDisplayProps) => {
   const rentalType = getRentalType(property);
   const dailyPrice = getDailyPrice(property);
   const monthlyPrice = getMonthlyPrice(property);
 
   return (
     <div className={`space-y-2 ${className}`}>
-      {(rentalType === 'daily' || rentalType === 'both') && (
+      {(rentalType === "daily" || rentalType === "both") && (
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-gray-900">
             EGP {dailyPrice.toLocaleString()}
@@ -33,8 +36,8 @@ const PropertyPriceDisplay = ({ property, className = "" }: PropertyPriceDisplay
           <span className="text-gray-600">/ night</span>
         </div>
       )}
-      
-      {(rentalType === 'monthly' || rentalType === 'both') && monthlyPrice && (
+
+      {(rentalType === "monthly" || rentalType === "both") && monthlyPrice && (
         <div className="flex items-center gap-2">
           <span className="text-2xl font-bold text-gray-900">
             EGP {monthlyPrice.toLocaleString()}

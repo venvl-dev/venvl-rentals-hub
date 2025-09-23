@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useState, useRef } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface PropertyImageCarouselProps {
   images: string[];
@@ -16,7 +16,7 @@ const PropertyImageCarousel = ({
   title,
   className = "",
   showBadges = true,
-  badges
+  badges,
 }: PropertyImageCarouselProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const touchStartX = useRef<number>(0);
@@ -61,7 +61,9 @@ const PropertyImageCarousel = ({
   // Handle case where there are no images
   if (!images || images.length === 0) {
     return (
-      <div className={`relative bg-gray-200 rounded-2xl shadow-lg ${className}`}>
+      <div
+        className={`relative bg-gray-200 rounded-2xl shadow-lg ${className}`}
+      >
         <div className="w-full h-96 flex items-center justify-center text-gray-500">
           <span>No images available</span>
         </div>
@@ -74,7 +76,7 @@ const PropertyImageCarousel = ({
     return (
       <div className={`relative ${className}`}>
         <img
-          src={images[0] || '/placeholder.svg'}
+          src={images[0] || "/placeholder.svg"}
           alt={title}
           className="w-full h-96 object-cover rounded-2xl shadow-lg"
         />
@@ -91,14 +93,14 @@ const PropertyImageCarousel = ({
     <div className={`relative group ${className}`}>
       {/* Main Image */}
       <img
-        src={images[currentImageIndex] || '/placeholder.svg'}
+        src={images[currentImageIndex] || "/placeholder.svg"}
         alt={`${title} - Image ${currentImageIndex + 1}`}
         className="w-full h-96 object-cover rounded-2xl shadow-lg"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       />
-      
+
       {/* Badges */}
       {showBadges && badges && (
         <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
@@ -141,8 +143,8 @@ const PropertyImageCarousel = ({
             key={index}
             className={`w-2 h-2 rounded-full transition-all duration-200 ${
               index === currentImageIndex
-                ? 'bg-white shadow-md'
-                : 'bg-white/50 hover:bg-white/70'
+                ? "bg-white shadow-md"
+                : "bg-white/50 hover:bg-white/70"
             }`}
             onClick={() => goToImage(index)}
             aria-label={`Go to image ${index + 1}`}
@@ -155,10 +157,10 @@ const PropertyImageCarousel = ({
         className="absolute inset-0 focus:outline-none"
         tabIndex={0}
         onKeyDown={(e) => {
-          if (e.key === 'ArrowLeft') {
+          if (e.key === "ArrowLeft") {
             e.preventDefault();
             prevImage();
-          } else if (e.key === 'ArrowRight') {
+          } else if (e.key === "ArrowRight") {
             e.preventDefault();
             nextImage();
           }

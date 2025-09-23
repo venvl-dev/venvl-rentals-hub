@@ -2,7 +2,7 @@
 -- Created: 2025-01-24
 -- Purpose: Add server-side role validation and security functions
 
--- =================================================================================
+-- ============================================================================
 -- SECURITY FUNCTIONS - Server-side role and session validation
 -- =================================================================================
 
@@ -20,32 +20,32 @@ DECLARE
 BEGIN
     -- Get current authenticated user ID
     user_id := auth.uid();
-    
+
     -- If no authenticated user, return null
     IF user_id IS NULL THEN
         RETURN NULL;
     END IF;
-    
+
     -- Validate session is still active (additional security check)
     -- Note: This queries the auth.users table to ensure session is valid
     SELECT EXISTS(
-        SELECT 1 FROM auth.users 
-        WHERE id = user_id 
+        SELECT 1 FROM auth.users
+        WHERE id = user_id
         AND last_sign_in_at > NOW() - INTERVAL '24 hours'
         AND (banned_until IS NULL OR banned_until < NOW())
     ) INTO session_valid;
-    
+
     -- If session is invalid, return null
     IF NOT session_valid THEN
         RETURN NULL;
     END IF;
-    
+
     -- Get role from profiles table with additional validation
-    SELECT role INTO user_role 
-    FROM profiles 
-    WHERE id = user_id 
+    SELECT role INTO user_role
+    FROM profiles
+    WHERE id = user_id
     AND is_active = TRUE;
-    
+
     -- Log role access for security auditing
     INSERT INTO audit_logs (
         user_id,
@@ -69,7 +69,7 @@ BEGIN
             'session_validation', 'passed'
         )
     );
-    
+
     RETURN COALESCE(user_role, 'guest');
 EXCEPTION
     WHEN OTHERS THEN
@@ -111,12 +111,12 @@ BEGIN
     -- Get current user and their verified role
     user_id := auth.uid();
     current_role := public.get_current_user_role_secure();
-    
+
     -- Check if user has required role
     IF current_role = required_role OR (required_role = 'admin' AND current_role = 'super_admin') THEN
         operation_allowed := TRUE;
     END IF;
-    
+
     -- Log admin operation attempt
     INSERT INTO audit_logs (
         user_id,
@@ -139,7 +139,7 @@ BEGIN
             'access_granted', operation_allowed
         )
     );
-    
+
     RETURN operation_allowed;
 EXCEPTION
     WHEN OTHERS THEN
@@ -175,16 +175,16 @@ DROP POLICY IF EXISTS "Super admins can update any profile" ON profiles;
 
 -- Enhanced profile read policy with session validation
 CREATE POLICY "Users can read own profile with validation" ON profiles
-    FOR SELECT 
+    FOR SELECT
     TO authenticated
     USING (
-        auth.uid() = id AND 
+        auth.uid() = id AND
         public.get_current_user_role_secure() IS NOT NULL
     );
 
 -- Enhanced profile update policy preventing role escalation
 CREATE POLICY "Users can update own profile securely" ON profiles
-    FOR UPDATE 
+    FOR UPDATE
     TO authenticated
     USING (auth.uid() = id)
     WITH CHECK (
@@ -195,13 +195,13 @@ CREATE POLICY "Users can update own profile securely" ON profiles
 
 -- Enhanced super admin read policy
 CREATE POLICY "Super admins can read all profiles securely" ON profiles
-    FOR SELECT 
+    FOR SELECT
     TO authenticated
     USING (public.validate_admin_operation('super_admin', 'profile_read'));
 
 -- Enhanced super admin update policy
 CREATE POLICY "Super admins can update any profile securely" ON profiles
-    FOR UPDATE 
+    FOR UPDATE
     TO authenticated
     USING (public.validate_admin_operation('super_admin', 'profile_update'))
     WITH CHECK (public.validate_admin_operation('super_admin', 'profile_update'));
@@ -244,7 +244,7 @@ BEGIN
             )
         );
     END IF;
-    
+
     RETURN NEW;
 END;
 $$;
@@ -278,15 +278,15 @@ DECLARE
     access_granted BOOLEAN := FALSE;
 BEGIN
     user_id := auth.uid();
-    
+
     -- Check authentication
     IF user_id IS NULL AND required_role != 'anonymous' THEN
         RETURN FALSE;
     END IF;
-    
+
     -- Get current role
     current_role := public.get_current_user_role_secure();
-    
+
     -- Check role authorization
     IF required_role = 'authenticated' AND current_role IS NOT NULL THEN
         access_granted := TRUE;
@@ -295,18 +295,18 @@ BEGIN
     ELSIF required_role = 'anonymous' THEN
         access_granted := TRUE;
     END IF;
-    
+
     -- Rate limiting check
     IF access_granted AND user_id IS NOT NULL THEN
         SELECT COUNT(*) INTO request_count
-        FROM audit_logs 
-        WHERE user_id = user_id 
+        FROM audit_logs
+        WHERE user_id = user_id
         AND action = CONCAT('api_', endpoint_name)
         AND created_at > NOW() - INTERVAL '1 minute';
-        
+
         IF request_count >= max_requests_per_minute THEN
             access_granted := FALSE;
-            
+
             -- Log rate limit violation
             INSERT INTO audit_logs (
                 user_id,
@@ -327,7 +327,7 @@ BEGIN
             );
         END IF;
     END IF;
-    
+
     -- Log API access attempt
     INSERT INTO audit_logs (
         user_id,
@@ -348,7 +348,7 @@ BEGIN
             'user_role', current_role
         )
     );
-    
+
     RETURN access_granted;
 END;
 $$;
@@ -359,9 +359,9 @@ GRANT EXECUTE ON FUNCTION public.validate_admin_operation(TEXT, TEXT) TO authent
 GRANT EXECUTE ON FUNCTION public.validate_api_access(TEXT, TEXT, INTEGER) TO authenticated, anon;
 
 -- Create indexes for performance
-CREATE INDEX IF NOT EXISTS idx_audit_logs_user_action_created 
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_action_created
     ON audit_logs(user_id, action, created_at);
-CREATE INDEX IF NOT EXISTS idx_profiles_role_active 
+CREATE INDEX IF NOT EXISTS idx_profiles_role_active
     ON profiles(role, is_active) WHERE is_active = TRUE;
 
 COMMENT ON FUNCTION public.get_current_user_role_secure() IS 'Securely retrieves and validates current user role with session verification';

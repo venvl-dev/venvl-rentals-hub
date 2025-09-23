@@ -1,6 +1,18 @@
+<<<<<<< HEAD
+
 # Welcome to our VENVL project
 
 ## Project info
+
+=======
+
+# Welcome to your Lovable project
+
+## Project info
+
+**URL**: https://lovable.dev/projects/33969250-c7b4-45da-9e5a-af9f6021ec27
+
+> > > > > > > testing
 
 ## ⚠️ Important: Environment Setup Required
 
@@ -9,11 +21,13 @@
 Before running the application, you **MUST** set up your environment variables:
 
 1. **Copy the example environment file:**
+
    ```sh
    cp .env.example .env
    ```
 
 2. **Add your Supabase credentials to the `.env` file:**
+
    - `VITE_SUPABASE_URL`: Your Supabase project URL
    - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
    - `SMTP_HOST`: SMTP server host
@@ -23,6 +37,7 @@ Before running the application, you **MUST** set up your environment variables:
    - `SMTP_SECURE`: `true` to use TLS
 
 3. **Find these values in your Supabase project dashboard:**
+
    - Go to Settings > API in your Supabase dashboard
    - Copy the Project URL and anon/public key
 
@@ -46,12 +61,14 @@ plain text.
 This project is structured with role-based code splitting for optimal performance:
 
 ### Directory Structure
+
 - `src/pages/guest/*` - Guest-specific pages (bookings, signup)
 - `src/pages/host/*` - Host-specific pages (dashboard, property management)
 - `src/pages/admin/*` - Admin-specific pages (user management, system setup)
 - `src/common/components/*` - Shared components across all roles
 
 ### Multiple Entry Points
+
 The application supports separate builds for each user role:
 
 - **Guest Portal**: `guest.html` - Includes public pages and guest features
@@ -60,6 +77,7 @@ The application supports separate builds for each user role:
 - **Main App**: `index.html` - Combined application (default)
 
 ### Build Commands
+
 ```sh
 # Development (loads all features)
 npm run dev
