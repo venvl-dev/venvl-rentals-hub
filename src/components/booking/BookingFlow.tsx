@@ -1,13 +1,12 @@
-
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { User } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import BookingSummary from './BookingSummary';
-import BookingConfirmation from './BookingConfirmation';
-import { useBookingFlow } from '@/hooks/useBookingFlow';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import BookingSummary from "./BookingSummary";
+import BookingConfirmation from "./bookingConfirmation";
+import { useBookingFlow } from "@/hooks/useBookingFlow";
 
 interface Property {
   id: string;
@@ -32,14 +31,19 @@ interface BookingFlowProps {
     checkIn: Date;
     checkOut: Date;
     guests: number;
-    bookingType: 'daily' | 'monthly';
+    bookingType: "daily" | "monthly";
     totalPrice: number;
     duration?: number;
   };
   onBack: () => void;
 }
 
-const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) => {
+const BookingFlow = ({
+  property,
+  user,
+  bookingData,
+  onBack,
+}: BookingFlowProps) => {
   const navigate = useNavigate();
   const {
     currentStep,
@@ -61,8 +65,10 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
         checkIn: bookingData.checkIn.toISOString(),
         checkOut: bookingData.checkOut.toISOString(),
       };
-      localStorage.setItem('pendingBooking', JSON.stringify(pendingBooking));
-      navigate('/auth?redirect=' + encodeURIComponent(window.location.pathname));
+      localStorage.setItem("pendingBooking", JSON.stringify(pendingBooking));
+      navigate(
+        "/auth?redirect=" + encodeURIComponent(window.location.pathname)
+      );
       return;
     }
 
@@ -70,13 +76,13 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
     const booking = {
       property_id: property.id,
       guest_id: user.id,
-      check_in: bookingData.checkIn.toISOString().split('T')[0],
-      check_out: bookingData.checkOut.toISOString().split('T')[0],
+      check_in: bookingData.checkIn.toISOString().split("T")[0],
+      check_out: bookingData.checkOut.toISOString().split("T")[0],
       guests: bookingData.guests,
       total_price: bookingData.totalPrice,
       booking_type: bookingData.bookingType,
       duration_months: bookingData.duration || null,
-      status: 'pending' as const,
+      status: "pending" as const,
     };
 
     proceedToSummary(booking);
@@ -109,7 +115,7 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <AnimatePresence mode="wait">
-        {currentStep === 'summary' && flowBookingData && (
+        {currentStep === "summary" && flowBookingData && (
           <motion.div
             key="summary"
             initial={{ opacity: 0, x: 20 }}
@@ -132,7 +138,9 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
                 checkIn: new Date(flowBookingData.check_in),
                 checkOut: new Date(flowBookingData.check_out),
                 guests: flowBookingData.guests,
-                bookingType: flowBookingData.booking_type as 'daily' | 'monthly',
+                bookingType: flowBookingData.booking_type as
+                  | "daily"
+                  | "monthly",
                 totalPrice: Number(flowBookingData.total_price),
                 duration: flowBookingData.duration_months || undefined,
               }}
@@ -143,7 +151,7 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
           </motion.div>
         )}
 
-        {currentStep === 'confirmation' && confirmedBooking && (
+        {currentStep === "confirmation" && confirmedBooking && (
           <motion.div
             key="confirmation"
             initial={{ opacity: 0, scale: 0.95 }}
@@ -154,7 +162,8 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
             <BookingConfirmation
               booking={{
                 ...confirmedBooking,
-                booking_reference: (confirmedBooking as any).booking_reference || 'PENDING',
+                booking_reference:
+                  (confirmedBooking as any).booking_reference || "PENDING",
                 property: {
                   id: property.id,
                   title: property.title,
