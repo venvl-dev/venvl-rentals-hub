@@ -19,11 +19,11 @@ class ImageCache {
     // Create loading promise
     const loadingPromise = new Promise<HTMLImageElement>((resolve, reject) => {
       const img = new Image();
-      
+
       // Try with CORS first, fallback without CORS if it fails
       const tryLoadWithCors = () => {
         img.crossOrigin = 'anonymous';
-        
+
         img.onload = async () => {
           try {
             await img.decode(); // Wait for decoding to complete
@@ -36,19 +36,19 @@ class ImageCache {
             tryLoadWithoutCors();
           }
         };
-        
+
         img.onerror = () => {
           // Network error with CORS, try without CORS
           console.error('Image network error with CORS');
           tryLoadWithoutCors();
         };
-        
+
         img.src = src;
       };
-      
+
       const tryLoadWithoutCors = () => {
         const imgNoCors = new Image();
-        
+
         imgNoCors.onload = async () => {
           try {
             await imgNoCors.decode(); // Wait for decoding to complete
@@ -62,17 +62,17 @@ class ImageCache {
             reject(new Error(`Failed to load and decode image: ${src}`));
           }
         };
-        
+
         imgNoCors.onerror = () => {
           // Network error without CORS, finally reject
           console.error('Image network error without CORS');
           this.loadingPromises.delete(src);
           reject(new Error(`Failed to load image: ${src}`));
         };
-        
+
         imgNoCors.src = src;
       };
-      
+
       // Start with CORS attempt
       tryLoadWithCors();
     });
@@ -88,13 +88,13 @@ class ImageCache {
       const firstKey = this.cache.keys().next().value;
       this.cache.delete(firstKey);
     }
-    
+
     this.cache.set(src, img);
   }
 
   // Preload multiple images
   async preloadImages(urls: string[]): Promise<void> {
-    const promises = urls.map(url => this.loadImage(url).catch(() => null));
+    const promises = urls.map((url) => this.loadImage(url).catch(() => null));
     await Promise.allSettled(promises);
   }
 
@@ -109,7 +109,7 @@ class ImageCache {
     return {
       size: this.cache.size,
       maxSize: this.maxCacheSize,
-      loadingCount: this.loadingPromises.size
+      loadingCount: this.loadingPromises.size,
     };
   }
 }
@@ -127,8 +127,8 @@ export interface ImageOptimizationOptions {
 }
 
 export function optimizeImageUrl(
-  url: string, 
-  options: ImageOptimizationOptions = {}
+  url: string,
+  options: ImageOptimizationOptions = {},
 ): string {
   if (!url || url.startsWith('data:') || url.startsWith('/')) {
     return url;
@@ -139,7 +139,7 @@ export function optimizeImageUrl(
     width,
     height,
     format = 'auto',
-    fit = 'cover'
+    fit = 'cover',
   } = options;
 
   // For local images, return as-is
@@ -150,8 +150,10 @@ export function optimizeImageUrl(
   // Check if this is a CORS-problematic domain (like Pinterest)
   const corsProblematicDomains = ['i.pinimg.com', 'pinterest.com'];
   const urlObj = new URL(url);
-  
-  if (corsProblematicDomains.some(domain => urlObj.hostname.includes(domain))) {
+
+  if (
+    corsProblematicDomains.some((domain) => urlObj.hostname.includes(domain))
+  ) {
     // Use our image proxy for CORS-problematic domains
     const proxyUrl = `https://xhzgistgvcbmcfczcrib.supabase.co/functions/v1/image-proxy?url=${encodeURIComponent(url)}`;
     return proxyUrl;
@@ -173,20 +175,22 @@ export function optimizeImageUrl(
 
 // Progressive image loading with low-quality placeholder
 export function generateLowQualityPlaceholder(
-  originalUrl: string, 
-  width: number = 10, 
-  height: number = 10
+  originalUrl: string,
+  width: number = 10,
+  height: number = 10,
 ): string {
   return optimizeImageUrl(originalUrl, {
     quality: 10,
     width,
     height,
-    format: 'jpeg'
+    format: 'jpeg',
   });
 }
 
 // Preload critical images for better performance
-export async function preloadCriticalImages(imageUrls: string[]): Promise<void> {
+export async function preloadCriticalImages(
+  imageUrls: string[],
+): Promise<void> {
   const criticalUrls = imageUrls.slice(0, 6); // Preload first 6 images
   await imageCache.preloadImages(criticalUrls);
 }
@@ -197,9 +201,11 @@ export function getOptimalImageFormat(): 'webp' | 'jpeg' {
   const canvas = document.createElement('canvas');
   canvas.width = 1;
   canvas.height = 1;
-  
+
   try {
-    const webpSupported = canvas.toDataURL('image/webp').startsWith('data:image/webp');
+    const webpSupported = canvas
+      .toDataURL('image/webp')
+      .startsWith('data:image/webp');
     return webpSupported ? 'webp' : 'jpeg';
   } catch {
     return 'jpeg';
@@ -209,49 +215,48 @@ export function getOptimalImageFormat(): 'webp' | 'jpeg' {
 // Lazy loading with Intersection Observer
 export function createLazyLoadObserver(
   callback: (entry: IntersectionObserverEntry) => void,
-  options: IntersectionObserverInit = {}
+  options: IntersectionObserverInit = {},
 ): IntersectionObserver {
   const defaultOptions: IntersectionObserverInit = {
     threshold: 0.1,
     rootMargin: '50px',
-    ...options
+    ...options,
   };
 
-  return new IntersectionObserver(
-    (entries) => {
-      entries.forEach(callback);
-    },
-    defaultOptions
-  );
+  return new IntersectionObserver((entries) => {
+    entries.forEach(callback);
+  }, defaultOptions);
 }
 
 // Image loading utility with retry mechanism
 export async function loadImageWithRetry(
-  src: string, 
-  maxRetries: number = 3
+  src: string,
+  maxRetries: number = 3,
 ): Promise<HTMLImageElement> {
   let lastError: Error;
-  
+
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await imageCache.loadImage(src);
     } catch (error) {
       lastError = error as Error;
       // Wait before retry (exponential backoff)
-      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000));
+      await new Promise((resolve) =>
+        setTimeout(resolve, Math.pow(2, i) * 1000),
+      );
     }
   }
-  
+
   throw lastError!;
 }
 
 // Batch image preloading for property cards
 export async function preloadPropertyImages(
   properties: Array<{ images: string[] }>,
-  maxImages: number = 20
+  maxImages: number = 20,
 ): Promise<void> {
   const allImages = properties
-    .flatMap(property => property.images)
+    .flatMap((property) => property.images)
     .filter(Boolean)
     .slice(0, maxImages);
 
@@ -260,8 +265,7 @@ export async function preloadPropertyImages(
 
 // Utility to check if image is in cache
 export function isImageCached(src: string): boolean {
-  return imageCache.getCacheStats().size > 0 && 
-         imageCache['cache'].has(src);
+  return imageCache.getCacheStats().size > 0 && imageCache['cache'].has(src);
 }
 
 // Clear image cache when memory is low
@@ -279,10 +283,10 @@ export function setupMemoryManagement(): void {
         imageCache.clearCache();
       }
     };
-    
+
     setInterval(checkMemory, 30000); // Check every 30 seconds
   }
 }
 
 // Initialize memory management
-setupMemoryManagement(); 
+setupMemoryManagement();

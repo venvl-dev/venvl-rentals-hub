@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User } from '@supabase/supabase-js';
@@ -39,7 +38,12 @@ interface BookingFlowProps {
   onBack: () => void;
 }
 
-const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) => {
+const BookingFlow = ({
+  property,
+  user,
+  bookingData,
+  onBack,
+}: BookingFlowProps) => {
   const navigate = useNavigate();
   const {
     currentStep,
@@ -62,7 +66,9 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
         checkOut: bookingData.checkOut.toISOString(),
       };
       localStorage.setItem('pendingBooking', JSON.stringify(pendingBooking));
-      navigate('/auth?redirect=' + encodeURIComponent(window.location.pathname));
+      navigate(
+        '/auth?redirect=' + encodeURIComponent(window.location.pathname),
+      );
       return;
     }
 
@@ -94,24 +100,24 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
   if (!user) {
     return (
       <motion.div
-        className="flex items-center justify-center p-8"
+        className='flex items-center justify-center p-8'
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p className="text-gray-600">Redirecting to login...</p>
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4'></div>
+          <p className='text-gray-600'>Redirecting to login...</p>
         </div>
       </motion.div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <AnimatePresence mode="wait">
+    <div className='max-w-4xl mx-auto p-6'>
+      <AnimatePresence mode='wait'>
         {currentStep === 'summary' && flowBookingData && (
           <motion.div
-            key="summary"
+            key='summary'
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -132,7 +138,9 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
                 checkIn: new Date(flowBookingData.check_in),
                 checkOut: new Date(flowBookingData.check_out),
                 guests: flowBookingData.guests,
-                bookingType: flowBookingData.booking_type as 'daily' | 'monthly',
+                bookingType: flowBookingData.booking_type as
+                  | 'daily'
+                  | 'monthly',
                 totalPrice: Number(flowBookingData.total_price),
                 duration: flowBookingData.duration_months || undefined,
               }}
@@ -145,7 +153,7 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
 
         {currentStep === 'confirmation' && confirmedBooking && (
           <motion.div
-            key="confirmation"
+            key='confirmation'
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
@@ -154,7 +162,8 @@ const BookingFlow = ({ property, user, bookingData, onBack }: BookingFlowProps) 
             <BookingConfirmation
               booking={{
                 ...confirmedBooking,
-                booking_reference: (confirmedBooking as any).booking_reference || 'PENDING',
+                booking_reference:
+                  (confirmedBooking as any).booking_reference || 'PENDING',
                 property: {
                   id: property.id,
                   title: property.title,

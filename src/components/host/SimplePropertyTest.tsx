@@ -12,12 +12,15 @@ const SimplePropertyTest = () => {
     setLoading(true);
     try {
       console.log('Testing property save...');
-      
+
       // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
       if (userError) throw userError;
       if (!user) throw new Error('Not authenticated');
-      
+
       console.log('User:', user.id);
 
       // Simple test data with proper types
@@ -40,7 +43,7 @@ const SimplePropertyTest = () => {
         is_active: true,
         approval_status: 'approved' as const,
         amenities: [] as string[],
-        images: [] as string[]
+        images: [] as string[],
       };
 
       console.log('Test data:', testData);
@@ -58,10 +61,11 @@ const SimplePropertyTest = () => {
         console.log('Success:', data);
         toast.success('Test property saved successfully!');
       }
-
     } catch (error) {
       console.error('Test error:', error);
-      toast.error(`Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(
+        `Test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     } finally {
       setLoading(false);
     }
@@ -71,8 +75,10 @@ const SimplePropertyTest = () => {
     setLoading(true);
     try {
       console.log('Testing property update...');
-      
-      const { data: { user } } = await supabase.auth.getUser();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
       // Find first property owned by user
@@ -105,47 +111,44 @@ const SimplePropertyTest = () => {
         console.log('Update success:', data);
         toast.success('Property updated successfully!');
       }
-
     } catch (error) {
       console.error('Update test error:', error);
-      toast.error(`Update test failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      toast.error(
+        `Update test failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-6 border rounded-lg bg-yellow-50">
-      <h3 className="text-lg font-bold mb-4">🔧 Property Save Test</h3>
-      
-      <div className="space-y-4">
+    <div className='p-6 border rounded-lg bg-yellow-50'>
+      <h3 className='text-lg font-bold mb-4'>🔧 Property Save Test</h3>
+
+      <div className='space-y-4'>
         <div>
           <Input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Property title"
+            placeholder='Property title'
           />
         </div>
-        
-        <div className="flex gap-2">
-          <Button 
-            onClick={testSave} 
+
+        <div className='flex gap-2'>
+          <Button
+            onClick={testSave}
             disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700"
+            className='bg-blue-600 hover:bg-blue-700'
           >
             {loading ? 'Testing...' : 'Test Insert'}
           </Button>
-          
-          <Button 
-            onClick={testUpdate} 
-            disabled={loading}
-            variant="outline"
-          >
+
+          <Button onClick={testUpdate} disabled={loading} variant='outline'>
             {loading ? 'Testing...' : 'Test Update'}
           </Button>
         </div>
-        
-        <p className="text-sm text-gray-600">
+
+        <p className='text-sm text-gray-600'>
           افتح Console (F12) لمشاهدة تفاصيل الأخطاء
         </p>
       </div>
@@ -153,4 +156,4 @@ const SimplePropertyTest = () => {
   );
 };
 
-export default SimplePropertyTest; 
+export default SimplePropertyTest;

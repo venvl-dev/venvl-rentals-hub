@@ -1,7 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -29,7 +35,7 @@ const RolesPage = () => {
         .from('roles_permissions')
         .select('*')
         .order('role', { ascending: true });
-      
+
       if (error) throw error;
       return data as RolePermission[];
     },
@@ -37,23 +43,31 @@ const RolesPage = () => {
 
   // Update permission mutation
   const updatePermissionMutation = useMutation({
-    mutationFn: async ({ role, permissionName, value }: { 
-      role: string; 
-      permissionName: string; 
-      value: boolean; 
+    mutationFn: async ({
+      role,
+      permissionName,
+      value,
+    }: {
+      role: string;
+      permissionName: string;
+      value: boolean;
     }) => {
       const { error } = await supabase
         .from('roles_permissions')
         .update({ permission_value: value })
         .eq('role', role)
         .eq('permission_name', permissionName);
-      
+
       if (error) throw error;
-      
+
       await supabase.rpc('log_admin_action', {
         p_action: 'update_role_permission',
         p_resource_type: 'roles_permissions',
-        p_metadata: { role, permission_name: permissionName, permission_value: value }
+        p_metadata: {
+          role,
+          permission_name: permissionName,
+          permission_value: value,
+        },
       });
     },
     onSuccess: () => {
@@ -67,17 +81,24 @@ const RolesPage = () => {
   });
 
   const getPermissionsByRole = (role: string) => {
-    return permissions?.filter(p => p.role === role) || [];
+    return permissions?.filter((p) => p.role === role) || [];
   };
 
-  const getPermissionValue = (role: string, permissionName: string): boolean => {
+  const getPermissionValue = (
+    role: string,
+    permissionName: string,
+  ): boolean => {
     const permission = permissions?.find(
-      p => p.role === role && p.permission_name === permissionName
+      (p) => p.role === role && p.permission_name === permissionName,
     );
     return permission?.permission_value || false;
   };
 
-  const handlePermissionToggle = (role: string, permissionName: string, value: boolean) => {
+  const handlePermissionToggle = (
+    role: string,
+    permissionName: string,
+    value: boolean,
+  ) => {
     updatePermissionMutation.mutate({ role, permissionName, value });
   };
 
@@ -157,36 +178,36 @@ const RolesPage = () => {
 
   if (isLoading) {
     return (
-      <AdminLayout title="Role Permissions">
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
+      <AdminLayout title='Role Permissions'>
+        <div className='flex items-center justify-center p-8'>
+          <Loader2 className='h-8 w-8 animate-spin' />
         </div>
       </AdminLayout>
     );
   }
 
   return (
-    <AdminLayout title="Role Permissions">
-      <div className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <AdminLayout title='Role Permissions'>
+      <div className='p-6 space-y-6'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
           {roleDefinitions.map((roleDef) => {
             const Icon = roleDef.icon;
             const rolePermissions = getPermissionsByRole(roleDef.role);
-            const activePermissions = rolePermissions.filter(p => p.permission_value).length;
-            
+            const activePermissions = rolePermissions.filter(
+              (p) => p.permission_value,
+            ).length;
+
             return (
               <Card key={roleDef.role}>
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <Icon className="h-5 w-5" />
-                    <Badge className={roleDef.color}>
-                      {roleDef.name}
-                    </Badge>
+                <CardContent className='p-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
+                    <Icon className='h-5 w-5' />
+                    <Badge className={roleDef.color}>{roleDef.name}</Badge>
                   </div>
-                  <div className="text-sm text-muted-foreground mb-2">
+                  <div className='text-sm text-muted-foreground mb-2'>
                     {roleDef.description}
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className='text-xs text-muted-foreground'>
                     {activePermissions} permissions enabled
                   </div>
                 </CardContent>
@@ -195,48 +216,53 @@ const RolesPage = () => {
           })}
         </div>
 
-        <div className="space-y-6">
+        <div className='space-y-6'>
           {roleDefinitions.map((roleDef) => (
             <Card key={roleDef.role}>
               <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <roleDef.icon className="h-6 w-6" />
+                <div className='flex items-center space-x-3'>
+                  <roleDef.icon className='h-6 w-6' />
                   <div>
-                    <CardTitle className="flex items-center space-x-2">
+                    <CardTitle className='flex items-center space-x-2'>
                       <span>{roleDef.name} Permissions</span>
-                      <Badge className={roleDef.color}>
-                        {roleDef.role}
-                      </Badge>
+                      <Badge className={roleDef.color}>{roleDef.role}</Badge>
                     </CardTitle>
                     <CardDescription>{roleDef.description}</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   {availablePermissions.map((permission) => (
-                    <div key={permission.name} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-0.5">
+                    <div key={permission.name} className='space-y-2'>
+                      <div className='flex items-center justify-between'>
+                        <div className='space-y-0.5'>
                           <Label htmlFor={`${roleDef.role}-${permission.name}`}>
                             {permission.label}
                           </Label>
-                          <div className="text-sm text-muted-foreground">
+                          <div className='text-sm text-muted-foreground'>
                             {permission.description}
                           </div>
                         </div>
                         <Switch
                           id={`${roleDef.role}-${permission.name}`}
-                          checked={getPermissionValue(roleDef.role, permission.name)}
-                          onCheckedChange={(checked) => 
-                            handlePermissionToggle(roleDef.role, permission.name, checked)
+                          checked={getPermissionValue(
+                            roleDef.role,
+                            permission.name,
+                          )}
+                          onCheckedChange={(checked) =>
+                            handlePermissionToggle(
+                              roleDef.role,
+                              permission.name,
+                              checked,
+                            )
                           }
                           disabled={updatePermissionMutation.isPending}
                         />
                       </div>
-                      {permission.name !== availablePermissions[availablePermissions.length - 1].name && (
-                        <Separator />
-                      )}
+                      {permission.name !==
+                        availablePermissions[availablePermissions.length - 1]
+                          .name && <Separator />}
                     </div>
                   ))}
                 </div>
@@ -247,8 +273,8 @@ const RolesPage = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Key className="h-5 w-5" />
+            <CardTitle className='flex items-center space-x-2'>
+              <Key className='h-5 w-5' />
               <span>Access Rules Overview</span>
             </CardTitle>
             <CardDescription>
@@ -256,28 +282,29 @@ const RolesPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className='space-y-4'>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4'>
                 {roleDefinitions.map((roleDef) => {
-                  const enabledPermissions = availablePermissions.filter(perm => 
-                    getPermissionValue(roleDef.role, perm.name)
+                  const enabledPermissions = availablePermissions.filter(
+                    (perm) => getPermissionValue(roleDef.role, perm.name),
                   );
-                  
+
                   return (
-                    <div key={roleDef.role} className="space-y-2">
-                      <Badge className={roleDef.color}>
-                        {roleDef.name}
-                      </Badge>
-                      <div className="space-y-1">
+                    <div key={roleDef.role} className='space-y-2'>
+                      <Badge className={roleDef.color}>{roleDef.name}</Badge>
+                      <div className='space-y-1'>
                         {enabledPermissions.length > 0 ? (
                           enabledPermissions.map((perm) => (
-                            <div key={perm.name} className="text-xs text-muted-foreground flex items-center">
-                              <div className="w-1 h-1 bg-green-500 rounded-full mr-2" />
+                            <div
+                              key={perm.name}
+                              className='text-xs text-muted-foreground flex items-center'
+                            >
+                              <div className='w-1 h-1 bg-green-500 rounded-full mr-2' />
                               {perm.label}
                             </div>
                           ))
                         ) : (
-                          <div className="text-xs text-muted-foreground">
+                          <div className='text-xs text-muted-foreground'>
                             No permissions enabled
                           </div>
                         )}

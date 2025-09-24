@@ -1,13 +1,19 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useMemo,
+} from 'react';
 import { cn } from '@/lib/utils';
-import { 
-  imageCache, 
-  optimizeImageUrl, 
+import {
+  imageCache,
+  optimizeImageUrl,
   generateLowQualityPlaceholder,
   getOptimalImageFormat,
   createLazyLoadObserver,
   isImageCached,
-  type ImageOptimizationOptions
+  type ImageOptimizationOptions,
 } from '@/lib/imageOptimization';
 
 interface OptimizedImageProps {
@@ -46,17 +52,17 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const [isInView, setIsInView] = useState(!lazy);
   const [currentSrc, setCurrentSrc] = useState(() => {
     if (!lazy) return src;
-    
+
     if (placeholder) return placeholder;
-    
+
     // Generate low-quality placeholder for progressive loading
     if (progressive && src) {
       return generateLowQualityPlaceholder(src, 20, 20);
     }
-    
+
     return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Ik0xMDAgMTAwbTAtNTBhNTAgNTAgMCAxIDEgMCAxMDBhNTAgNTAgMCAxIDEgMC0xMDBaIiBmaWxsPSIjZTVlN2ViIi8+Cjwvc3ZnPg==';
   });
-  
+
   const imgRef = useRef<HTMLImageElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
@@ -67,9 +73,9 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       width,
       height,
       format: getOptimalImageFormat(),
-      fit: 'cover'
+      fit: 'cover',
     };
-    
+
     return optimizeImageUrl(src, options);
   }, [src, quality, width, height]);
 
@@ -85,7 +91,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     console.warn('Image failed to load (likely CORS):', currentSrc);
     setIsError(true);
     setIsLoaded(false);
-    
+
     // Try fallback if available and not already using it
     if (fallbackSrc && currentSrc !== fallbackSrc) {
       console.log('Using fallback image:', fallbackSrc);
@@ -93,7 +99,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       setIsError(false); // Reset error state when using fallback
       return;
     }
-    
+
     onError?.();
   }, [currentSrc, fallbackSrc, onError]);
 
@@ -111,7 +117,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       {
         threshold: 0.1,
         rootMargin: '50px',
-      }
+      },
     );
 
     observerRef.current.observe(imgRef.current);
@@ -133,7 +139,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     }
 
     // Load image through cache
-    imageCache.loadImage(optimizedSrc)
+    imageCache
+      .loadImage(optimizedSrc)
       .then(() => {
         setCurrentSrc(optimizedSrc);
       })
@@ -160,35 +167,48 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         className={cn(
           'transition-all duration-500 ease-out',
           isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105',
-          className
+          className,
         )}
         onLoad={handleLoad}
         onError={handleError}
         style={style}
         loading={lazy ? 'lazy' : 'eager'}
-        decoding="async"
+        decoding='async'
       />
-      
+
       {/* Progressive loading overlay */}
       {progressive && !isLoaded && currentSrc !== optimizedSrc && (
-        <div className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse" />
+        <div className='absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse' />
       )}
-      
+
       {/* Loading skeleton */}
-      {!isLoaded && !isError && currentSrc === 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Ik0xMDAgMTAwbTAtNTBhNTAgNTAgMCAxIDEgMCAxMDBhNTAgNTAgMCAxIDEgMC0xMDBaIiBmaWxsPSIjZTVlN2ViIi8+Cjwvc3ZnPg==' && (
-        <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      )}
-      
+      {!isLoaded &&
+        !isError &&
+        currentSrc ===
+          'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Ik0xMDAgMTAwbTAtNTBhNTAgNTAgMCAxIDEgMCAxMDBhNTAgNTAgMCAxIDEgMC0xMDBaIiBmaWxsPSIjZTVlN2ViIi8+Cjwvc3ZnPg==' && (
+          <div className='absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center'>
+            <div className='w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin'></div>
+          </div>
+        )}
+
       {/* Error state */}
       {isError && (
-        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-          <div className="text-gray-400 text-center">
-            <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z" />
+        <div className='absolute inset-0 bg-gray-100 flex items-center justify-center'>
+          <div className='text-gray-400 text-center'>
+            <svg
+              className='w-8 h-8 mx-auto mb-2'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 002 2z'
+              />
             </svg>
-            <p className="text-xs">Failed to load image</p>
+            <p className='text-xs'>Failed to load image</p>
           </div>
         </div>
       )}
@@ -196,4 +216,4 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   );
 };
 
-export default OptimizedImage; 
+export default OptimizedImage;

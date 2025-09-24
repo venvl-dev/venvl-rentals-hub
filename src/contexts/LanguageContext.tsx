@@ -1,5 +1,10 @@
-
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 
 type Language = 'en' | 'es' | 'fr';
 
@@ -21,7 +26,7 @@ const translations = {
     'header.myProperties': 'My Properties',
     'header.signOut': 'Sign out',
     'header.adminPanel': 'Admin Panel',
-    
+
     // Admin Panel
     'admin.title': 'Admin Panel',
     'admin.users': 'Users',
@@ -44,7 +49,7 @@ const translations = {
     'admin.edit': 'Edit',
     'admin.delete': 'Delete',
     'admin.viewDetails': 'View Details',
-    
+
     // Common
     'common.loading': 'Loading...',
     'common.error': 'Error',
@@ -64,7 +69,7 @@ const translations = {
     'header.myProperties': 'Mis Propiedades',
     'header.signOut': 'Cerrar sesión',
     'header.adminPanel': 'Panel de Administrador',
-    
+
     // Admin Panel
     'admin.title': 'Panel de Administrador',
     'admin.users': 'Usuarios',
@@ -87,7 +92,7 @@ const translations = {
     'admin.edit': 'Editar',
     'admin.delete': 'Eliminar',
     'admin.viewDetails': 'Ver Detalles',
-    
+
     // Common
     'common.loading': 'Cargando...',
     'common.error': 'Error',
@@ -107,7 +112,7 @@ const translations = {
     'header.myProperties': 'Mes Propriétés',
     'header.signOut': 'Se déconnecter',
     'header.adminPanel': "Panneau d'administration",
-    
+
     // Admin Panel
     'admin.title': "Panneau d'administration",
     'admin.users': 'Utilisateurs',
@@ -130,7 +135,7 @@ const translations = {
     'admin.edit': 'Modifier',
     'admin.delete': 'Supprimer',
     'admin.viewDetails': 'Voir les détails',
-    
+
     // Common
     'common.loading': 'Chargement...',
     'common.error': 'Erreur',
@@ -141,7 +146,9 @@ const translations = {
   },
 };
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const LanguageContext = createContext<LanguageContextType | undefined>(
+  undefined,
+);
 
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const [language, setLanguage] = useState<Language>(() => {
@@ -154,7 +161,11 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   }, [language]);
 
   const t = (key: string): string => {
-    return translations[language][key as keyof typeof translations[typeof language]] || key;
+    return (
+      translations[language][
+        key as keyof (typeof translations)[typeof language]
+      ] || key
+    );
   };
 
   return (

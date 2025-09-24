@@ -4,7 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -62,7 +68,7 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
     daily_price: 0,
     monthly_price: 0,
     images: [],
-    amenities: []
+    amenities: [],
   });
 
   const [amenities, setAmenities] = useState<Amenity[]>([]);
@@ -74,39 +80,44 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
     if (property) {
       setFormData({
         ...property,
-        amenities: normalizeAmenities(property.amenities || [])
+        amenities: normalizeAmenities(property.amenities || []),
       });
     }
   }, [property]);
 
   const fetchAmenities = () => {
     // Use the structured amenities from amenitiesUtils.ts
-    const structuredAmenities = AMENITIES.map(amenity => ({
+    const structuredAmenities = AMENITIES.map((amenity) => ({
       id: amenity.id,
       name: amenity.name,
       icon: amenity.icon,
-      category: amenity.category
+      category: amenity.category,
     }));
     setAmenities(structuredAmenities);
   };
 
-  const handleInputChange = (field: keyof typeof formData, value: string | number | string[]) => {
-    setFormData(prev => ({
+  const handleInputChange = (
+    field: keyof typeof formData,
+    value: string | number | string[],
+  ) => {
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleAmenityToggle = (amenityId: string, checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      amenities: checked 
+      amenities: checked
         ? [...prev.amenities, amenityId]
-        : prev.amenities.filter(id => id !== amenityId)
+        : prev.amenities.filter((id) => id !== amenityId),
     }));
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
@@ -134,9 +145,9 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
         uploadedUrls.push(data.publicUrl);
       }
 
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        images: [...prev.images, ...uploadedUrls]
+        images: [...prev.images, ...uploadedUrls],
       }));
 
       toast.success('Images uploaded successfully');
@@ -149,9 +160,9 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
   };
 
   const removeImage = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }));
   };
 
@@ -172,7 +183,7 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
         ...formData,
         amenities: normalizedAmenities,
         host_id: user.data.user.id,
-        daily_price: formData.price_per_night // Keep backward compatibility
+        daily_price: formData.price_per_night, // Keep backward compatibility
       };
 
       let result;
@@ -184,9 +195,7 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
           .eq('id', property.id);
       } else {
         // Create new property
-        result = await supabase
-          .from('properties')
-          .insert(propertyData);
+        result = await supabase.from('properties').insert(propertyData);
       }
 
       if (result.error) throw result.error;
@@ -206,86 +215,105 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
     { value: 'villa' as PropertyType, label: 'Villa' },
     { value: 'studio' as PropertyType, label: 'Studio' },
     { value: 'cabin' as PropertyType, label: 'Cabin' },
-    { value: 'loft' as PropertyType, label: 'Loft' }
+    { value: 'loft' as PropertyType, label: 'Loft' },
   ];
 
   const rentalTypes = [
     { value: 'daily', label: 'Daily Rental' },
     { value: 'monthly', label: 'Monthly Rental' },
-    { value: 'both', label: 'Both Daily & Monthly' }
+    { value: 'both', label: 'Both Daily & Monthly' },
   ];
 
-  const groupedAmenities = amenities.reduce((acc, amenity) => {
-    if (!acc[amenity.category]) acc[amenity.category] = [];
-    acc[amenity.category].push(amenity);
-    return acc;
-  }, {} as Record<string, Amenity[]>);
+  const groupedAmenities = amenities.reduce(
+    (acc, amenity) => {
+      if (!acc[amenity.category]) acc[amenity.category] = [];
+      acc[amenity.category].push(amenity);
+      return acc;
+    },
+    {} as Record<string, Amenity[]>,
+  );
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" onClick={onCancel}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
+    <div className='max-w-4xl mx-auto'>
+      <div className='flex items-center gap-4 mb-6'>
+        <Button variant='outline' onClick={onCancel}>
+          <ArrowLeft className='h-4 w-4 mr-2' />
           Back to Dashboard
         </Button>
-        <h1 className="text-2xl font-bold">
+        <h1 className='text-2xl font-bold'>
           {property ? 'Edit Property' : 'Add New Property'}
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className='space-y-6'>
         <Card>
           <CardHeader>
             <CardTitle>Basic Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className='space-y-4'>
             <div>
-              <Label htmlFor="title">Property Title</Label>
+              <Label htmlFor='title'>Property Title</Label>
               <Input
-                id="title"
+                id='title'
                 value={formData.title}
                 onChange={(e) => handleInputChange('title', e.target.value)}
-                placeholder="Beautiful downtown apartment"
+                placeholder='Beautiful downtown apartment'
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor='description'>Description</Label>
               <Textarea
-                id="description"
+                id='description'
                 value={formData.description}
-                onChange={(e) => handleInputChange('description', e.target.value)}
-                placeholder="Describe your property..."
+                onChange={(e) =>
+                  handleInputChange('description', e.target.value)
+                }
+                placeholder='Describe your property...'
                 rows={4}
                 required
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <div>
-                <Label htmlFor="property_type">Property Type</Label>
-                <Select value={formData.property_type} onValueChange={(value) => handleInputChange('property_type', value)}>
+                <Label htmlFor='property_type'>Property Type</Label>
+                <Select
+                  value={formData.property_type}
+                  onValueChange={(value) =>
+                    handleInputChange('property_type', value)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {propertyTypes.map(type => (
-                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                    {propertyTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="rental_type">Rental Type</Label>
-                <Select value={formData.rental_type} onValueChange={(value) => handleInputChange('rental_type', value)}>
+                <Label htmlFor='rental_type'>Rental Type</Label>
+                <Select
+                  value={formData.rental_type}
+                  onValueChange={(value) =>
+                    handleInputChange('rental_type', value)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {rentalTypes.map(type => (
-                      <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                    {rentalTypes.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -298,48 +326,48 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
           <CardHeader>
             <CardTitle>Location</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className='space-y-4'>
             <div>
-              <Label htmlFor="address">Address</Label>
+              <Label htmlFor='address'>Address</Label>
               <Input
-                id="address"
+                id='address'
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                placeholder="123 Main St"
+                placeholder='123 Main St'
                 required
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
               <div>
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor='city'>City</Label>
                 <Input
-                  id="city"
+                  id='city'
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
-                  placeholder="New York"
+                  placeholder='New York'
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="state">State</Label>
+                <Label htmlFor='state'>State</Label>
                 <Input
-                  id="state"
+                  id='state'
                   value={formData.state}
                   onChange={(e) => handleInputChange('state', e.target.value)}
-                  placeholder="NY"
+                  placeholder='NY'
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="country">Country</Label>
+                <Label htmlFor='country'>Country</Label>
                 <Input
-                  id="country"
+                  id='country'
                   value={formData.country}
                   onChange={(e) => handleInputChange('country', e.target.value)}
-                  placeholder="US"
+                  placeholder='US'
                   required
                 />
               </div>
@@ -351,41 +379,53 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
           <CardHeader>
             <CardTitle>Property Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardContent className='space-y-4'>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
               <div>
-                <Label htmlFor="bedrooms">Bedrooms</Label>
+                <Label htmlFor='bedrooms'>Bedrooms</Label>
                 <Input
-                  id="bedrooms"
-                  type="number"
-                  min="0"
+                  id='bedrooms'
+                  type='number'
+                  min='0'
                   value={formData.bedrooms}
-                  onChange={(e) => handleInputChange('bedrooms', parseInt(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleInputChange('bedrooms', parseInt(e.target.value) || 0)
+                  }
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="bathrooms">Bathrooms</Label>
+                <Label htmlFor='bathrooms'>Bathrooms</Label>
                 <Input
-                  id="bathrooms"
-                  type="number"
-                  min="0"
-                  step="0.5"
+                  id='bathrooms'
+                  type='number'
+                  min='0'
+                  step='0.5'
                   value={formData.bathrooms}
-                  onChange={(e) => handleInputChange('bathrooms', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleInputChange(
+                      'bathrooms',
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
                   required
                 />
               </div>
 
               <div>
-                <Label htmlFor="max_guests">Max Guests</Label>
+                <Label htmlFor='max_guests'>Max Guests</Label>
                 <Input
-                  id="max_guests"
-                  type="number"
-                  min="1"
+                  id='max_guests'
+                  type='number'
+                  min='1'
                   value={formData.max_guests}
-                  onChange={(e) => handleInputChange('max_guests', parseInt(e.target.value) || 1)}
+                  onChange={(e) =>
+                    handleInputChange(
+                      'max_guests',
+                      parseInt(e.target.value) || 1,
+                    )
+                  }
                   required
                 />
               </div>
@@ -397,31 +437,42 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
           <CardHeader>
             <CardTitle>Pricing</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <CardContent className='space-y-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <div>
-                <Label htmlFor="price_per_night">Daily Price ($)</Label>
+                <Label htmlFor='price_per_night'>Daily Price ($)</Label>
                 <Input
-                  id="price_per_night"
-                  type="number"
-                  min="0"
-                  step="0.01"
+                  id='price_per_night'
+                  type='number'
+                  min='0'
+                  step='0.01'
                   value={formData.price_per_night}
-                  onChange={(e) => handleInputChange('price_per_night', parseFloat(e.target.value) || 0)}
+                  onChange={(e) =>
+                    handleInputChange(
+                      'price_per_night',
+                      parseFloat(e.target.value) || 0,
+                    )
+                  }
                   required
                 />
               </div>
 
-              {(formData.rental_type === 'monthly' || formData.rental_type === 'both') && (
+              {(formData.rental_type === 'monthly' ||
+                formData.rental_type === 'both') && (
                 <div>
-                  <Label htmlFor="monthly_price">Monthly Price ($)</Label>
+                  <Label htmlFor='monthly_price'>Monthly Price ($)</Label>
                   <Input
-                    id="monthly_price"
-                    type="number"
-                    min="0"
-                    step="0.01"
+                    id='monthly_price'
+                    type='number'
+                    min='0'
+                    step='0.01'
                     value={formData.monthly_price}
-                    onChange={(e) => handleInputChange('monthly_price', parseFloat(e.target.value) || 0)}
+                    onChange={(e) =>
+                      handleInputChange(
+                        'monthly_price',
+                        parseFloat(e.target.value) || 0,
+                      )
+                    }
                   />
                 </div>
               )}
@@ -433,42 +484,44 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
           <CardHeader>
             <CardTitle>Images</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-4">
-              <Label htmlFor="images" className="cursor-pointer">
-                <div className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg hover:border-gray-400">
-                  <Upload className="h-4 w-4" />
+          <CardContent className='space-y-4'>
+            <div className='flex items-center gap-4'>
+              <Label htmlFor='images' className='cursor-pointer'>
+                <div className='flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 rounded-lg hover:border-gray-400'>
+                  <Upload className='h-4 w-4' />
                   Upload Images
                 </div>
                 <Input
-                  id="images"
-                  type="file"
+                  id='images'
+                  type='file'
                   multiple
-                  accept="image/*"
+                  accept='image/*'
                   onChange={handleImageUpload}
-                  className="hidden"
+                  className='hidden'
                 />
               </Label>
-              {imageUploading && <span className="text-sm text-gray-600">Uploading...</span>}
+              {imageUploading && (
+                <span className='text-sm text-gray-600'>Uploading...</span>
+              )}
             </div>
 
             {formData.images.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
                 {formData.images.map((image, index) => (
-                  <div key={index} className="relative">
+                  <div key={index} className='relative'>
                     <img
                       src={image}
                       alt={`Property image ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg"
+                      className='w-full h-32 object-cover rounded-lg'
                     />
                     <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2 h-6 w-6 p-0"
+                      type='button'
+                      variant='destructive'
+                      size='sm'
+                      className='absolute top-2 right-2 h-6 w-6 p-0'
                       onClick={() => removeImage(index)}
                     >
-                      <X className="h-4 w-4" />
+                      <X className='h-4 w-4' />
                     </Button>
                   </div>
                 ))}
@@ -481,37 +534,48 @@ const PropertyForm = ({ property, onSave, onCancel }: PropertyFormProps) => {
           <CardHeader>
             <CardTitle>Amenities</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {Object.entries(groupedAmenities).map(([category, categoryAmenities]) => (
-              <div key={category}>
-                <h4 className="font-medium text-sm text-gray-700 uppercase tracking-wide mb-3">
-                  {category}
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {categoryAmenities.map((amenity) => (
-                    <div key={amenity.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={amenity.id}
-                        checked={formData.amenities.includes(amenity.id)}
-                        onCheckedChange={(checked) => handleAmenityToggle(amenity.id, checked as boolean)}
-                      />
-                      <Label htmlFor={amenity.id} className="text-sm">
-                        {amenity.name}
-                      </Label>
-                    </div>
-                  ))}
+          <CardContent className='space-y-6'>
+            {Object.entries(groupedAmenities).map(
+              ([category, categoryAmenities]) => (
+                <div key={category}>
+                  <h4 className='font-medium text-sm text-gray-700 uppercase tracking-wide mb-3'>
+                    {category}
+                  </h4>
+                  <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+                    {categoryAmenities.map((amenity) => (
+                      <div
+                        key={amenity.id}
+                        className='flex items-center space-x-2'
+                      >
+                        <Checkbox
+                          id={amenity.id}
+                          checked={formData.amenities.includes(amenity.id)}
+                          onCheckedChange={(checked) =>
+                            handleAmenityToggle(amenity.id, checked as boolean)
+                          }
+                        />
+                        <Label htmlFor={amenity.id} className='text-sm'>
+                          {amenity.name}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ),
+            )}
           </CardContent>
         </Card>
 
-        <div className="flex gap-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
+        <div className='flex gap-4'>
+          <Button type='button' variant='outline' onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Saving...' : (property ? 'Update Property' : 'Create Property')}
+          <Button type='submit' disabled={loading}>
+            {loading
+              ? 'Saving...'
+              : property
+                ? 'Update Property'
+                : 'Create Property'}
           </Button>
         </div>
       </form>

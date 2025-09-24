@@ -1,11 +1,14 @@
-
 import { useState, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { CalendarBooking } from '../types';
 import { toast } from 'sonner';
 
-export const useBookings = (userId: string, userType: 'host' | 'guest', currentDate: Date) => {
+export const useBookings = (
+  userId: string,
+  userType: 'host' | 'guest',
+  currentDate: Date,
+) => {
   const [bookings, setBookings] = useState<CalendarBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +24,9 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
       const startDate = format(startOfMonth(currentDate), 'yyyy-MM-dd');
       const endDate = format(endOfMonth(currentDate), 'yyyy-MM-dd');
 
-      console.log(`Fetching bookings for ${userType} user ${userId} from ${startDate} to ${endDate}`);
+      console.log(
+        `Fetching bookings for ${userType} user ${userId} from ${startDate} to ${endDate}`,
+      );
 
       // Get bookings without foreign key joins to avoid relationship issues
       let bookingsQuery = supabase
@@ -37,7 +42,7 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
           .from('properties')
           .select('id')
           .eq('host_id', userId);
-        
+
         if (propertiesError) {
           console.error('Error fetching host properties:', propertiesError);
           throw propertiesError;
@@ -50,7 +55,7 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
           return;
         }
 
-        const propertyIds = hostProperties.map(p => p.id);
+        const propertyIds = hostProperties.map((p) => p.id);
         bookingsQuery = bookingsQuery.in('property_id', propertyIds);
       } else {
         bookingsQuery = bookingsQuery.eq('guest_id', userId);
@@ -63,14 +68,15 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
         throw bookingsError;
       }
 
-      console.log(`Found ${bookingsData?.length || 0} bookings for period ${startDate} to ${endDate}:`, 
-        bookingsData?.map(b => ({
+      console.log(
+        `Found ${bookingsData?.length || 0} bookings for period ${startDate} to ${endDate}:`,
+        bookingsData?.map((b) => ({
           id: b.id.substring(0, 8),
           check_in: b.check_in,
           check_out: b.check_out,
           status: b.status,
-          property_id: b.property_id.substring(0, 8)
-        }))
+          property_id: b.property_id.substring(0, 8),
+        })),
       );
 
       if (!bookingsData || bookingsData.length === 0) {
@@ -80,9 +86,13 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
       }
 
       // Get unique guest IDs and property IDs for separate queries
-      const guestIds = [...new Set(bookingsData.map(b => b.guest_id).filter(Boolean))];
-      const propertyIds = [...new Set(bookingsData.map(b => b.property_id).filter(Boolean))];
-      
+      const guestIds = [
+        ...new Set(bookingsData.map((b) => b.guest_id).filter(Boolean)),
+      ];
+      const propertyIds = [
+        ...new Set(bookingsData.map((b) => b.property_id).filter(Boolean)),
+      ];
+
       // Fetch guest profiles separately
       let guestProfiles: Array<{
         id: string;
@@ -121,19 +131,23 @@ export const useBookings = (userId: string, userType: 'host' | 'guest', currentD
       }
 
       // Combine the data
-      const typedBookings: CalendarBooking[] = bookingsData.map(booking => {
-        const guestProfile = guestProfiles.find(p => p.id === booking.guest_id);
-        const property = propertyData.find(p => p.id === booking.property_id);
+      const typedBookings: CalendarBooking[] = bookingsData.map((booking) => {
+        const guestProfile = guestProfiles.find(
+          (p) => p.id === booking.guest_id,
+        );
+        const property = propertyData.find((p) => p.id === booking.property_id);
         return {
           ...booking,
           property: property ? { title: property.title } : null,
-          guest: guestProfile ? {
-            first_name: guestProfile.first_name || '',
-            last_name: guestProfile.last_name || ''
-          } : null
+          guest: guestProfile
+            ? {
+                first_name: guestProfile.first_name || '',
+                last_name: guestProfile.last_name || '',
+              }
+            : null,
         };
       });
-      
+
       setBookings(typedBookings);
     } catch (error) {
       console.error('Error in fetchBookings:', error);

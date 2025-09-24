@@ -27,7 +27,6 @@ Before running the application, you **MUST** set up your environment variables:
    ```
 
 2. **Add your Supabase credentials to the `.env` file:**
-
    - `VITE_SUPABASE_URL`: Your Supabase project URL
    - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
    - `SMTP_HOST`: SMTP server host
@@ -37,7 +36,6 @@ Before running the application, you **MUST** set up your environment variables:
    - `SMTP_SECURE`: `true` to use TLS
 
 3. **Find these values in your Supabase project dashboard:**
-
    - Go to Settings > API in your Supabase dashboard
    - Copy the Project URL and anon/public key
 

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import AuthCard from '@/components/auth/AuthCard';
 

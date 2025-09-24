@@ -4,13 +4,21 @@ import { checkRateLimit, logSecurityEvent } from '@/lib/security';
 import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
 
 interface SecurityContextType {
-  checkAndLogAction: (action: string, resourceType?: string, resourceId?: string) => Promise<boolean>;
+  checkAndLogAction: (
+    action: string,
+    resourceType?: string,
+    resourceId?: string,
+  ) => Promise<boolean>;
   isRateLimited: (action: string) => Promise<boolean>;
 }
 
-const SecurityContext = createContext<SecurityContextType | undefined>(undefined);
+const SecurityContext = createContext<SecurityContextType | undefined>(
+  undefined,
+);
 
-export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { user } = useAuth();
 
   useEffect(() => {
@@ -20,24 +28,30 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, [user]);
 
   const checkAndLogAction = async (
-    action: string, 
-    resourceType?: string, 
-    resourceId?: string
+    action: string,
+    resourceType?: string,
+    resourceId?: string,
   ): Promise<boolean> => {
     try {
       // Check rate limiting
       const isAllowed = await checkRateLimit(action, 100, 60); // 100 actions per hour
-      
+
       if (!isAllowed) {
-        await logSecurityEvent(action, resourceType, resourceId, false, 'Rate limit exceeded');
+        await logSecurityEvent(
+          action,
+          resourceType,
+          resourceId,
+          false,
+          'Rate limit exceeded',
+        );
         await handleError(
           new CustomError(
             'Rate limit exceeded',
             ErrorCodes.SYSTEM_RATE_LIMIT_EXCEEDED,
             'medium',
-            'You are performing actions too quickly. Please wait a moment.'
+            'You are performing actions too quickly. Please wait a moment.',
           ),
-          { action, userId: user?.id }
+          { action, userId: user?.id },
         );
         return false;
       }
@@ -46,7 +60,13 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       await logSecurityEvent(action, resourceType, resourceId, true);
       return true;
     } catch (error) {
-      await logSecurityEvent(action, resourceType, resourceId, false, (error as Error).message);
+      await logSecurityEvent(
+        action,
+        resourceType,
+        resourceId,
+        false,
+        (error as Error).message,
+      );
       return false;
     }
   };
@@ -62,7 +82,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const value = {
     checkAndLogAction,
-    isRateLimited
+    isRateLimited,
   };
 
   return (

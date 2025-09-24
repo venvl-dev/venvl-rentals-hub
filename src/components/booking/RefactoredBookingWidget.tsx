@@ -14,13 +14,13 @@ import BookingDateSelector from './components/BookingDateSelector';
 import BookingGuestSelector from './components/BookingGuestSelector';
 import BookingPricingSummary from './components/BookingPricingSummary';
 import { useBookingValidation } from '@/hooks/useBookingValidation';
-import { 
-  getRentalType, 
-  getDailyPrice, 
-  getMonthlyPrice, 
+import {
+  getRentalType,
+  getDailyPrice,
+  getMonthlyPrice,
   supportsBookingType,
   getAvailableBookingTypes,
-  type PropertyRentalData 
+  type PropertyRentalData,
 } from '@/lib/rentalTypeUtils';
 
 interface Property {
@@ -62,7 +62,11 @@ interface RefactoredBookingWidgetProps {
   onBookingInitiated?: (bookingData: BookingData) => void;
 }
 
-const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: RefactoredBookingWidgetProps) => {
+const RefactoredBookingWidget = ({
+  property,
+  user,
+  onBookingInitiated,
+}: RefactoredBookingWidgetProps) => {
   const navigate = useNavigate();
   const [bookingMode, setBookingMode] = useState<'daily' | 'monthly'>('daily');
   const [checkIn, setCheckIn] = useState<Date>();
@@ -99,106 +103,138 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
   }, [property.id]);
 
   // Fetch unavailable dates
-  const fetchUnavailableDates = useCallback(async (force = false) => {
-    try {
-      // Debug: Check current user
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log(`👤 RefactoredWidget user:`, user?.id?.substring(0, 8));
+  const fetchUnavailableDates = useCallback(
+    async (force = false) => {
+      try {
+        // Debug: Check current user
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        console.log(`👤 RefactoredWidget user:`, user?.id?.substring(0, 8));
 
-      // Test 1: Try to get ALL bookings for this property (no filters)
-      const { data: allBookingsTest, error: allError } = await supabase
-        .from('bookings')
-        .select('check_in, check_out, status, guest_id, id')
-        .eq('property_id', property.id);
+        // Test 1: Try to get ALL bookings for this property (no filters)
+        const { data: allBookingsTest, error: allError } = await supabase
+          .from('bookings')
+          .select('check_in, check_out, status, guest_id, id')
+          .eq('property_id', property.id);
 
-      console.log(`🧪 RLS Test - All bookings query:`, {
-        totalFound: allBookingsTest?.length || 0,
-        error: allError?.message,
-        bookings: allBookingsTest?.map(b => ({
-          id: b.id?.substring(0, 8),
-          status: b.status,
-          check_in: b.check_in,
-          check_out: b.check_out,
-          guest_id: b.guest_id?.substring(0, 8)
-        })) || []
-      });
+        console.log(`🧪 RLS Test - All bookings query:`, {
+          totalFound: allBookingsTest?.length || 0,
+          error: allError?.message,
+          bookings:
+            allBookingsTest?.map((b) => ({
+              id: b.id?.substring(0, 8),
+              status: b.status,
+              check_in: b.check_in,
+              check_out: b.check_out,
+              guest_id: b.guest_id?.substring(0, 8),
+            })) || [],
+        });
 
-      // Debug: Check what status the booking has vs our filter
-      const foundStatuses = [...new Set(allBookingsTest?.map(b => b.status) || [])];
-      const ourFilter = ['pending', 'confirmed', 'checked_in'];
-      console.log(`📋 Booking statuses found:`, foundStatuses);
-      console.log(`🔍 Our filter includes:`, ourFilter);
-      console.log(`❌ Excluded statuses:`, foundStatuses.filter(s => !ourFilter.includes(s)));
+        // Debug: Check what status the booking has vs our filter
+        const foundStatuses = [
+          ...new Set(allBookingsTest?.map((b) => b.status) || []),
+        ];
+        const ourFilter = ['pending', 'confirmed', 'checked_in'];
+        console.log(`📋 Booking statuses found:`, foundStatuses);
+        console.log(`🔍 Our filter includes:`, ourFilter);
+        console.log(
+          `❌ Excluded statuses:`,
+          foundStatuses.filter((s) => !ourFilter.includes(s)),
+        );
 
-      // Only get ACTIVE bookings that block availability (exclude cancelled and completed)
-      const { data: bookings, error: bookingsError } = await supabase
-        .from('bookings')
-        .select('check_in, check_out, status, guest_id, id')
-        .eq('property_id', property.id)
-        .in('status', ['pending', 'confirmed', 'checked_in']); // Removed 'completed' - those dates should be available again
+        // Only get ACTIVE bookings that block availability (exclude cancelled and completed)
+        const { data: bookings, error: bookingsError } = await supabase
+          .from('bookings')
+          .select('check_in, check_out, status, guest_id, id')
+          .eq('property_id', property.id)
+          .in('status', ['pending', 'confirmed', 'checked_in']); // Removed 'completed' - those dates should be available again
 
-      if (bookingsError) {
-        console.error(`❌ RefactoredWidget booking query error:`, bookingsError);
-        throw bookingsError;
-      }
-
-      // Debug: Log what bookings RefactoredWidget found
-      console.log(`🔧 RefactoredWidget fetchUnavailableDates for ${property.id}:`, {
-        totalBookings: bookings?.length || 0,
-        activeStatuses: ['pending', 'confirmed', 'checked_in'],
-        bookings: bookings?.map(b => ({
-          id: b.id?.substring(0, 8),
-          check_in: b.check_in,
-          check_out: b.check_out,
-          status: b.status,
-          guest_id: b.guest_id?.substring(0, 8)
-        })) || []
-      });
-
-      // Log how many dates will be blocked
-      const totalBlockedDates = bookings?.reduce((total, booking) => {
-        const start = new Date(booking.check_in);
-        const end = new Date(booking.check_out);
-        const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-        return total + days;
-      }, 0) || 0;
-      
-      console.log(`📅 Will block ${totalBlockedDates} total dates from ${bookings?.length || 0} active bookings`);
-
-      const { data: availability, error: availabilityError } = await supabase
-        .from('property_availability')
-        .select('blocked_date')
-        .eq('property_id', property.id);
-
-      if (availabilityError) throw availabilityError;
-
-      const blocked: Date[] = [];
-      
-      bookings?.forEach(booking => {
-        const start = new Date(booking.check_in);
-        const end = new Date(booking.check_out);
-        const current = new Date(start);
-        
-        console.log(`🚫 Blocking dates for booking ${booking.id?.substring(0, 8)}: ${booking.check_in} to ${booking.check_out}`);
-        
-        while (current < end) {
-          blocked.push(new Date(current));
-          console.log(`  - Blocked date: ${current.toISOString().split('T')[0]} (${current.getMonth() + 1}/${current.getDate()}/${current.getFullYear()})`);
-          current.setDate(current.getDate() + 1);
+        if (bookingsError) {
+          console.error(
+            `❌ RefactoredWidget booking query error:`,
+            bookingsError,
+          );
+          throw bookingsError;
         }
-      });
 
-      availability?.forEach(item => {
-        blocked.push(new Date(item.blocked_date));
-      });
+        // Debug: Log what bookings RefactoredWidget found
+        console.log(
+          `🔧 RefactoredWidget fetchUnavailableDates for ${property.id}:`,
+          {
+            totalBookings: bookings?.length || 0,
+            activeStatuses: ['pending', 'confirmed', 'checked_in'],
+            bookings:
+              bookings?.map((b) => ({
+                id: b.id?.substring(0, 8),
+                check_in: b.check_in,
+                check_out: b.check_out,
+                status: b.status,
+                guest_id: b.guest_id?.substring(0, 8),
+              })) || [],
+          },
+        );
 
-      console.log(`📊 Total blocked dates to set:`, blocked.length, 'dates:', blocked.map(d => d.toISOString().split('T')[0]));
-      setUnavailableDates(blocked);
-    } catch (error) {
-      console.error('Error fetching unavailable dates:', error);
-      toast.error('Failed to load availability calendar');
-    }
-  }, [property.id]);
+        // Log how many dates will be blocked
+        const totalBlockedDates =
+          bookings?.reduce((total, booking) => {
+            const start = new Date(booking.check_in);
+            const end = new Date(booking.check_out);
+            const days = Math.ceil(
+              (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24),
+            );
+            return total + days;
+          }, 0) || 0;
+
+        console.log(
+          `📅 Will block ${totalBlockedDates} total dates from ${bookings?.length || 0} active bookings`,
+        );
+
+        const { data: availability, error: availabilityError } = await supabase
+          .from('property_availability')
+          .select('blocked_date')
+          .eq('property_id', property.id);
+
+        if (availabilityError) throw availabilityError;
+
+        const blocked: Date[] = [];
+
+        bookings?.forEach((booking) => {
+          const start = new Date(booking.check_in);
+          const end = new Date(booking.check_out);
+          const current = new Date(start);
+
+          console.log(
+            `🚫 Blocking dates for booking ${booking.id?.substring(0, 8)}: ${booking.check_in} to ${booking.check_out}`,
+          );
+
+          while (current < end) {
+            blocked.push(new Date(current));
+            console.log(
+              `  - Blocked date: ${current.toISOString().split('T')[0]} (${current.getMonth() + 1}/${current.getDate()}/${current.getFullYear()})`,
+            );
+            current.setDate(current.getDate() + 1);
+          }
+        });
+
+        availability?.forEach((item) => {
+          blocked.push(new Date(item.blocked_date));
+        });
+
+        console.log(
+          `📊 Total blocked dates to set:`,
+          blocked.length,
+          'dates:',
+          blocked.map((d) => d.toISOString().split('T')[0]),
+        );
+        setUnavailableDates(blocked);
+      } catch (error) {
+        console.error('Error fetching unavailable dates:', error);
+        toast.error('Failed to load availability calendar');
+      }
+    },
+    [property.id],
+  );
 
   // Set initial booking mode based on supported types
   useEffect(() => {
@@ -215,12 +251,12 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
   // Fetch unavailable dates on mount and set up periodic refresh
   useEffect(() => {
     fetchUnavailableDates();
-    
+
     // Refresh calendar every 30 seconds to catch booking status changes
     const refreshInterval = setInterval(() => {
       refreshCalendar();
     }, 30000);
-    
+
     return () => clearInterval(refreshInterval);
   }, [fetchUnavailableDates, refreshCalendar]);
 
@@ -232,57 +268,72 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
   // Calculate total price using unified utilities
   useEffect(() => {
     if (bookingMode === 'daily' && checkIn && checkOut) {
-      const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+      const nights = Math.ceil(
+        (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24),
+      );
       setTotalPrice(nights * dailyPrice);
     } else if (bookingMode === 'monthly' && monthlyPrice) {
       setTotalPrice(monthlyDuration * monthlyPrice);
     } else {
       setTotalPrice(0);
     }
-  }, [bookingMode, checkIn, checkOut, monthlyDuration, dailyPrice, monthlyPrice]);
+  }, [
+    bookingMode,
+    checkIn,
+    checkOut,
+    monthlyDuration,
+    dailyPrice,
+    monthlyPrice,
+  ]);
 
   const handleDateChange = useCallback((data: DateChangeData) => {
     if (data.checkIn !== undefined) setCheckIn(data.checkIn);
     if (data.checkOut !== undefined) setCheckOut(data.checkOut);
-    if (data.monthlyStartDate !== undefined) setMonthlyStartDate(data.monthlyStartDate);
-    if (data.monthlyDuration !== undefined) setMonthlyDuration(data.monthlyDuration);
+    if (data.monthlyStartDate !== undefined)
+      setMonthlyStartDate(data.monthlyStartDate);
+    if (data.monthlyDuration !== undefined)
+      setMonthlyDuration(data.monthlyDuration);
   }, []);
 
-  const isDateBlocked = useCallback((date: Date) => {
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth();
-    const currentDate = today.getDate();
-    
-    // Reset hours for accurate comparison
-    today.setHours(0, 0, 0, 0);
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
-    
-    const isInUnavailableList = unavailableDates.some(blockedDate => 
-      format(blockedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-    );
-    
-    // Only block dates that are actually in the past (before today)
-    // For a booking system, we typically want to allow future dates
-    // If you're testing with dates in 2025, make sure this logic makes sense
-    // Temporarily disable past date blocking for testing
-    // const isPastDate = checkDate < today;
-    const isPastDate = false; // Allow all dates for testing
-    
-    // Debug: Log for a few sample dates
-    if (checkDate.getDate() <= 3) {
-      console.log(`✅ Date check ${format(date, 'yyyy-MM-dd')}:`, {
-        isPastDate,
-        isInUnavailableList,
-        unavailableDatesCount: unavailableDates.length,
-        today: format(today, 'yyyy-MM-dd'),
-        blocked: isPastDate || isInUnavailableList
-      });
-    }
-    
-    return isInUnavailableList || isPastDate;
-  }, [unavailableDates]);
+  const isDateBlocked = useCallback(
+    (date: Date) => {
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth();
+      const currentDate = today.getDate();
+
+      // Reset hours for accurate comparison
+      today.setHours(0, 0, 0, 0);
+      const checkDate = new Date(date);
+      checkDate.setHours(0, 0, 0, 0);
+
+      const isInUnavailableList = unavailableDates.some(
+        (blockedDate) =>
+          format(blockedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'),
+      );
+
+      // Only block dates that are actually in the past (before today)
+      // For a booking system, we typically want to allow future dates
+      // If you're testing with dates in 2025, make sure this logic makes sense
+      // Temporarily disable past date blocking for testing
+      // const isPastDate = checkDate < today;
+      const isPastDate = false; // Allow all dates for testing
+
+      // Debug: Log for a few sample dates
+      if (checkDate.getDate() <= 3) {
+        console.log(`✅ Date check ${format(date, 'yyyy-MM-dd')}:`, {
+          isPastDate,
+          isInUnavailableList,
+          unavailableDatesCount: unavailableDates.length,
+          today: format(today, 'yyyy-MM-dd'),
+          blocked: isPastDate || isInUnavailableList,
+        });
+      }
+
+      return isInUnavailableList || isPastDate;
+    },
+    [unavailableDates],
+  );
 
   const handleBooking = async () => {
     if (!user) {
@@ -311,22 +362,30 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
     }
 
     const checkInDate = bookingMode === 'daily' ? checkIn! : monthlyStartDate!;
-    const checkOutDate = bookingMode === 'daily' ? checkOut! : addMonths(monthlyStartDate!, monthlyDuration);
-    
+    const checkOutDate =
+      bookingMode === 'daily'
+        ? checkOut!
+        : addMonths(monthlyStartDate!, monthlyDuration);
+
     try {
       setIsSubmitting(true);
 
       // Check availability before proceeding
-      const { data: conflicts, error } = await supabase.rpc('check_booking_conflicts', {
-        p_property_id: property.id,
-        p_check_in: checkInDate.toISOString().split('T')[0],
-        p_check_out: checkOutDate.toISOString().split('T')[0],
-      });
+      const { data: conflicts, error } = await supabase.rpc(
+        'check_booking_conflicts',
+        {
+          p_property_id: property.id,
+          p_check_in: checkInDate.toISOString().split('T')[0],
+          p_check_out: checkOutDate.toISOString().split('T')[0],
+        },
+      );
 
       if (error) throw error;
-      
+
       if (conflicts) {
-        toast.error('Selected dates are no longer available. Please choose different dates.');
+        toast.error(
+          'Selected dates are no longer available. Please choose different dates.',
+        );
         fetchUnavailableDates(); // Refresh the calendar
         return;
       }
@@ -363,20 +422,20 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
       if (bookingError) throw bookingError;
 
       toast.success('Booking request submitted successfully!');
-      
+
       // Reset form
       setCheckIn(undefined);
       setCheckOut(undefined);
       setMonthlyStartDate(undefined);
       setMonthlyDuration(1);
       setGuests(1);
-      
+
       // Refresh unavailable dates
       fetchUnavailableDates();
-      
     } catch (error) {
       console.error('Error creating booking:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to create booking';
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -384,33 +443,35 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
   };
 
   return (
-    <Card className="sticky top-4 lg:top-8 shadow-xl rounded-2xl overflow-hidden border-0 max-w-full">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 p-4 lg:p-5">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg lg:text-xl font-bold flex items-center gap-2.5">
-            <div className="w-8 h-8 lg:w-9 lg:h-9 bg-black rounded-lg flex items-center justify-center">
-              <CreditCard className="h-4 w-4 lg:h-5 lg:w-5 text-white" />
+    <Card className='sticky top-4 lg:top-8 shadow-xl rounded-2xl overflow-hidden border-0 max-w-full'>
+      <CardHeader className='bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 p-4 lg:p-5'>
+        <div className='flex items-center justify-between'>
+          <CardTitle className='text-lg lg:text-xl font-bold flex items-center gap-2.5'>
+            <div className='w-8 h-8 lg:w-9 lg:h-9 bg-black rounded-lg flex items-center justify-center'>
+              <CreditCard className='h-4 w-4 lg:h-5 lg:w-5 text-white' />
             </div>
             <span>Book Your Stay</span>
           </CardTitle>
-          <Badge className="bg-black text-white font-semibold tracking-wide text-xs px-2 py-1">
+          <Badge className='bg-black text-white font-semibold tracking-wide text-xs px-2 py-1'>
             VENVL
           </Badge>
         </div>
-        
-        <div className="space-y-1.5 pt-3">
-          <div className="flex items-center text-gray-600">
-            <MapPin className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
-            <span className="text-sm truncate">{property.city}, {property.state}</span>
+
+        <div className='space-y-1.5 pt-3'>
+          <div className='flex items-center text-gray-600'>
+            <MapPin className='h-3.5 w-3.5 mr-2 flex-shrink-0' />
+            <span className='text-sm truncate'>
+              {property.city}, {property.state}
+            </span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400 flex-shrink-0" />
-            <span className="text-sm font-medium">4.9 · 127 reviews</span>
+          <div className='flex items-center gap-1.5'>
+            <Star className='h-3.5 w-3.5 fill-yellow-400 text-yellow-400 flex-shrink-0' />
+            <span className='text-sm font-medium'>4.9 · 127 reviews</span>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 lg:p-5 space-y-4 lg:space-y-5">
+      <CardContent className='p-4 lg:p-5 space-y-4 lg:space-y-5'>
         {/* Only show booking type selector if property supports both types */}
         {rentalType === 'both' && (
           <motion.div
@@ -421,7 +482,9 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
             <BookingTypeSelector
               bookingTypes={availableBookingTypes}
               selectedType={bookingMode}
-              onTypeChange={(type) => setBookingMode(type as 'daily' | 'monthly')}
+              onTypeChange={(type) =>
+                setBookingMode(type as 'daily' | 'monthly')
+              }
               dailyPrice={dailyPrice}
               monthlyPrice={monthlyPrice}
               minNights={property.min_nights}
@@ -432,22 +495,24 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
 
         {/* Show rental type info for single-type properties */}
         {rentalType !== 'both' && (
-          <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className={`
+          <div className='bg-gray-50 rounded-lg p-3 border border-gray-200'>
+            <div className='flex items-center justify-between'>
+              <div
+                className={`
                 px-2.5 py-1 rounded-full text-sm font-medium
-                ${rentalType === 'daily' 
-                  ? 'bg-blue-100 text-blue-800' 
-                  : 'bg-green-100 text-green-800'
+                ${
+                  rentalType === 'daily'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-green-100 text-green-800'
                 }
-              `}>
+              `}
+              >
                 {rentalType === 'daily' ? 'Daily Only' : 'Monthly Only'}
               </div>
-              <span className="text-sm font-semibold text-gray-900">
-                {rentalType === 'daily' 
+              <span className='text-sm font-semibold text-gray-900'>
+                {rentalType === 'daily'
                   ? `EGP ${dailyPrice}/night`
-                  : `EGP ${monthlyPrice}/month`
-                }
+                  : `EGP ${monthlyPrice}/month`}
               </span>
             </div>
           </div>
@@ -486,11 +551,14 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
 
         {/* Validation Errors Display */}
         {validation.errors.length > 0 && (
-          <div className="space-y-2">
+          <div className='space-y-2'>
             {validation.errors.map((error, index) => (
-              <div key={index} className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                <div className="w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0"></div>
-                <span className="text-sm text-red-700">{error}</span>
+              <div
+                key={index}
+                className='flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg'
+              >
+                <div className='w-2 h-2 bg-red-500 rounded-full mt-2 flex-shrink-0'></div>
+                <span className='text-sm text-red-700'>{error}</span>
               </div>
             ))}
           </div>
@@ -500,26 +568,31 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
         <motion.div
           whileHover={{ scale: validation.isValid ? 1.01 : 1 }}
           whileTap={{ scale: validation.isValid ? 0.99 : 1 }}
-          className="pt-1"
+          className='pt-1'
         >
           <Button
             onClick={!user ? () => navigate('/auth') : handleBooking}
             disabled={user && (isSubmitting || !validation.isValid)}
             className={`
               w-full font-semibold py-3.5 px-6 rounded-xl shadow-lg transition-all duration-300 text-base
-              ${!user || validation.isValid
-                ? 'bg-black hover:bg-gray-800 text-white'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300'
+              ${
+                !user || validation.isValid
+                  ? 'bg-black hover:bg-gray-800 text-white'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300'
               }
             `}
           >
             {isSubmitting ? (
-              <div className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className='flex items-center gap-2'>
+                <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' />
                 Processing...
               </div>
             ) : !validation.isValid ? (
-              validation.errors.length > 0 ? 'Please fix errors above' : 'Complete booking details'
+              validation.errors.length > 0 ? (
+                'Please fix errors above'
+              ) : (
+                'Complete booking details'
+              )
             ) : user ? (
               'Book Now'
             ) : (
@@ -529,7 +602,7 @@ const RefactoredBookingWidget = ({ property, user, onBookingInitiated }: Refacto
         </motion.div>
 
         {!user && (
-          <p className="text-xs text-gray-500 text-center">
+          <p className='text-xs text-gray-500 text-center'>
             Login required to complete booking
           </p>
         )}

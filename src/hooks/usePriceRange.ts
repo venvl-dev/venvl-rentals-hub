@@ -1,5 +1,5 @@
-﻿import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+﻿import { useState, useEffect, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PriceRange {
   min: number;
@@ -8,8 +8,8 @@ interface PriceRange {
 }
 
 export const usePriceRange = (
-  bookingType?: "daily" | "monthly",
-  debug = true
+  bookingType?: 'daily' | 'monthly',
+  debug = true,
 ) => {
   const [priceRange, setPriceRange] = useState<PriceRange>({
     min: 0,
@@ -19,8 +19,8 @@ export const usePriceRange = (
 
   // More realistic fallback ranges based on typical Egyptian rental market
   const fallbackRange = {
-    min: bookingType === "monthly" ? 3000 : 100, // Updated minimums
-    max: bookingType === "monthly" ? 50000 : 3000, // Updated maximums
+    min: bookingType === 'monthly' ? 3000 : 100, // Updated minimums
+    max: bookingType === 'monthly' ? 50000 : 3000, // Updated maximums
     distribution: [],
   };
 
@@ -37,35 +37,35 @@ export const usePriceRange = (
     const fetchPriceData = async () => {
       try {
         setLoading(true);
-        console.log("🔍 Fetching price range for booking type:", bookingType);
-        console.log("📊 Current priceRange state:", priceRange);
+        console.log('🔍 Fetching price range for booking type:', bookingType);
+        console.log('📊 Current priceRange state:', priceRange);
 
         // Use direct query to get ALL active, approved properties for accurate price range
         const { data, error } = await supabase
-          .from("properties")
+          .from('properties')
           .select(
-            "price_per_night, daily_price, monthly_price, title, booking_types, rental_type"
+            'price_per_night, daily_price, monthly_price, title, booking_types, rental_type',
           )
-          .eq("is_active", true)
-          .eq("approval_status", "approved");
+          .eq('is_active', true)
+          .eq('approval_status', 'approved');
 
         if (error) {
-          console.error("❌ Error fetching properties:", error);
-          console.log("📝 Data received:", data);
-          console.log("🔄 Component mounted:", mounted);
+          console.error('❌ Error fetching properties:', error);
+          console.log('📝 Data received:', data);
+          console.log('🔄 Component mounted:', mounted);
           return;
         }
 
         if (!data || !mounted) {
-          console.log("⚠️ No data or component unmounted:", {
+          console.log('⚠️ No data or component unmounted:', {
             data: !!data,
             mounted,
           });
           return;
         }
 
-        console.log("✅ Fetched properties data:", data.length, "properties");
-        console.log("📋 Raw properties data:", data);
+        console.log('✅ Fetched properties data:', data.length, 'properties');
+        console.log('📋 Raw properties data:', data);
 
         // Extract prices based on booking type with better error handling
         const prices: number[] = [];
@@ -73,7 +73,7 @@ export const usePriceRange = (
         data.forEach((property, index) => {
           try {
             console.log(
-              `🏠 Processing property ${index + 1}: ${property.title}`
+              `🏠 Processing property ${index + 1}: ${property.title}`,
             );
             console.log(`📋 Property prices:`, {
               price_per_night: property.price_per_night,
@@ -81,14 +81,14 @@ export const usePriceRange = (
               monthly_price: property.monthly_price,
             });
 
-            if (bookingType === "daily") {
+            if (bookingType === 'daily') {
               // For daily booking, use daily_price or fallback to price_per_night
               const dailyPrice =
                 property.daily_price || property.price_per_night;
               console.log(`💰 Daily price for ${property.title}:`, dailyPrice);
               if (
                 dailyPrice &&
-                typeof dailyPrice === "number" &&
+                typeof dailyPrice === 'number' &&
                 dailyPrice > 0
               ) {
                 prices.push(dailyPrice);
@@ -96,13 +96,13 @@ export const usePriceRange = (
               } else {
                 console.log(`❌ Skipped daily price (invalid): ${dailyPrice}`);
               }
-            } else if (bookingType === "monthly") {
+            } else if (bookingType === 'monthly') {
               // For monthly booking, use monthly_price only for properties that actually support monthly rental
               const supportsMonthly =
                 (Array.isArray(property.booking_types) &&
-                  property.booking_types.includes("monthly")) ||
-                property.rental_type === "monthly" ||
-                property.rental_type === "both";
+                  property.booking_types.includes('monthly')) ||
+                property.rental_type === 'monthly' ||
+                property.rental_type === 'both';
 
               console.log(`💰 Monthly check for ${property.title}:`, {
                 monthly_price: property.monthly_price,
@@ -114,12 +114,12 @@ export const usePriceRange = (
               if (
                 supportsMonthly &&
                 property.monthly_price &&
-                typeof property.monthly_price === "number" &&
+                typeof property.monthly_price === 'number' &&
                 property.monthly_price > 0
               ) {
                 prices.push(property.monthly_price);
                 console.log(
-                  `✅ Added monthly price: ${property.monthly_price}`
+                  `✅ Added monthly price: ${property.monthly_price}`,
                 );
               } else {
                 console.log(
@@ -127,28 +127,28 @@ export const usePriceRange = (
                   {
                     monthly_price: property.monthly_price,
                     supportsMonthly,
-                  }
+                  },
                 );
               }
             } else {
               // Default: include all available prices (convert monthly to daily for comparison)
               if (
                 property.price_per_night &&
-                typeof property.price_per_night === "number" &&
+                typeof property.price_per_night === 'number' &&
                 property.price_per_night > 0
               ) {
                 prices.push(property.price_per_night);
               }
               if (
                 property.daily_price &&
-                typeof property.daily_price === "number" &&
+                typeof property.daily_price === 'number' &&
                 property.daily_price > 0
               ) {
                 prices.push(property.daily_price);
               }
               if (
                 property.monthly_price &&
-                typeof property.monthly_price === "number" &&
+                typeof property.monthly_price === 'number' &&
                 property.monthly_price > 0
               ) {
                 prices.push(Math.round(property.monthly_price / 30));
@@ -156,20 +156,20 @@ export const usePriceRange = (
             }
           } catch (error) {
             console.warn(
-              "❌ Error processing property price:",
+              '❌ Error processing property price:',
               property,
-              error
+              error,
             );
           }
         });
 
-        console.log("Extracted prices:", prices);
+        console.log('Extracted prices:', prices);
 
         if (prices.length === 0) {
-          console.log("⚠️ No prices found for booking type:", bookingType);
-          console.log("📊 Using fallback range due to no valid prices");
+          console.log('⚠️ No prices found for booking type:', bookingType);
+          console.log('📊 Using fallback range due to no valid prices');
 
-          console.log("🔄 Fallback range set:", fallbackRange);
+          console.log('🔄 Fallback range set:', fallbackRange);
 
           if (mounted) {
             setPriceRange(fallbackRange);
@@ -181,7 +181,7 @@ export const usePriceRange = (
         const actualMin = Math.min(...prices);
         const actualMax = Math.max(...prices);
 
-        console.log("Calculated price range:", {
+        console.log('Calculated price range:', {
           min: actualMin,
           max: actualMax,
           priceCount: prices.length,
@@ -195,7 +195,7 @@ export const usePriceRange = (
           });
         }
       } catch (error) {
-        console.error("Price range fetch error:", error);
+        console.error('Price range fetch error:', error);
         if (mounted) {
           // Fallback range based on booking type
           setPriceRange(fallbackRange);
@@ -218,36 +218,36 @@ export const usePriceRange = (
       }
 
       // Skip real-time subscription in test environment
-      if (typeof window === "undefined" || process.env.NODE_ENV === "test") {
+      if (typeof window === 'undefined' || process.env.NODE_ENV === 'test') {
         return;
       }
 
       try {
         realtimeSubscriptionRef.current = supabase
-          .channel("price-range-updates")
+          .channel('price-range-updates')
           .on(
-            "postgres_changes",
+            'postgres_changes',
             {
-              event: "*",
-              schema: "public",
-              table: "properties",
-              filter: "is_active=eq.true",
+              event: '*',
+              schema: 'public',
+              table: 'properties',
+              filter: 'is_active=eq.true',
             },
             (payload) => {
               console.log(
-                "Property change detected, refetching price range:",
-                payload
+                'Property change detected, refetching price range:',
+                payload,
               );
               // Debounce the refetch to avoid too many calls
               if (timeoutId) clearTimeout(timeoutId);
               timeoutId = setTimeout(() => {
                 fetchPriceData();
               }, 500);
-            }
+            },
           )
           .subscribe();
       } catch (error) {
-        console.warn("Failed to set up real-time subscription:", error);
+        console.warn('Failed to set up real-time subscription:', error);
       }
     };
 

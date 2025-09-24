@@ -8,30 +8,61 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Home, Calendar, DollarSign, Settings, ArrowLeft, Plus, X, Upload, Image, Video, Play } from 'lucide-react';
+import {
+  Home,
+  Calendar,
+  DollarSign,
+  Settings,
+  ArrowLeft,
+  Plus,
+  X,
+  Upload,
+  Image,
+  Video,
+  Play,
+} from 'lucide-react';
 import { Property } from '@/types/property';
-import { 
-  getRentalType, 
-  getDailyPrice, 
-  getMonthlyPrice, 
+import {
+  getRentalType,
+  getDailyPrice,
+  getMonthlyPrice,
   getRentalTypeBadge,
   supportsBookingType,
   type RentalType,
-  type PropertyRentalData 
+  type PropertyRentalData,
 } from '@/lib/rentalTypeUtils';
-import { AMENITIES_LIST, cleanAmenityIds, getAmenitiesByCategory } from '@/lib/amenitiesUtils';
+import {
+  AMENITIES_LIST,
+  cleanAmenityIds,
+  getAmenitiesByCategory,
+} from '@/lib/amenitiesUtils';
 
 // Dynamic schema creator based on rental type
 const createPropertySchema = (rentalType: RentalType) => {
   const baseSchema = z.object({
     title: z.string().min(1, 'Title is required'),
-    description: z.string().min(10, 'Description must be at least 10 characters'),
-    property_type: z.enum(['apartment', 'house', 'villa', 'studio', 'cabin', 'loft']),
+    description: z
+      .string()
+      .min(10, 'Description must be at least 10 characters'),
+    property_type: z.enum([
+      'apartment',
+      'house',
+      'villa',
+      'studio',
+      'cabin',
+      'loft',
+    ]),
     address: z.string().min(1, 'Address is required'),
     city: z.string().min(1, 'City is required'),
     state: z.string().optional(),
@@ -80,9 +111,16 @@ interface EnhancedPropertyFormProps {
   onCancel: () => void;
 }
 
-const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFormProps) => {
+const EnhancedPropertyForm = ({
+  property,
+  onSave,
+  onCancel,
+}: EnhancedPropertyFormProps) => {
   // Determine if this is a new property or editing existing
-  const isNewProperty = !property || property.id === 'new-property' || Object.keys(property).length === 0;
+  const isNewProperty =
+    !property ||
+    property.id === 'new-property' ||
+    Object.keys(property).length === 0;
   const editingProperty = isNewProperty ? undefined : property;
 
   // Fixed amenities synchronization: form now uses AMENITIES from amenitiesUtils.ts consistently
@@ -92,17 +130,24 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     console.log('🎯 EnhancedPropertyForm: isNewProperty:', isNewProperty);
     console.log('🎯 EnhancedPropertyForm: editingProperty:', editingProperty);
   }
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [imageUrls, setImageUrls] = useState<string[]>(editingProperty?.images || []);
-  const [videoUrls, setVideoUrls] = useState<string[]>(editingProperty?.videos || []);
+  const [imageUrls, setImageUrls] = useState<string[]>(
+    editingProperty?.images || [],
+  );
+  const [videoUrls, setVideoUrls] = useState<string[]>(
+    editingProperty?.videos || [],
+  );
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingVideos, setUploadingVideos] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
-  const [currentRentalType, setCurrentRentalType] = useState<RentalType>('daily');
+  const [currentRentalType, setCurrentRentalType] =
+    useState<RentalType>('daily');
 
   // Get current rental type for existing property or default for new property
-  const initialRentalType = editingProperty ? getRentalType(editingProperty as PropertyRentalData) : 'daily';
+  const initialRentalType = editingProperty
+    ? getRentalType(editingProperty as PropertyRentalData)
+    : 'daily';
   if (process.env.NODE_ENV !== 'production') {
     // Set initial rental type
   }
@@ -115,7 +160,14 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
     defaultValues: {
       title: editingProperty?.title || '',
       description: editingProperty?.description || '',
-      property_type: (editingProperty?.property_type as 'apartment' | 'house' | 'villa' | 'studio' | 'cabin' | 'loft') || 'apartment',
+      property_type:
+        (editingProperty?.property_type as
+          | 'apartment'
+          | 'house'
+          | 'villa'
+          | 'studio'
+          | 'cabin'
+          | 'loft') || 'apartment',
       address: editingProperty?.address || '',
       city: editingProperty?.city || '',
       state: editingProperty?.state || '',
@@ -125,11 +177,17 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       bedrooms: editingProperty?.bedrooms || 1,
       bathrooms: editingProperty?.bathrooms || 1,
       max_guests: editingProperty?.max_guests || 2,
-      price_per_night: editingProperty ? getDailyPrice(editingProperty as PropertyRentalData) : undefined,
-      monthly_price: editingProperty ? getMonthlyPrice(editingProperty as PropertyRentalData) : undefined,
+      price_per_night: editingProperty
+        ? getDailyPrice(editingProperty as PropertyRentalData)
+        : undefined,
+      monthly_price: editingProperty
+        ? getMonthlyPrice(editingProperty as PropertyRentalData)
+        : undefined,
       min_nights: editingProperty?.min_nights || 1,
       min_months: editingProperty?.min_months || 1,
-      amenities: editingProperty ? cleanAmenityIds(editingProperty.amenities || []) : [],
+      amenities: editingProperty
+        ? cleanAmenityIds(editingProperty.amenities || [])
+        : [],
       images: editingProperty?.images || [],
       videos: editingProperty?.videos || [],
     },
@@ -141,7 +199,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
   const watchedRentalType = form.watch('rental_type') as RentalType;
   const watchedAmenities = form.watch('amenities') || [];
-  
+
   if (process.env.NODE_ENV !== 'production') {
     // Watch amenities changes
   }
@@ -150,11 +208,11 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   useEffect(() => {
     if (watchedRentalType !== currentRentalType) {
       setCurrentRentalType(watchedRentalType);
-      
+
       // Re-initialize form with new schema
       const newSchema = createPropertySchema(watchedRentalType);
       const currentValues = form.getValues();
-      
+
       // Auto-clear irrelevant fields based on rental type
       if (watchedRentalType === 'daily') {
         currentValues.monthly_price = undefined;
@@ -163,7 +221,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         currentValues.price_per_night = undefined;
         currentValues.min_nights = undefined;
       }
-      
+
       form.reset(currentValues);
     }
   }, [watchedRentalType, currentRentalType, form]);
@@ -175,13 +233,21 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       const formData = {
         title: property.title || '',
         description: property.description || '',
-        property_type: property.property_type as 'apartment' | 'house' | 'villa' | 'studio' | 'cabin' | 'loft',
+        property_type: property.property_type as
+          | 'apartment'
+          | 'house'
+          | 'villa'
+          | 'studio'
+          | 'cabin'
+          | 'loft',
         address: property.address || '',
         city: property.city || '',
         state: property.state || '',
         country: property.country || 'US',
         postal_code: property.postal_code || '',
-        rental_type: getRentalType(property as PropertyRentalData) as RentalType,
+        rental_type: getRentalType(
+          property as PropertyRentalData,
+        ) as RentalType,
         bedrooms: property.bedrooms || 1,
         bathrooms: property.bathrooms || 1,
         max_guests: property.max_guests || 2,
@@ -193,7 +259,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         images: property.images || [],
         videos: property.videos || [],
       };
-      
+
       form.reset(formData);
       setImageUrls(property.images || []);
       setVideoUrls(property.videos || []);
@@ -203,9 +269,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   const handleAmenityToggle = (amenity: string) => {
     const currentAmenities = form.getValues('amenities') || [];
     const updated = currentAmenities.includes(amenity)
-      ? currentAmenities.filter(a => a !== amenity)
+      ? currentAmenities.filter((a) => a !== amenity)
       : [...currentAmenities, amenity];
-    
+
     form.setValue('amenities', updated);
   };
 
@@ -235,7 +301,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
           .from('property-images')
           .upload(fileName, file, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
           });
 
         if (error) {
@@ -243,9 +309,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         }
 
         // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('property-images')
-          .getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('property-images').getPublicUrl(fileName);
 
         return publicUrl;
       });
@@ -258,7 +324,8 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
       toast.success(`Successfully uploaded ${uploadedUrls.length} image(s)`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload images';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to upload images';
       toast.error(errorMessage);
     } finally {
       setUploadingImages(false);
@@ -291,7 +358,7 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
           .from('property-videos')
           .upload(fileName, file, {
             cacheControl: '3600',
-            upsert: false
+            upsert: false,
           });
 
         if (error) {
@@ -299,9 +366,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         }
 
         // Get public URL
-        const { data: { publicUrl } } = supabase.storage
-          .from('property-videos')
-          .getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('property-videos').getPublicUrl(fileName);
 
         return publicUrl;
       });
@@ -314,7 +381,8 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
       toast.success(`Successfully uploaded ${uploadedUrls.length} video(s)`);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to upload videos';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to upload videos';
       toast.error(errorMessage);
     } finally {
       setUploadingVideos(false);
@@ -338,11 +406,13 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       setIsSubmitting(true);
 
       const rentalType = data.rental_type as RentalType;
-      
+
       // Enhanced validation with detailed error messages
       if (rentalType === 'daily') {
         if (!data.price_per_night || data.price_per_night <= 0) {
-          toast.error('Daily price is required and must be greater than 0 for daily rentals');
+          toast.error(
+            'Daily price is required and must be greater than 0 for daily rentals',
+          );
           return;
         }
         if (!data.min_nights || data.min_nights < 1) {
@@ -351,7 +421,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         }
       } else if (rentalType === 'monthly') {
         if (!data.monthly_price || data.monthly_price <= 0) {
-          toast.error('Monthly price is required and must be greater than 0 for monthly rentals');
+          toast.error(
+            'Monthly price is required and must be greater than 0 for monthly rentals',
+          );
           return;
         }
         if (!data.min_months || data.min_months < 1) {
@@ -360,11 +432,15 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         }
       } else if (rentalType === 'both') {
         if (!data.price_per_night || data.price_per_night <= 0) {
-          toast.error('Daily price is required for flexible booking properties');
+          toast.error(
+            'Daily price is required for flexible booking properties',
+          );
           return;
         }
         if (!data.monthly_price || data.monthly_price <= 0) {
-          toast.error('Monthly price is required for flexible booking properties');
+          toast.error(
+            'Monthly price is required for flexible booking properties',
+          );
           return;
         }
         if (!data.min_nights || data.min_nights < 1) {
@@ -377,7 +453,9 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         }
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
@@ -403,9 +481,10 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
         images: imageUrls,
         videos: videoUrls,
         // Ensure booking_types is always an array for consistency
-        booking_types: rentalType === 'both' ? ['daily', 'monthly'] : [rentalType],
+        booking_types:
+          rentalType === 'both' ? ['daily', 'monthly'] : [rentalType],
         is_active: true,
-        approval_status: 'approved'
+        approval_status: 'approved',
       };
 
       // Only include relevant price fields based on rental type
@@ -429,7 +508,11 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
       }
 
       // Save property with synchronized amenities data
-      if (editingProperty && editingProperty.id && editingProperty.id !== 'new-property') {
+      if (
+        editingProperty &&
+        editingProperty.id &&
+        editingProperty.id !== 'new-property'
+      ) {
         // Remove fields that shouldn't be updated
         const updateData = { ...propertyData };
         delete updateData.host_id; // Don't update host_id on edit
@@ -451,17 +534,18 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
           .from('properties')
           .insert(propertyData)
           .select();
-        
+
         if (error) {
           throw new Error(`Insert failed: ${error.message}`);
         }
-        
+
         toast.success('Property created successfully!');
       }
 
       onSave();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save property';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to save property';
       toast.error(`Save failed: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
@@ -474,199 +558,231 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className='max-w-4xl mx-auto p-6'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
+        <div className='flex items-center justify-between mb-8'>
+          <div className='flex items-center gap-4'>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={onCancel}
-              className="rounded-full"
+              className='rounded-full'
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft className='h-4 w-4' />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold">
+              <h1 className='text-3xl font-bold'>
                 {editingProperty ? 'Edit Property' : 'Add New Property'}
               </h1>
-              <p className="text-gray-600">
-                {editingProperty ? 'Update your property details' : 'Create a new listing for your property'}
+              <p className='text-gray-600'>
+                {editingProperty
+                  ? 'Update your property details'
+                  : 'Create a new listing for your property'}
               </p>
             </div>
           </div>
         </div>
 
         {/* Form */}
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-4 rounded-2xl p-1 bg-gray-100">
-              <TabsTrigger value="basic" className="rounded-xl">
-                <Home className="h-4 w-4 mr-2" />
+        <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-8'>
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className='w-full'
+          >
+            <TabsList className='grid w-full grid-cols-4 rounded-2xl p-1 bg-gray-100'>
+              <TabsTrigger value='basic' className='rounded-xl'>
+                <Home className='h-4 w-4 mr-2' />
                 Basic Info
               </TabsTrigger>
-              <TabsTrigger value="pricing" className="rounded-xl">
-                <DollarSign className="h-4 w-4 mr-2" />
+              <TabsTrigger value='pricing' className='rounded-xl'>
+                <DollarSign className='h-4 w-4 mr-2' />
                 Pricing
               </TabsTrigger>
-              <TabsTrigger value="details" className="rounded-xl">
-                <Settings className="h-4 w-4 mr-2" />
+              <TabsTrigger value='details' className='rounded-xl'>
+                <Settings className='h-4 w-4 mr-2' />
                 Details
               </TabsTrigger>
-              <TabsTrigger value="media" className="rounded-xl">
-                <Calendar className="h-4 w-4 mr-2" />
+              <TabsTrigger value='media' className='rounded-xl'>
+                <Calendar className='h-4 w-4 mr-2' />
                 Media
               </TabsTrigger>
             </TabsList>
 
             {/* Basic Info Tab */}
-            <TabsContent value="basic">
+            <TabsContent value='basic'>
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card className="rounded-3xl shadow-lg">
+                <Card className='rounded-3xl shadow-lg'>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                        <Home className="h-5 w-5 text-white" />
+                    <CardTitle className='flex items-center gap-3'>
+                      <div className='w-10 h-10 bg-black rounded-xl flex items-center justify-center'>
+                        <Home className='h-5 w-5 text-white' />
                       </div>
                       Basic Information
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="title">Property Title *</Label>
+                  <CardContent className='space-y-6'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='title'>Property Title *</Label>
                       <Input
-                        id="title"
+                        id='title'
                         {...form.register('title')}
-                        placeholder="Beautiful downtown apartment"
-                        className="rounded-xl border-gray-200 focus:border-black"
+                        placeholder='Beautiful downtown apartment'
+                        className='rounded-xl border-gray-200 focus:border-black'
                       />
                       {form.formState.errors.title && (
-                        <p className="text-red-500 text-sm">{form.formState.errors.title.message}</p>
+                        <p className='text-red-500 text-sm'>
+                          {form.formState.errors.title.message}
+                        </p>
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Description *</Label>
+                    <div className='space-y-2'>
+                      <Label htmlFor='description'>Description *</Label>
                       <Textarea
-                        id="description"
+                        id='description'
                         {...form.register('description')}
-                        placeholder="Describe your property..."
+                        placeholder='Describe your property...'
                         rows={4}
-                        className="rounded-xl border-gray-200 focus:border-black"
+                        className='rounded-xl border-gray-200 focus:border-black'
                       />
                       {form.formState.errors.description && (
-                        <p className="text-red-500 text-sm">{form.formState.errors.description.message}</p>
+                        <p className='text-red-500 text-sm'>
+                          {form.formState.errors.description.message}
+                        </p>
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="property_type">Property Type *</Label>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='property_type'>Property Type *</Label>
                         <Select
                           value={form.watch('property_type')}
-                          onValueChange={(value) => form.setValue('property_type', value as any)}
+                          onValueChange={(value) =>
+                            form.setValue('property_type', value as any)
+                          }
                         >
-                          <SelectTrigger className="rounded-xl border-gray-200 focus:border-black">
+                          <SelectTrigger className='rounded-xl border-gray-200 focus:border-black'>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="apartment">Apartment</SelectItem>
-                            <SelectItem value="house">House</SelectItem>
-                            <SelectItem value="villa">Villa</SelectItem>
-                            <SelectItem value="studio">Studio</SelectItem>
-                            <SelectItem value="cabin">Cabin</SelectItem>
-                            <SelectItem value="loft">Loft</SelectItem>
+                            <SelectItem value='apartment'>Apartment</SelectItem>
+                            <SelectItem value='house'>House</SelectItem>
+                            <SelectItem value='villa'>Villa</SelectItem>
+                            <SelectItem value='studio'>Studio</SelectItem>
+                            <SelectItem value='cabin'>Cabin</SelectItem>
+                            <SelectItem value='loft'>Loft</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="rental_type">Rental Type *</Label>
+                      <div className='space-y-2'>
+                        <Label htmlFor='rental_type'>Rental Type *</Label>
                         <Select
                           value={form.watch('rental_type')}
-                          onValueChange={(value) => form.setValue('rental_type', value as RentalType)}
+                          onValueChange={(value) =>
+                            form.setValue('rental_type', value as RentalType)
+                          }
                         >
-                          <SelectTrigger className="rounded-xl border-gray-200 focus:border-black">
+                          <SelectTrigger className='rounded-xl border-gray-200 focus:border-black'>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="daily">Daily Rental</SelectItem>
-                            <SelectItem value="monthly">Monthly Rental</SelectItem>
-                            <SelectItem value="both">Both Daily & Monthly</SelectItem>
+                            <SelectItem value='daily'>Daily Rental</SelectItem>
+                            <SelectItem value='monthly'>
+                              Monthly Rental
+                            </SelectItem>
+                            <SelectItem value='both'>
+                              Both Daily & Monthly
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                         {watchedRentalType && (
-                          <div className="mt-2">
-                            <Badge className={getRentalTypeBadgeForForm(watchedRentalType as RentalType).color}>
-                              {getRentalTypeBadgeForForm(watchedRentalType as RentalType).label}
+                          <div className='mt-2'>
+                            <Badge
+                              className={
+                                getRentalTypeBadgeForForm(
+                                  watchedRentalType as RentalType,
+                                ).color
+                              }
+                            >
+                              {
+                                getRentalTypeBadgeForForm(
+                                  watchedRentalType as RentalType,
+                                ).label
+                              }
                             </Badge>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="address">Address *</Label>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='address'>Address *</Label>
                         <Input
-                          id="address"
+                          id='address'
                           {...form.register('address')}
-                          placeholder="123 Main Street"
-                          className="rounded-xl border-gray-200 focus:border-black"
+                          placeholder='123 Main Street'
+                          className='rounded-xl border-gray-200 focus:border-black'
                         />
                         {form.formState.errors.address && (
-                          <p className="text-red-500 text-sm">{form.formState.errors.address.message}</p>
+                          <p className='text-red-500 text-sm'>
+                            {form.formState.errors.address.message}
+                          </p>
                         )}
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="city">City *</Label>
+                      <div className='space-y-2'>
+                        <Label htmlFor='city'>City *</Label>
                         <Input
-                          id="city"
+                          id='city'
                           {...form.register('city')}
-                          placeholder="New York"
-                          className="rounded-xl border-gray-200 focus:border-black"
+                          placeholder='New York'
+                          className='rounded-xl border-gray-200 focus:border-black'
                         />
                         {form.formState.errors.city && (
-                          <p className="text-red-500 text-sm">{form.formState.errors.city.message}</p>
+                          <p className='text-red-500 text-sm'>
+                            {form.formState.errors.city.message}
+                          </p>
                         )}
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="state">State</Label>
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='state'>State</Label>
                         <Input
-                          id="state"
+                          id='state'
                           {...form.register('state')}
-                          placeholder="NY"
-                          className="rounded-xl border-gray-200 focus:border-black"
+                          placeholder='NY'
+                          className='rounded-xl border-gray-200 focus:border-black'
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="country">Country</Label>
+                      <div className='space-y-2'>
+                        <Label htmlFor='country'>Country</Label>
                         <Input
-                          id="country"
+                          id='country'
                           {...form.register('country')}
-                          placeholder="US"
-                          className="rounded-xl border-gray-200 focus:border-black"
+                          placeholder='US'
+                          className='rounded-xl border-gray-200 focus:border-black'
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="postal_code">Postal Code</Label>
+                      <div className='space-y-2'>
+                        <Label htmlFor='postal_code'>Postal Code</Label>
                         <Input
-                          id="postal_code"
+                          id='postal_code'
                           {...form.register('postal_code')}
-                          placeholder="10001"
-                          className="rounded-xl border-gray-200 focus:border-black"
+                          placeholder='10001'
+                          className='rounded-xl border-gray-200 focus:border-black'
                         />
                       </div>
                     </div>
@@ -676,74 +792,100 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
             </TabsContent>
 
             {/* Pricing Tab */}
-            <TabsContent value="pricing">
+            <TabsContent value='pricing'>
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card className="rounded-3xl shadow-lg">
+                <Card className='rounded-3xl shadow-lg'>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                        <DollarSign className="h-5 w-5 text-white" />
+                    <CardTitle className='flex items-center gap-3'>
+                      <div className='w-10 h-10 bg-black rounded-xl flex items-center justify-center'>
+                        <DollarSign className='h-5 w-5 text-white' />
                       </div>
                       Pricing & Availability
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className='space-y-6'>
                     {/* Show current rental type info */}
-                    <div className="bg-gray-50 rounded-xl p-4">
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-gray-700">Current Rental Type:</span>
-                        <Badge className={getRentalTypeBadgeForForm(watchedRentalType as RentalType).color}>
-                          {getRentalTypeBadgeForForm(watchedRentalType as RentalType).label}
+                    <div className='bg-gray-50 rounded-xl p-4'>
+                      <div className='flex items-center gap-3'>
+                        <span className='text-sm font-medium text-gray-700'>
+                          Current Rental Type:
+                        </span>
+                        <Badge
+                          className={
+                            getRentalTypeBadgeForForm(
+                              watchedRentalType as RentalType,
+                            ).color
+                          }
+                        >
+                          {
+                            getRentalTypeBadgeForForm(
+                              watchedRentalType as RentalType,
+                            ).label
+                          }
                         </Badge>
                       </div>
                     </div>
 
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode='wait'>
                       {/* Daily Pricing - Only show if supports daily rentals */}
-                      {(watchedRentalType === 'daily' || watchedRentalType === 'both') && (
+                      {(watchedRentalType === 'daily' ||
+                        watchedRentalType === 'both') && (
                         <motion.div
-                          key="daily-pricing"
+                          key='daily-pricing'
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="space-y-4"
+                          className='space-y-4'
                         >
-                          <div className="flex items-center gap-3 mb-4">
-                            <Badge className="bg-blue-100 text-blue-800">Daily Rental</Badge>
+                          <div className='flex items-center gap-3 mb-4'>
+                            <Badge className='bg-blue-100 text-blue-800'>
+                              Daily Rental
+                            </Badge>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                              <Label htmlFor="price_per_night">
+                          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                            <div className='space-y-2'>
+                              <Label htmlFor='price_per_night'>
                                 Nightly Rate (EGP) *
                               </Label>
                               <Input
-                                id="price_per_night"
-                                type="number"
-                                step="0.01"
-                                {...form.register('price_per_night', { valueAsNumber: true })}
-                                placeholder="250.00"
-                                className="rounded-xl border-gray-200 focus:border-black"
+                                id='price_per_night'
+                                type='number'
+                                step='0.01'
+                                {...form.register('price_per_night', {
+                                  valueAsNumber: true,
+                                })}
+                                placeholder='250.00'
+                                className='rounded-xl border-gray-200 focus:border-black'
                               />
                               {form.formState.errors.price_per_night && (
-                                <p className="text-red-500 text-sm">{form.formState.errors.price_per_night.message}</p>
+                                <p className='text-red-500 text-sm'>
+                                  {
+                                    form.formState.errors.price_per_night
+                                      .message
+                                  }
+                                </p>
                               )}
                             </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="min_nights">Minimum Days *</Label>
+                            <div className='space-y-2'>
+                              <Label htmlFor='min_nights'>Minimum Days *</Label>
                               <Input
-                                id="min_nights"
-                                type="number"
-                                {...form.register('min_nights', { valueAsNumber: true })}
-                                placeholder="1"
-                                className="rounded-xl border-gray-200 focus:border-black"
+                                id='min_nights'
+                                type='number'
+                                {...form.register('min_nights', {
+                                  valueAsNumber: true,
+                                })}
+                                placeholder='1'
+                                className='rounded-xl border-gray-200 focus:border-black'
                               />
                               {form.formState.errors.min_nights && (
-                                <p className="text-red-500 text-sm">{form.formState.errors.min_nights.message}</p>
+                                <p className='text-red-500 text-sm'>
+                                  {form.formState.errors.min_nights.message}
+                                </p>
                               )}
                             </div>
                           </div>
@@ -751,46 +893,59 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                       )}
 
                       {/* Monthly Pricing - Only show if supports monthly rentals */}
-                      {(watchedRentalType === 'monthly' || watchedRentalType === 'both') && (
+                      {(watchedRentalType === 'monthly' ||
+                        watchedRentalType === 'both') && (
                         <motion.div
-                          key="monthly-pricing"
+                          key='monthly-pricing'
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
                           transition={{ duration: 0.3 }}
-                          className="space-y-4"
+                          className='space-y-4'
                         >
-                          <div className="flex items-center gap-3 mb-4">
-                            <Badge className="bg-green-100 text-green-800">Monthly Rental</Badge>
+                          <div className='flex items-center gap-3 mb-4'>
+                            <Badge className='bg-green-100 text-green-800'>
+                              Monthly Rental
+                            </Badge>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                              <Label htmlFor="monthly_price">
+                          <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                            <div className='space-y-2'>
+                              <Label htmlFor='monthly_price'>
                                 Monthly Rate (EGP) *
                               </Label>
                               <Input
-                                id="monthly_price"
-                                type="number"
-                                step="0.01"
-                                {...form.register('monthly_price', { valueAsNumber: true })}
-                                placeholder="6500.00"
-                                className="rounded-xl border-gray-200 focus:border-black"
+                                id='monthly_price'
+                                type='number'
+                                step='0.01'
+                                {...form.register('monthly_price', {
+                                  valueAsNumber: true,
+                                })}
+                                placeholder='6500.00'
+                                className='rounded-xl border-gray-200 focus:border-black'
                               />
                               {form.formState.errors.monthly_price && (
-                                <p className="text-red-500 text-sm">{form.formState.errors.monthly_price.message}</p>
+                                <p className='text-red-500 text-sm'>
+                                  {form.formState.errors.monthly_price.message}
+                                </p>
                               )}
                             </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="min_months">Minimum Months *</Label>
+                            <div className='space-y-2'>
+                              <Label htmlFor='min_months'>
+                                Minimum Months *
+                              </Label>
                               <Input
-                                id="min_months"
-                                type="number"
-                                {...form.register('min_months', { valueAsNumber: true })}
-                                placeholder="1"
-                                className="rounded-xl border-gray-200 focus:border-black"
+                                id='min_months'
+                                type='number'
+                                {...form.register('min_months', {
+                                  valueAsNumber: true,
+                                })}
+                                placeholder='1'
+                                className='rounded-xl border-gray-200 focus:border-black'
                               />
                               {form.formState.errors.min_months && (
-                                <p className="text-red-500 text-sm">{form.formState.errors.min_months.message}</p>
+                                <p className='text-red-500 text-sm'>
+                                  {form.formState.errors.min_months.message}
+                                </p>
                               )}
                             </div>
                           </div>
@@ -803,66 +958,78 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
             </TabsContent>
 
             {/* Details Tab */}
-            <TabsContent value="details">
+            <TabsContent value='details'>
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card className="rounded-3xl shadow-lg">
+                <Card className='rounded-3xl shadow-lg'>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                        <Settings className="h-5 w-5 text-white" />
+                    <CardTitle className='flex items-center gap-3'>
+                      <div className='w-10 h-10 bg-black rounded-xl flex items-center justify-center'>
+                        <Settings className='h-5 w-5 text-white' />
                       </div>
                       Property Details
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="bedrooms">Bedrooms</Label>
+                  <CardContent className='space-y-6'>
+                    <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='bedrooms'>Bedrooms</Label>
                         <Input
-                          id="bedrooms"
-                          type="number"
-                          {...form.register('bedrooms', { valueAsNumber: true })}
-                          className="rounded-xl border-gray-200 focus:border-black"
+                          id='bedrooms'
+                          type='number'
+                          {...form.register('bedrooms', {
+                            valueAsNumber: true,
+                          })}
+                          className='rounded-xl border-gray-200 focus:border-black'
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="bathrooms">Bathrooms</Label>
+                      <div className='space-y-2'>
+                        <Label htmlFor='bathrooms'>Bathrooms</Label>
                         <Input
-                          id="bathrooms"
-                          type="number"
-                          {...form.register('bathrooms', { valueAsNumber: true })}
-                          className="rounded-xl border-gray-200 focus:border-black"
+                          id='bathrooms'
+                          type='number'
+                          {...form.register('bathrooms', {
+                            valueAsNumber: true,
+                          })}
+                          className='rounded-xl border-gray-200 focus:border-black'
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="max_guests">Max Guests *</Label>
+                      <div className='space-y-2'>
+                        <Label htmlFor='max_guests'>Max Guests *</Label>
                         <Input
-                          id="max_guests"
-                          type="number"
-                          {...form.register('max_guests', { valueAsNumber: true })}
-                          className="rounded-xl border-gray-200 focus:border-black"
+                          id='max_guests'
+                          type='number'
+                          {...form.register('max_guests', {
+                            valueAsNumber: true,
+                          })}
+                          className='rounded-xl border-gray-200 focus:border-black'
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className='space-y-4'>
                       <Label>Amenities</Label>
-                      <div className="space-y-6">
+                      <div className='space-y-6'>
                         {/* الأساسيات */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm text-gray-700">الأساسيات</h4>
-                            <div className="flex-1 h-px bg-gray-200"></div>
+                        <div className='space-y-3'>
+                          <div className='flex items-center gap-2'>
+                            <h4 className='font-medium text-sm text-gray-700'>
+                              الأساسيات
+                            </h4>
+                            <div className='flex-1 h-px bg-gray-200'></div>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {AMENITIES_LIST.filter(amenity => amenity.category === 'essential').map((amenity) => {
+                          <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+                            {AMENITIES_LIST.filter(
+                              (amenity) => amenity.category === 'essential',
+                            ).map((amenity) => {
                               const IconComponent = amenity.icon;
-                              const isSelected = watchedAmenities.includes(amenity.id);
-                              
+                              const isSelected = watchedAmenities.includes(
+                                amenity.id,
+                              );
+
                               return (
                                 <motion.div
                                   key={amenity.id}
@@ -870,13 +1037,17 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                                   whileTap={{ scale: 0.98 }}
                                 >
                                   <Button
-                                    type="button"
-                                    variant={isSelected ? "default" : "outline"}
-                                    onClick={() => handleAmenityToggle(amenity.id)}
-                                    className="w-full rounded-xl justify-start h-auto p-3"
+                                    type='button'
+                                    variant={isSelected ? 'default' : 'outline'}
+                                    onClick={() =>
+                                      handleAmenityToggle(amenity.id)
+                                    }
+                                    className='w-full rounded-xl justify-start h-auto p-3'
                                   >
-                                    <IconComponent className="h-5 w-5 mr-2 flex-shrink-0" />
-                                    <span className="text-sm font-medium">{amenity.name}</span>
+                                    <IconComponent className='h-5 w-5 mr-2 flex-shrink-0' />
+                                    <span className='text-sm font-medium'>
+                                      {amenity.name}
+                                    </span>
                                   </Button>
                                 </motion.div>
                               );
@@ -885,16 +1056,22 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                         </div>
 
                         {/* الراحة */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm text-gray-700">الراحة</h4>
-                            <div className="flex-1 h-px bg-gray-200"></div>
+                        <div className='space-y-3'>
+                          <div className='flex items-center gap-2'>
+                            <h4 className='font-medium text-sm text-gray-700'>
+                              الراحة
+                            </h4>
+                            <div className='flex-1 h-px bg-gray-200'></div>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {AMENITIES_LIST.filter(amenity => amenity.category === 'comfort').map((amenity) => {
+                          <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+                            {AMENITIES_LIST.filter(
+                              (amenity) => amenity.category === 'comfort',
+                            ).map((amenity) => {
                               const IconComponent = amenity.icon;
-                              const isSelected = watchedAmenities.includes(amenity.id);
-                              
+                              const isSelected = watchedAmenities.includes(
+                                amenity.id,
+                              );
+
                               return (
                                 <motion.div
                                   key={amenity.id}
@@ -902,13 +1079,17 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                                   whileTap={{ scale: 0.98 }}
                                 >
                                   <Button
-                                    type="button"
-                                    variant={isSelected ? "default" : "outline"}
-                                    onClick={() => handleAmenityToggle(amenity.id)}
-                                    className="w-full rounded-xl justify-start h-auto p-3"
+                                    type='button'
+                                    variant={isSelected ? 'default' : 'outline'}
+                                    onClick={() =>
+                                      handleAmenityToggle(amenity.id)
+                                    }
+                                    className='w-full rounded-xl justify-start h-auto p-3'
                                   >
-                                    <IconComponent className="h-5 w-5 mr-2 flex-shrink-0" />
-                                    <span className="text-sm font-medium">{amenity.name}</span>
+                                    <IconComponent className='h-5 w-5 mr-2 flex-shrink-0' />
+                                    <span className='text-sm font-medium'>
+                                      {amenity.name}
+                                    </span>
                                   </Button>
                                 </motion.div>
                               );
@@ -917,16 +1098,22 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                         </div>
 
                         {/* الترفيه */}
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-medium text-sm text-gray-700">الترفيه</h4>
-                            <div className="flex-1 h-px bg-gray-200"></div>
+                        <div className='space-y-3'>
+                          <div className='flex items-center gap-2'>
+                            <h4 className='font-medium text-sm text-gray-700'>
+                              الترفيه
+                            </h4>
+                            <div className='flex-1 h-px bg-gray-200'></div>
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {AMENITIES_LIST.filter(amenity => amenity.category === 'entertainment').map((amenity) => {
+                          <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+                            {AMENITIES_LIST.filter(
+                              (amenity) => amenity.category === 'entertainment',
+                            ).map((amenity) => {
                               const IconComponent = amenity.icon;
-                              const isSelected = watchedAmenities.includes(amenity.id);
-                              
+                              const isSelected = watchedAmenities.includes(
+                                amenity.id,
+                              );
+
                               return (
                                 <motion.div
                                   key={amenity.id}
@@ -934,13 +1121,17 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                                   whileTap={{ scale: 0.98 }}
                                 >
                                   <Button
-                                    type="button"
-                                    variant={isSelected ? "default" : "outline"}
-                                    onClick={() => handleAmenityToggle(amenity.id)}
-                                    className="w-full rounded-xl justify-start h-auto p-3"
+                                    type='button'
+                                    variant={isSelected ? 'default' : 'outline'}
+                                    onClick={() =>
+                                      handleAmenityToggle(amenity.id)
+                                    }
+                                    className='w-full rounded-xl justify-start h-auto p-3'
                                   >
-                                    <IconComponent className="h-5 w-5 mr-2 flex-shrink-0" />
-                                    <span className="text-sm font-medium">{amenity.name}</span>
+                                    <IconComponent className='h-5 w-5 mr-2 flex-shrink-0' />
+                                    <span className='text-sm font-medium'>
+                                      {amenity.name}
+                                    </span>
                                   </Button>
                                 </motion.div>
                               );
@@ -955,46 +1146,51 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
             </TabsContent>
 
             {/* Media Tab */}
-            <TabsContent value="media">
+            <TabsContent value='media'>
               <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card className="rounded-3xl shadow-lg">
+                <Card className='rounded-3xl shadow-lg'>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-                        <Image className="h-5 w-5 text-white" />
+                    <CardTitle className='flex items-center gap-3'>
+                      <div className='w-10 h-10 bg-black rounded-xl flex items-center justify-center'>
+                        <Image className='h-5 w-5 text-white' />
                       </div>
                       Property Images
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className='space-y-6'>
                     {/* File Upload Area */}
-                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-gray-400 transition-colors">
+                    <div className='border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-gray-400 transition-colors'>
                       <input
-                        type="file"
+                        type='file'
                         multiple
-                        accept="image/*"
+                        accept='image/*'
                         onChange={(e) => handleFileUpload(e.target.files)}
-                        className="hidden"
-                        id="image-upload"
+                        className='hidden'
+                        id='image-upload'
                         disabled={uploadingImages}
                       />
-                      <label htmlFor="image-upload" className="cursor-pointer block">
-                        <div className="space-y-4">
-                          <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                            <Upload className="h-8 w-8 text-gray-600" />
+                      <label
+                        htmlFor='image-upload'
+                        className='cursor-pointer block'
+                      >
+                        <div className='space-y-4'>
+                          <div className='mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center'>
+                            <Upload className='h-8 w-8 text-gray-600' />
                           </div>
                           <div>
-                            <p className="text-lg font-medium text-gray-900">
-                              {uploadingImages ? 'Uploading...' : 'Upload property images'}
+                            <p className='text-lg font-medium text-gray-900'>
+                              {uploadingImages
+                                ? 'Uploading...'
+                                : 'Upload property images'}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className='text-sm text-gray-500 mt-1'>
                               Drag and drop images here, or click to browse
                             </p>
-                            <p className="text-xs text-gray-400 mt-2">
+                            <p className='text-xs text-gray-400 mt-2'>
                               Supports: JPG, PNG, GIF • Max size: 5MB per image
                             </p>
                           </div>
@@ -1003,58 +1199,61 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                     </div>
 
                     {/* Alternative Upload Button */}
-                    <div className="flex justify-center">
+                    <div className='flex justify-center'>
                       <Button
-                        type="button"
-                        onClick={() => document.getElementById('image-upload')?.click()}
+                        type='button'
+                        onClick={() =>
+                          document.getElementById('image-upload')?.click()
+                        }
                         disabled={uploadingImages}
-                        className="rounded-xl bg-black text-white hover:bg-gray-800"
+                        className='rounded-xl bg-black text-white hover:bg-gray-800'
                       >
-                        <Upload className="h-4 w-4 mr-2" />
+                        <Upload className='h-4 w-4 mr-2' />
                         {uploadingImages ? 'Uploading...' : 'Choose Files'}
                       </Button>
                     </div>
 
                     {/* Image Preview Grid */}
                     {imageUrls.length > 0 && (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-gray-900">
+                      <div className='space-y-4'>
+                        <div className='flex items-center justify-between'>
+                          <h4 className='font-medium text-gray-900'>
                             Uploaded Images ({imageUrls.length})
                           </h4>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
                           {imageUrls.map((url, index) => (
                             <motion.div
                               key={index}
                               initial={{ opacity: 0, scale: 0.8 }}
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.8 }}
-                              className="relative group"
+                              className='relative group'
                             >
                               <img
                                 src={url}
                                 alt={`Property ${index + 1}`}
-                                className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                                className='w-full h-48 object-cover rounded-xl border border-gray-200'
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
-                                  target.src = 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
+                                  target.src =
+                                    'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80';
                                 }}
                               />
-                              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-xl flex items-center justify-center">
+                              <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-xl flex items-center justify-center'>
                                 <Button
-                                  type="button"
-                                  variant="destructive"
-                                  size="sm"
+                                  type='button'
+                                  variant='destructive'
+                                  size='sm'
                                   onClick={() => removeImage(index)}
-                                  className="opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-8 h-8 p-0"
+                                  className='opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-8 h-8 p-0'
                                 >
-                                  <X className="h-4 w-4" />
+                                  <X className='h-4 w-4' />
                                 </Button>
                               </div>
                               {index === 0 && (
-                                <div className="absolute top-2 left-2">
-                                  <Badge className="bg-blue-600 text-white text-xs">
+                                <div className='absolute top-2 left-2'>
+                                  <Badge className='bg-blue-600 text-white text-xs'>
                                     Cover Photo
                                   </Badge>
                                 </div>
@@ -1066,50 +1265,64 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                     )}
 
                     {imageUrls.length === 0 && (
-                      <div className="text-center py-8">
-                        <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                          <Image className="h-8 w-8 text-gray-400" />
+                      <div className='text-center py-8'>
+                        <div className='mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4'>
+                          <Image className='h-8 w-8 text-gray-400' />
                         </div>
-                        <p className="text-gray-500 text-sm">No images uploaded yet</p>
-                        <p className="text-gray-400 text-xs mt-1">Upload at least one image to showcase your property</p>
+                        <p className='text-gray-500 text-sm'>
+                          No images uploaded yet
+                        </p>
+                        <p className='text-gray-400 text-xs mt-1'>
+                          Upload at least one image to showcase your property
+                        </p>
                       </div>
                     )}
 
                     {/* Video Upload Section */}
-                    <div className="border-t border-gray-200 pt-6">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <Video className="h-4 w-4 text-purple-600" />
+                    <div className='border-t border-gray-200 pt-6'>
+                      <div className='flex items-center gap-3 mb-6'>
+                        <div className='w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center'>
+                          <Video className='h-4 w-4 text-purple-600' />
                         </div>
-                        <h3 className="text-lg font-semibold text-gray-900">Property Videos</h3>
-                        <Badge variant="outline" className="text-xs">Optional</Badge>
+                        <h3 className='text-lg font-semibold text-gray-900'>
+                          Property Videos
+                        </h3>
+                        <Badge variant='outline' className='text-xs'>
+                          Optional
+                        </Badge>
                       </div>
 
                       {/* Video Upload Area */}
-                      <div className="border-2 border-dashed border-purple-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors bg-purple-50/50">
+                      <div className='border-2 border-dashed border-purple-300 rounded-xl p-6 text-center hover:border-purple-400 transition-colors bg-purple-50/50'>
                         <input
-                          type="file"
+                          type='file'
                           multiple
-                          accept="video/*"
+                          accept='video/*'
                           onChange={(e) => handleVideoUpload(e.target.files)}
-                          className="hidden"
-                          id="video-upload"
+                          className='hidden'
+                          id='video-upload'
                           disabled={uploadingVideos}
                         />
-                        <label htmlFor="video-upload" className="cursor-pointer block">
-                          <div className="space-y-3">
-                            <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                              <Video className="h-6 w-6 text-purple-600" />
+                        <label
+                          htmlFor='video-upload'
+                          className='cursor-pointer block'
+                        >
+                          <div className='space-y-3'>
+                            <div className='mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center'>
+                              <Video className='h-6 w-6 text-purple-600' />
                             </div>
                             <div>
-                              <p className="font-medium text-gray-900">
-                                {uploadingVideos ? 'Uploading videos...' : 'Upload property videos'}
+                              <p className='font-medium text-gray-900'>
+                                {uploadingVideos
+                                  ? 'Uploading videos...'
+                                  : 'Upload property videos'}
                               </p>
-                              <p className="text-sm text-gray-500 mt-1">
+                              <p className='text-sm text-gray-500 mt-1'>
                                 Add video tours or walkthroughs
                               </p>
-                              <p className="text-xs text-gray-400 mt-2">
-                                Supports: MP4, MOV, AVI • Max size: 50MB per video
+                              <p className='text-xs text-gray-400 mt-2'>
+                                Supports: MP4, MOV, AVI • Max size: 50MB per
+                                video
                               </p>
                             </div>
                           </div>
@@ -1117,65 +1330,67 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                       </div>
 
                       {/* Alternative Video Upload Button */}
-                      <div className="flex justify-center mt-4">
+                      <div className='flex justify-center mt-4'>
                         <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById('video-upload')?.click()}
+                          type='button'
+                          variant='outline'
+                          onClick={() =>
+                            document.getElementById('video-upload')?.click()
+                          }
                           disabled={uploadingVideos}
-                          className="rounded-xl border-purple-200 text-purple-700 hover:bg-purple-50"
+                          className='rounded-xl border-purple-200 text-purple-700 hover:bg-purple-50'
                         >
-                          <Upload className="h-4 w-4 mr-2" />
+                          <Upload className='h-4 w-4 mr-2' />
                           {uploadingVideos ? 'Uploading...' : 'Choose Videos'}
                         </Button>
                       </div>
 
                       {/* Video Preview Grid */}
                       {videoUrls.length > 0 && (
-                        <div className="space-y-4 mt-6">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-gray-900">
+                        <div className='space-y-4 mt-6'>
+                          <div className='flex items-center justify-between'>
+                            <h4 className='font-medium text-gray-900'>
                               Uploaded Videos ({videoUrls.length})
                             </h4>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                             {videoUrls.map((url, index) => (
                               <motion.div
                                 key={index}
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.8 }}
-                                className="relative group"
+                                className='relative group'
                               >
-                                <div className="relative w-full h-48 bg-gray-100 rounded-xl border border-gray-200 overflow-hidden">
+                                <div className='relative w-full h-48 bg-gray-100 rounded-xl border border-gray-200 overflow-hidden'>
                                   <video
                                     src={url}
-                                    className="w-full h-full object-cover"
+                                    className='w-full h-full object-cover'
                                     muted
-                                    preload="metadata"
+                                    preload='metadata'
                                   />
-                                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                      <div className="bg-black bg-opacity-50 rounded-full p-3">
-                                        <Play className="h-6 w-6 text-white" />
+                                  <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center'>
+                                    <div className='absolute inset-0 flex items-center justify-center'>
+                                      <div className='bg-black bg-opacity-50 rounded-full p-3'>
+                                        <Play className='h-6 w-6 text-white' />
                                       </div>
                                     </div>
                                     <Button
-                                      type="button"
-                                      variant="destructive"
-                                      size="sm"
+                                      type='button'
+                                      variant='destructive'
+                                      size='sm'
                                       onClick={() => removeVideo(index)}
-                                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-8 h-8 p-0"
+                                      className='absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-8 h-8 p-0'
                                     >
-                                      <X className="h-4 w-4" />
+                                      <X className='h-4 w-4' />
                                     </Button>
                                   </div>
                                 </div>
-                                <div className="mt-2 px-1">
-                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                <div className='mt-2 px-1'>
+                                  <p className='text-sm font-medium text-gray-900 truncate'>
                                     Video {index + 1}
                                   </p>
-                                  <p className="text-xs text-gray-500">
+                                  <p className='text-xs text-gray-500'>
                                     Property walkthrough
                                   </p>
                                 </div>
@@ -1186,12 +1401,16 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
                       )}
 
                       {videoUrls.length === 0 && (
-                        <div className="text-center py-6 mt-4">
-                          <div className="mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3">
-                            <Video className="h-6 w-6 text-purple-400" />
+                        <div className='text-center py-6 mt-4'>
+                          <div className='mx-auto w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-3'>
+                            <Video className='h-6 w-6 text-purple-400' />
                           </div>
-                          <p className="text-gray-500 text-sm">No videos uploaded yet</p>
-                          <p className="text-gray-400 text-xs mt-1">Videos help showcase your property better</p>
+                          <p className='text-gray-500 text-sm'>
+                            No videos uploaded yet
+                          </p>
+                          <p className='text-gray-400 text-xs mt-1'>
+                            Videos help showcase your property better
+                          </p>
                         </div>
                       )}
                     </div>
@@ -1202,25 +1421,29 @@ const EnhancedPropertyForm = ({ property, onSave, onCancel }: EnhancedPropertyFo
 
             {/* Action Buttons */}
             <motion.div
-              className="flex justify-between items-center pt-8 border-t border-gray-200"
+              className='flex justify-between items-center pt-8 border-t border-gray-200'
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
               <Button
-                type="button"
-                variant="outline"
+                type='button'
+                variant='outline'
                 onClick={onCancel}
-                className="rounded-xl px-8"
+                className='rounded-xl px-8'
               >
                 Cancel
               </Button>
               <Button
-                type="submit"
+                type='submit'
                 disabled={isSubmitting}
-                className="rounded-xl px-8 bg-black text-white hover:bg-gray-800"
+                className='rounded-xl px-8 bg-black text-white hover:bg-gray-800'
               >
-                {isSubmitting ? 'Saving...' : editingProperty ? 'Update Property' : 'Create Property'}
+                {isSubmitting
+                  ? 'Saving...'
+                  : editingProperty
+                    ? 'Update Property'
+                    : 'Create Property'}
               </Button>
             </motion.div>
           </Tabs>

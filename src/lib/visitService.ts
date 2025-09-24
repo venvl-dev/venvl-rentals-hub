@@ -1,25 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
-import { 
-  ListingVisit, 
-  VisitedListing, 
-  PropertyVisitStats, 
+import {
+  ListingVisit,
+  VisitedListing,
+  PropertyVisitStats,
   TrackVisitParams,
-  GetVisitedListingsParams 
+  GetVisitedListingsParams,
 } from '../types/visit';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
 export class VisitService {
   /**
    * Track a visit to a property listing
    */
-  static async trackVisit(params: TrackVisitParams): Promise<{ success: boolean; visitId?: string; error?: string }> {
+  static async trackVisit(
+    params: TrackVisitParams,
+  ): Promise<{ success: boolean; visitId?: string; error?: string }> {
     try {
       const { data, error } = await supabase.rpc('track_listing_visit', {
-        target_property_id: params.propertyId
+        target_property_id: params.propertyId,
       });
 
       if (error) {
@@ -37,17 +39,19 @@ export class VisitService {
   /**
    * Get user's visited listings
    */
-  static async getVisitedListings(params: GetVisitedListingsParams = {}): Promise<{
+  static async getVisitedListings(
+    params: GetVisitedListingsParams = {},
+  ): Promise<{
     success: boolean;
     data?: VisitedListing[];
     error?: string;
   }> {
     try {
       const { limit = 20, offset = 0 } = params;
-      
+
       const { data, error } = await supabase.rpc('get_user_visited_listings', {
         limit_count: limit,
-        offset_count: offset
+        offset_count: offset,
       });
 
       if (error) {
@@ -72,7 +76,7 @@ export class VisitService {
   }> {
     try {
       const { data, error } = await supabase.rpc('get_property_visit_stats', {
-        target_property_id: propertyId
+        target_property_id: propertyId,
       });
 
       if (error) {

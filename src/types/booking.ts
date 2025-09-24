@@ -1,4 +1,3 @@
-
 import { Database } from '@/integrations/supabase/types';
 
 export type BookingStatus = Database['public']['Enums']['booking_status'];
@@ -17,7 +16,7 @@ export interface Booking {
   cancelled_by: string | null;
   created_at: string | null;
   updated_at: string | null;
-  
+
   // Joined data from other tables
   property?: {
     title: string;

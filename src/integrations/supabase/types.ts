@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)";
+    PostgrestVersion: '12.2.3 (519615d)';
   };
   public: {
     Tables: {
@@ -56,12 +56,12 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "admin_messages_parent_message_id_fkey";
-            columns: ["parent_message_id"];
+            foreignKeyName: 'admin_messages_parent_message_id_fkey';
+            columns: ['parent_message_id'];
             isOneToOne: false;
-            referencedRelation: "admin_messages";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'admin_messages';
+            referencedColumns: ['id'];
+          },
         ];
       };
       amenities: {
@@ -136,12 +136,12 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "approval_requests_workflow_id_fkey";
-            columns: ["workflow_id"];
+            foreignKeyName: 'approval_requests_workflow_id_fkey';
+            columns: ['workflow_id'];
             isOneToOne: false;
-            referencedRelation: "approval_workflows";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'approval_workflows';
+            referencedColumns: ['id'];
+          },
         ];
       };
       approval_workflows: {
@@ -243,12 +243,12 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "booking_notifications_booking_id_fkey";
-            columns: ["booking_id"];
+            foreignKeyName: 'booking_notifications_booking_id_fkey';
+            columns: ['booking_id'];
             isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'bookings';
+            referencedColumns: ['id'];
+          },
         ];
       };
       bookings: {
@@ -271,7 +271,7 @@ export type Database = {
           payment_amount: number | null;
           payment_status: string | null;
           property_id: string;
-          status: Database["public"]["Enums"]["booking_status"] | null;
+          status: Database['public']['Enums']['booking_status'] | null;
           stripe_session_id: string | null;
           total_price: number;
           updated_at: string | null;
@@ -295,7 +295,7 @@ export type Database = {
           payment_amount?: number | null;
           payment_status?: string | null;
           property_id: string;
-          status?: Database["public"]["Enums"]["booking_status"] | null;
+          status?: Database['public']['Enums']['booking_status'] | null;
           stripe_session_id?: string | null;
           total_price: number;
           updated_at?: string | null;
@@ -319,19 +319,19 @@ export type Database = {
           payment_amount?: number | null;
           payment_status?: string | null;
           property_id?: string;
-          status?: Database["public"]["Enums"]["booking_status"] | null;
+          status?: Database['public']['Enums']['booking_status'] | null;
           stripe_session_id?: string | null;
           total_price?: number;
           updated_at?: string | null;
         };
         Relationships: [
           {
-            foreignKeyName: "bookings_property_id_fkey";
-            columns: ["property_id"];
+            foreignKeyName: 'bookings_property_id_fkey';
+            columns: ['property_id'];
             isOneToOne: false;
-            referencedRelation: "properties";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
         ];
       };
       custom_roles: {
@@ -463,12 +463,12 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "managed_locations_parent_location_id_fkey";
-            columns: ["parent_location_id"];
+            foreignKeyName: 'managed_locations_parent_location_id_fkey';
+            columns: ['parent_location_id'];
             isOneToOne: false;
-            referencedRelation: "managed_locations";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'managed_locations';
+            referencedColumns: ['id'];
+          },
         ];
       };
       moderation_reports: {
@@ -522,12 +522,12 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "moderation_reports_reported_property_id_fkey";
-            columns: ["reported_property_id"];
+            foreignKeyName: 'moderation_reports_reported_property_id_fkey';
+            columns: ['reported_property_id'];
             isOneToOne: false;
-            referencedRelation: "properties";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
         ];
       };
       notifications: {
@@ -598,7 +598,7 @@ export type Database = {
           id: string;
           is_active: boolean | null;
           last_name: string | null;
-          role: Database["public"]["Enums"]["user_role"];
+          role: Database['public']['Enums']['user_role'];
           updated_at: string;
         };
         Insert: {
@@ -608,7 +608,7 @@ export type Database = {
           id: string;
           is_active?: boolean | null;
           last_name?: string | null;
-          role?: Database["public"]["Enums"]["user_role"];
+          role?: Database['public']['Enums']['user_role'];
           updated_at?: string;
         };
         Update: {
@@ -618,7 +618,7 @@ export type Database = {
           id?: string;
           is_active?: boolean | null;
           last_name?: string | null;
-          role?: Database["public"]["Enums"]["user_role"];
+          role?: Database['public']['Enums']['user_role'];
           updated_at?: string;
         };
         Relationships: [];
@@ -709,7 +709,7 @@ export type Database = {
           monthly_price: number | null;
           postal_code: string | null;
           price_per_night: number;
-          property_type: Database["public"]["Enums"]["property_type"];
+          property_type: Database['public']['Enums']['property_type'];
           rental_type: string | null;
           state: string | null;
           title: string;
@@ -741,7 +741,7 @@ export type Database = {
           monthly_price?: number | null;
           postal_code?: string | null;
           price_per_night: number;
-          property_type: Database["public"]["Enums"]["property_type"];
+          property_type: Database['public']['Enums']['property_type'];
           rental_type?: string | null;
           state?: string | null;
           title: string;
@@ -773,7 +773,7 @@ export type Database = {
           monthly_price?: number | null;
           postal_code?: string | null;
           price_per_night?: number;
-          property_type?: Database["public"]["Enums"]["property_type"];
+          property_type?: Database['public']['Enums']['property_type'];
           rental_type?: string | null;
           state?: string | null;
           title?: string;
@@ -800,19 +800,19 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "property_amenities_amenity_id_fkey";
-            columns: ["amenity_id"];
+            foreignKeyName: 'property_amenities_amenity_id_fkey';
+            columns: ['amenity_id'];
             isOneToOne: false;
-            referencedRelation: "amenities";
-            referencedColumns: ["id"];
+            referencedRelation: 'amenities';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "property_amenities_property_id_fkey";
-            columns: ["property_id"];
+            foreignKeyName: 'property_amenities_property_id_fkey';
+            columns: ['property_id'];
             isOneToOne: false;
-            referencedRelation: "properties";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
         ];
       };
       property_availability: {
@@ -842,12 +842,12 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "property_availability_property_id_fkey";
-            columns: ["property_id"];
+            foreignKeyName: 'property_availability_property_id_fkey';
+            columns: ['property_id'];
             isOneToOne: false;
-            referencedRelation: "properties";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
         ];
       };
       property_images: {
@@ -877,12 +877,12 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "property_images_property_id_fkey";
-            columns: ["property_id"];
+            foreignKeyName: 'property_images_property_id_fkey';
+            columns: ['property_id'];
             isOneToOne: false;
-            referencedRelation: "properties";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
         ];
       };
       property_types: {
@@ -1068,19 +1068,19 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "reviews_booking_id_fkey";
-            columns: ["booking_id"];
+            foreignKeyName: 'reviews_booking_id_fkey';
+            columns: ['booking_id'];
             isOneToOne: false;
-            referencedRelation: "bookings";
-            referencedColumns: ["id"];
+            referencedRelation: 'bookings';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "reviews_property_id_fkey";
-            columns: ["property_id"];
+            foreignKeyName: 'reviews_property_id_fkey';
+            columns: ['property_id'];
             isOneToOne: false;
-            referencedRelation: "properties";
-            referencedColumns: ["id"];
-          }
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
         ];
       };
       roles_permissions: {
@@ -1089,7 +1089,7 @@ export type Database = {
           id: string;
           permission_name: string;
           permission_value: boolean;
-          role: Database["public"]["Enums"]["user_role"];
+          role: Database['public']['Enums']['user_role'];
           updated_at: string;
         };
         Insert: {
@@ -1097,7 +1097,7 @@ export type Database = {
           id?: string;
           permission_name: string;
           permission_value?: boolean;
-          role: Database["public"]["Enums"]["user_role"];
+          role: Database['public']['Enums']['user_role'];
           updated_at?: string;
         };
         Update: {
@@ -1105,7 +1105,7 @@ export type Database = {
           id?: string;
           permission_name?: string;
           permission_value?: boolean;
-          role?: Database["public"]["Enums"]["user_role"];
+          role?: Database['public']['Enums']['user_role'];
           updated_at?: string;
         };
         Relationships: [];
@@ -1239,7 +1239,7 @@ export type Database = {
       };
       get_current_user_role: {
         Args: Record<PropertyKey, never>;
-        Returns: Database["public"]["Enums"]["user_role"];
+        Returns: Database['public']['Enums']['user_role'];
       };
       get_price_range: {
         Args: { booking_type_param?: string; price_column?: string };
@@ -1290,7 +1290,7 @@ export type Database = {
       update_user_role: {
         Args: {
           target_user_id: string;
-          new_role: Database["public"]["Enums"]["user_role"];
+          new_role: Database['public']['Enums']['user_role'];
         };
         Returns: boolean;
       };
@@ -1309,19 +1309,19 @@ export type Database = {
     };
     Enums: {
       booking_status:
-        | "pending"
-        | "confirmed"
-        | "cancelled"
-        | "completed"
-        | "checked_in";
+        | 'pending'
+        | 'confirmed'
+        | 'cancelled'
+        | 'completed'
+        | 'checked_in';
       property_type:
-        | "apartment"
-        | "house"
-        | "villa"
-        | "studio"
-        | "cabin"
-        | "loft";
-      user_role: "guest" | "host" | "admin" | "super_admin";
+        | 'apartment'
+        | 'house'
+        | 'villa'
+        | 'studio'
+        | 'cabin'
+        | 'loft';
+      user_role: 'guest' | 'host' | 'admin' | 'super_admin';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1329,138 +1329,138 @@ export type Database = {
   };
 };
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
 
 type DefaultSchema = DatabaseWithoutInternals[Extract<
   keyof Database,
-  "public"
+  'public'
 >];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R;
-    }
-    ? R
-    : never
-  : never;
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I;
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Insert: infer I;
-    }
-    ? I
-    : never
-  : never;
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U;
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Update: infer U;
-    }
-    ? U
-    : never
-  : never;
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+    | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never;
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof DefaultSchema['CompositeTypes']
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never;
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+    : never;
 
 export const Constants = {
   public: {
     Enums: {
       booking_status: [
-        "pending",
-        "confirmed",
-        "cancelled",
-        "completed",
-        "checked_in",
+        'pending',
+        'confirmed',
+        'cancelled',
+        'completed',
+        'checked_in',
       ],
-      property_type: ["apartment", "house", "villa", "studio", "cabin", "loft"],
-      user_role: ["guest", "host", "admin", "super_admin"],
+      property_type: ['apartment', 'house', 'villa', 'studio', 'cabin', 'loft'],
+      user_role: ['guest', 'host', 'admin', 'super_admin'],
     },
   },
 } as const;

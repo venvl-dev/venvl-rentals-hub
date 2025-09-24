@@ -31,7 +31,7 @@ export const useUserRole = (): UseUserRoleReturn => {
       // Check cache first
       const roleKey = `user_role_${user.id}`;
       const cachedRole = localStorage.getItem(roleKey);
-      
+
       if (cachedRole) {
         setUserRole(cachedRole);
         setLoading(false);
@@ -53,19 +53,24 @@ export const useUserRole = (): UseUserRoleReturn => {
       setUserRole(role);
       localStorage.setItem(roleKey, role);
 
-      await logSecurityEvent('user_role_fetched', 'authentication', user.id, true);
+      await logSecurityEvent(
+        'user_role_fetched',
+        'authentication',
+        user.id,
+        true,
+      );
     } catch (err) {
       const errorMessage = 'Unable to fetch user role';
       setError(errorMessage);
-      
+
       await handleError(
         new CustomError(
           'User role fetch failed',
           ErrorCodes.AUTH_UNAUTHORIZED,
           'medium',
-          errorMessage
+          errorMessage,
         ),
-        { userId: user.id, error: err }
+        { userId: user.id, error: err },
       );
     } finally {
       setLoading(false);
@@ -80,6 +85,6 @@ export const useUserRole = (): UseUserRoleReturn => {
     userRole,
     loading,
     error,
-    refetch: fetchUserRole
+    refetch: fetchUserRole,
   };
 };

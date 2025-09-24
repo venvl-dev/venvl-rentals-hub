@@ -4,18 +4,31 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { 
-  ArrowLeft, 
-  CheckCircle, 
-  XCircle, 
-  Edit, 
-  Star, 
-  Archive, 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Edit,
+  Star,
+  Archive,
   Trash2,
   DollarSign,
   Calendar,
@@ -27,7 +40,7 @@ import {
   TrendingUp,
   AlertTriangle,
   Phone,
-  Mail
+  Mail,
 } from 'lucide-react';
 import {
   Dialog,
@@ -87,13 +100,17 @@ const SuperAdminPropertyDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
-  
+
   // Fetch property with host details
-  const { data: property, isLoading, refetch } = useQuery({
+  const {
+    data: property,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['admin-property-details', id],
     queryFn: async () => {
       if (!id) throw new Error('Property ID is required');
-      
+
       // First fetch the property
       const { data: propertyData, error: propertyError } = await supabase
         .from('properties')
@@ -114,7 +131,7 @@ const SuperAdminPropertyDetails = () => {
           .select('first_name, last_name, email, phone')
           .eq('id', propertyData.host_id)
           .single();
-        
+
         hostData = host;
       }
 
@@ -128,7 +145,7 @@ const SuperAdminPropertyDetails = () => {
     queryKey: ['admin-property-bookings', id],
     queryFn: async () => {
       if (!id) return [];
-      
+
       // First try with basic query to avoid foreign key issues
       const { data, error } = await supabase
         .from('bookings')
@@ -150,11 +167,11 @@ const SuperAdminPropertyDetails = () => {
               .select('first_name, last_name, email')
               .eq('id', booking.guest_id)
               .single();
-            
+
             return { ...booking, profiles: guestData };
           }
           return { ...booking, profiles: null };
-        })
+        }),
       );
 
       return bookingsWithGuests as Booking[];
@@ -166,7 +183,7 @@ const SuperAdminPropertyDetails = () => {
   const updateStatusMutation = useMutation({
     mutationFn: async ({ status }: { status: 'approved' | 'rejected' }) => {
       if (!id) throw new Error('Property ID is required');
-      
+
       const { error } = await supabase
         .from('properties')
         .update({ approval_status: status })
@@ -179,7 +196,7 @@ const SuperAdminPropertyDetails = () => {
         p_action: `property_${status}`,
         p_resource_type: 'property',
         p_resource_id: id,
-        p_metadata: { status }
+        p_metadata: { status },
       });
     },
     onSuccess: (_, { status }) => {
@@ -196,7 +213,7 @@ const SuperAdminPropertyDetails = () => {
   const toggleFeaturedMutation = useMutation({
     mutationFn: async () => {
       if (!id || !property) throw new Error('Property data is required');
-      
+
       const { error } = await supabase
         .from('properties')
         .update({ is_featured: !property.is_featured })
@@ -205,7 +222,9 @@ const SuperAdminPropertyDetails = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success(`Property ${property?.is_featured ? 'unfeatured' : 'featured'} successfully`);
+      toast.success(
+        `Property ${property?.is_featured ? 'unfeatured' : 'featured'} successfully`,
+      );
       refetch();
     },
     onError: (error) => {
@@ -218,7 +237,7 @@ const SuperAdminPropertyDetails = () => {
   const toggleActiveMutation = useMutation({
     mutationFn: async () => {
       if (!id || !property) throw new Error('Property data is required');
-      
+
       const { error } = await supabase
         .from('properties')
         .update({ is_active: !property.is_active })
@@ -227,7 +246,9 @@ const SuperAdminPropertyDetails = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success(`Property ${property?.is_active ? 'archived' : 'activated'} successfully`);
+      toast.success(
+        `Property ${property?.is_active ? 'archived' : 'activated'} successfully`,
+      );
       refetch();
     },
     onError: (error) => {
@@ -250,25 +271,30 @@ const SuperAdminPropertyDetails = () => {
   const getStatusBadgeVariant = (status: string, isActive: boolean) => {
     if (!isActive) return 'secondary';
     switch (status) {
-      case 'approved': return 'default';
-      case 'rejected': return 'destructive';
-      case 'pending': return 'outline';
-      default: return 'outline';
+      case 'approved':
+        return 'default';
+      case 'rejected':
+        return 'destructive';
+      case 'pending':
+        return 'outline';
+      default:
+        return 'outline';
     }
   };
 
   const getHostName = (property: Property) => {
     const profile = property.profiles;
     if (!profile) return 'Unknown Host';
-    const fullName = `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
+    const fullName =
+      `${profile.first_name || ''} ${profile.last_name || ''}`.trim();
     return fullName || profile.email?.split('@')[0] || 'Unknown Host';
   };
 
   if (isLoading) {
     return (
-      <AdminLayout title="Property Details">
-        <div className="flex items-center justify-center p-8">
-          <div className="text-lg">Loading property details...</div>
+      <AdminLayout title='Property Details'>
+        <div className='flex items-center justify-center p-8'>
+          <div className='text-lg'>Loading property details...</div>
         </div>
       </AdminLayout>
     );
@@ -276,18 +302,21 @@ const SuperAdminPropertyDetails = () => {
 
   if (!property) {
     return (
-      <AdminLayout title="Property Not Found">
-        <div className="p-6">
+      <AdminLayout title='Property Not Found'>
+        <div className='p-6'>
           <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <AlertTriangle className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                <h2 className="text-xl font-semibold mb-2">Property Not Found</h2>
-                <p className="text-muted-foreground mb-6">
-                  The property you're looking for doesn't exist or has been removed.
+            <CardContent className='pt-6'>
+              <div className='text-center'>
+                <AlertTriangle className='h-16 w-16 mx-auto text-muted-foreground mb-4' />
+                <h2 className='text-xl font-semibold mb-2'>
+                  Property Not Found
+                </h2>
+                <p className='text-muted-foreground mb-6'>
+                  The property you're looking for doesn't exist or has been
+                  removed.
                 </p>
                 <Button onClick={() => navigate('/admin/properties')}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  <ArrowLeft className='h-4 w-4 mr-2' />
                   Back to Properties
                 </Button>
               </div>
@@ -298,36 +327,47 @@ const SuperAdminPropertyDetails = () => {
     );
   }
 
-  const totalRevenue = bookings.reduce((sum, booking) => sum + Number(booking.total_price), 0);
-  const completedBookings = bookings.filter(booking => booking.status === 'completed').length;
+  const totalRevenue = bookings.reduce(
+    (sum, booking) => sum + Number(booking.total_price),
+    0,
+  );
+  const completedBookings = bookings.filter(
+    (booking) => booking.status === 'completed',
+  ).length;
 
   return (
     <AdminLayout title={`Property: ${property.title}`}>
-      <div className="p-6 space-y-6">
+      <div className='p-6 space-y-6'>
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="outline" 
+        <div className='flex items-center justify-between'>
+          <div className='flex items-center space-x-4'>
+            <Button
+              variant='outline'
               onClick={() => navigate('/admin/properties')}
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className='h-4 w-4 mr-2' />
               Back to Properties
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">{property.title}</h1>
-              <p className="text-muted-foreground capitalize">
-                {property.property_type} in {property.city}, {property.state || property.country}
+              <h1 className='text-2xl font-bold'>{property.title}</h1>
+              <p className='text-muted-foreground capitalize'>
+                {property.property_type} in {property.city},{' '}
+                {property.state || property.country}
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Badge variant={getStatusBadgeVariant(property.approval_status, property.is_active)}>
+          <div className='flex items-center space-x-2'>
+            <Badge
+              variant={getStatusBadgeVariant(
+                property.approval_status,
+                property.is_active,
+              )}
+            >
               {!property.is_active ? 'Archived' : property.approval_status}
             </Badge>
             {property.is_featured && (
-              <Badge variant="default" className="bg-yellow-500">
-                <Star className="h-3 w-3 mr-1" />
+              <Badge variant='default' className='bg-yellow-500'>
+                <Star className='h-3 w-3 mr-1' />
                 Featured
               </Badge>
             )}
@@ -338,104 +378,123 @@ const SuperAdminPropertyDetails = () => {
         <Card>
           <CardHeader>
             <CardTitle>Super Admin Actions</CardTitle>
-            <CardDescription>Quick property management controls</CardDescription>
+            <CardDescription>
+              Quick property management controls
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-2">
+            <div className='flex flex-wrap gap-2'>
               {property.approval_status === 'pending' && (
                 <>
                   <Button
-                    onClick={() => updateStatusMutation.mutate({ status: 'approved' })}
+                    onClick={() =>
+                      updateStatusMutation.mutate({ status: 'approved' })
+                    }
                     disabled={updateStatusMutation.isPending}
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
+                    <CheckCircle className='h-4 w-4 mr-2' />
                     Approve Property
                   </Button>
                   <Button
-                    variant="destructive"
-                    onClick={() => updateStatusMutation.mutate({ status: 'rejected' })}
+                    variant='destructive'
+                    onClick={() =>
+                      updateStatusMutation.mutate({ status: 'rejected' })
+                    }
                     disabled={updateStatusMutation.isPending}
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
+                    <XCircle className='h-4 w-4 mr-2' />
                     Reject Property
                   </Button>
                 </>
               )}
-              
+
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={() => toggleFeaturedMutation.mutate()}
                 disabled={toggleFeaturedMutation.isPending}
               >
-                <Star className="h-4 w-4 mr-2" />
+                <Star className='h-4 w-4 mr-2' />
                 {property.is_featured ? 'Remove Featured' : 'Make Featured'}
               </Button>
-              
+
               <Button
-                variant="outline"
+                variant='outline'
                 onClick={() => toggleActiveMutation.mutate()}
                 disabled={toggleActiveMutation.isPending}
               >
-                <Archive className="h-4 w-4 mr-2" />
+                <Archive className='h-4 w-4 mr-2' />
                 {property.is_active ? 'Archive Property' : 'Activate Property'}
               </Button>
-              
-              <Button variant="outline" onClick={() => setIsEditing(true)}>
-                <Edit className="h-4 w-4 mr-2" />
+
+              <Button variant='outline' onClick={() => setIsEditing(true)}>
+                <Edit className='h-4 w-4 mr-2' />
                 Edit Property
               </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="details" className="space-y-4">
+        <Tabs defaultValue='details' className='space-y-4'>
           <TabsList>
-            <TabsTrigger value="details">Property Details</TabsTrigger>
-            <TabsTrigger value="host">Host Information</TabsTrigger>
-            <TabsTrigger value="bookings">Bookings ({bookings.length})</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value='details'>Property Details</TabsTrigger>
+            <TabsTrigger value='host'>Host Information</TabsTrigger>
+            <TabsTrigger value='bookings'>
+              Bookings ({bookings.length})
+            </TabsTrigger>
+            <TabsTrigger value='analytics'>Analytics</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="details">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <TabsContent value='details'>
+            <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
               <Card>
                 <CardHeader>
                   <CardTitle>Basic Information</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className='space-y-4'>
                   <div>
-                    <label className="text-sm font-medium">Description</label>
-                    <p className="text-sm text-muted-foreground mt-1">
+                    <label className='text-sm font-medium'>Description</label>
+                    <p className='text-sm text-muted-foreground mt-1'>
                       {property.description || 'No description provided'}
                     </p>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
+
+                  <div className='grid grid-cols-2 gap-4'>
                     <div>
-                      <label className="text-sm font-medium">Property Type</label>
-                      <p className="text-sm text-muted-foreground capitalize">{property.property_type}</p>
+                      <label className='text-sm font-medium'>
+                        Property Type
+                      </label>
+                      <p className='text-sm text-muted-foreground capitalize'>
+                        {property.property_type}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Max Guests</label>
-                      <p className="text-sm text-muted-foreground">{property.max_guests}</p>
+                      <label className='text-sm font-medium'>Max Guests</label>
+                      <p className='text-sm text-muted-foreground'>
+                        {property.max_guests}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className='grid grid-cols-2 gap-4'>
                     <div>
-                      <label className="text-sm font-medium">Bedrooms</label>
-                      <p className="text-sm text-muted-foreground">{property.bedrooms || 0}</p>
+                      <label className='text-sm font-medium'>Bedrooms</label>
+                      <p className='text-sm text-muted-foreground'>
+                        {property.bedrooms || 0}
+                      </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium">Bathrooms</label>
-                      <p className="text-sm text-muted-foreground">{property.bathrooms || 0}</p>
+                      <label className='text-sm font-medium'>Bathrooms</label>
+                      <p className='text-sm text-muted-foreground'>
+                        {property.bathrooms || 0}
+                      </p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium">Full Address</label>
-                    <p className="text-sm text-muted-foreground">
-                      {property.address}, {property.city}, {property.state} {property.country}
+                    <label className='text-sm font-medium'>Full Address</label>
+                    <p className='text-sm text-muted-foreground'>
+                      {property.address}, {property.city}, {property.state}{' '}
+                      {property.country}
                     </p>
                   </div>
                 </CardContent>
@@ -445,30 +504,39 @@ const SuperAdminPropertyDetails = () => {
                 <CardHeader>
                   <CardTitle>Pricing & Availability</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {(property.booking_types?.includes('daily') || property.daily_price) && (
+                <CardContent className='space-y-4'>
+                  {(property.booking_types?.includes('daily') ||
+                    property.daily_price) && (
                     <div>
-                      <label className="text-sm font-medium">Daily Rate</label>
-                      <p className="text-sm text-muted-foreground">
-                        ${property.daily_price || property.price_per_night}/night
+                      <label className='text-sm font-medium'>Daily Rate</label>
+                      <p className='text-sm text-muted-foreground'>
+                        ${property.daily_price || property.price_per_night}
+                        /night
                       </p>
                     </div>
                   )}
-                  
-                  {(property.booking_types?.includes('monthly') || property.monthly_price) && (
+
+                  {(property.booking_types?.includes('monthly') ||
+                    property.monthly_price) && (
                     <div>
-                      <label className="text-sm font-medium">Monthly Rate</label>
-                      <p className="text-sm text-muted-foreground">
+                      <label className='text-sm font-medium'>
+                        Monthly Rate
+                      </label>
+                      <p className='text-sm text-muted-foreground'>
                         ${property.monthly_price || 'Not set'}/month
                       </p>
                     </div>
                   )}
 
                   <div>
-                    <label className="text-sm font-medium">Booking Types</label>
-                    <div className="flex flex-wrap gap-1 mt-1">
+                    <label className='text-sm font-medium'>Booking Types</label>
+                    <div className='flex flex-wrap gap-1 mt-1'>
                       {property.booking_types?.map((type, index) => (
-                        <Badge key={index} variant="outline" className="text-xs capitalize">
+                        <Badge
+                          key={index}
+                          variant='outline'
+                          className='text-xs capitalize'
+                        >
                           {type}
                         </Badge>
                       ))}
@@ -476,10 +544,14 @@ const SuperAdminPropertyDetails = () => {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium">Amenities</label>
-                    <div className="flex flex-wrap gap-1 mt-1">
+                    <label className='text-sm font-medium'>Amenities</label>
+                    <div className='flex flex-wrap gap-1 mt-1'>
                       {property.amenities?.map((amenity, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
+                        <Badge
+                          key={index}
+                          variant='outline'
+                          className='text-xs'
+                        >
                           {amenity}
                         </Badge>
                       ))}
@@ -490,35 +562,41 @@ const SuperAdminPropertyDetails = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="host">
+          <TabsContent value='host'>
             <Card>
               <CardHeader>
                 <CardTitle>Host Information</CardTitle>
-                <CardDescription>Property owner details and contact information</CardDescription>
+                <CardDescription>
+                  Property owner details and contact information
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                  <div className='space-y-4'>
                     <div>
-                      <label className="text-sm font-medium">Host Name</label>
-                      <p className="text-lg font-semibold">{getHostName(property)}</p>
+                      <label className='text-sm font-medium'>Host Name</label>
+                      <p className='text-lg font-semibold'>
+                        {getHostName(property)}
+                      </p>
                     </div>
-                    
+
                     <div>
-                      <label className="text-sm font-medium">Email</label>
-                      <p className="text-sm text-muted-foreground">
+                      <label className='text-sm font-medium'>Email</label>
+                      <p className='text-sm text-muted-foreground'>
                         {property.profiles?.email || 'No email provided'}
                       </p>
                     </div>
-                    
+
                     {property.profiles?.phone && (
                       <div>
-                        <label className="text-sm font-medium">Phone</label>
-                        <p className="text-sm text-muted-foreground">{property.profiles.phone}</p>
+                        <label className='text-sm font-medium'>Phone</label>
+                        <p className='text-sm text-muted-foreground'>
+                          {property.profiles.phone}
+                        </p>
                       </div>
                     )}
                   </div>
-                   {/* future features (view host profile - send email - call host) */}
+                  {/* future features (view host profile - send email - call host) */}
                   {/* <div className="space-y-2">
                     <Button variant="outline" className="w-full justify-start">
                       <Mail className="h-4 w-4 mr-2" />
@@ -540,11 +618,13 @@ const SuperAdminPropertyDetails = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="bookings">
+          <TabsContent value='bookings'>
             <Card>
               <CardHeader>
                 <CardTitle>Booking History</CardTitle>
-                <CardDescription>All bookings for this property</CardDescription>
+                <CardDescription>
+                  All bookings for this property
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {bookings.length > 0 ? (
@@ -563,32 +643,41 @@ const SuperAdminPropertyDetails = () => {
                       {bookings.map((booking) => (
                         <TableRow key={booking.id}>
                           <TableCell>
-                            {booking.profiles ? 
-                              `${booking.profiles.first_name || ''} ${booking.profiles.last_name || ''}`.trim() || booking.profiles.email :
-                              'Unknown Guest'
-                            }
+                            {booking.profiles
+                              ? `${booking.profiles.first_name || ''} ${booking.profiles.last_name || ''}`.trim() ||
+                                booking.profiles.email
+                              : 'Unknown Guest'}
                           </TableCell>
-                          <TableCell>{new Date(booking.check_in).toLocaleDateString()}</TableCell>
-                          <TableCell>{new Date(booking.check_out).toLocaleDateString()}</TableCell>
                           <TableCell>
-                            <Badge 
+                            {new Date(booking.check_in).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(booking.check_out).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
                               variant={
-                                booking.status === 'completed' ? 'default' :
-                                booking.status === 'cancelled' ? 'destructive' : 'secondary'
+                                booking.status === 'completed'
+                                  ? 'default'
+                                  : booking.status === 'cancelled'
+                                    ? 'destructive'
+                                    : 'secondary'
                               }
                             >
                               {booking.status}
                             </Badge>
                           </TableCell>
                           <TableCell>${booking.total_price}</TableCell>
-                          <TableCell>{new Date(booking.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            {new Date(booking.created_at).toLocaleDateString()}
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <div className='text-center py-8 text-muted-foreground'>
+                    <Calendar className='h-12 w-12 mx-auto mb-4 opacity-50' />
                     <p>No bookings found for this property</p>
                   </div>
                 )}
@@ -596,60 +685,84 @@ const SuperAdminPropertyDetails = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="analytics">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <TabsContent value='analytics'>
+            <div className='grid grid-cols-1 md:grid-cols-4 gap-6 mb-6'>
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+                  <CardTitle className='text-sm font-medium'>
+                    Total Revenue
+                  </CardTitle>
+                  <DollarSign className='h-4 w-4 text-muted-foreground' />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">${totalRevenue.toLocaleString()}</div>
-                  <p className="text-xs text-muted-foreground">
-                    From {bookings.length} booking{bookings.length !== 1 ? 's' : ''}
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Completed Bookings</CardTitle>
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{completedBookings}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {bookings.length > 0 ? Math.round((completedBookings / bookings.length) * 100) : 0}% completion rate
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Booking Value</CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    ${bookings.length > 0 ? Math.round(totalRevenue / bookings.length).toLocaleString() : 0}
+                  <div className='text-2xl font-bold'>
+                    ${totalRevenue.toLocaleString()}
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className='text-xs text-muted-foreground'>
+                    From {bookings.length} booking
+                    {bookings.length !== 1 ? 's' : ''}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+                  <CardTitle className='text-sm font-medium'>
+                    Completed Bookings
+                  </CardTitle>
+                  <CheckCircle className='h-4 w-4 text-muted-foreground' />
+                </CardHeader>
+                <CardContent>
+                  <div className='text-2xl font-bold'>{completedBookings}</div>
+                  <p className='text-xs text-muted-foreground'>
+                    {bookings.length > 0
+                      ? Math.round((completedBookings / bookings.length) * 100)
+                      : 0}
+                    % completion rate
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+                  <CardTitle className='text-sm font-medium'>
+                    Average Booking Value
+                  </CardTitle>
+                  <TrendingUp className='h-4 w-4 text-muted-foreground' />
+                </CardHeader>
+                <CardContent>
+                  <div className='text-2xl font-bold'>
+                    $
+                    {bookings.length > 0
+                      ? Math.round(
+                          totalRevenue / bookings.length,
+                        ).toLocaleString()
+                      : 0}
+                  </div>
+                  <p className='text-xs text-muted-foreground'>
                     Per booking average
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Property Age</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+                  <CardTitle className='text-sm font-medium'>
+                    Property Age
+                  </CardTitle>
+                  <Calendar className='h-4 w-4 text-muted-foreground' />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">
-                    {Math.floor((Date.now() - new Date(property.created_at).getTime()) / (1000 * 60 * 60 * 24))} days
+                  <div className='text-2xl font-bold'>
+                    {Math.floor(
+                      (Date.now() - new Date(property.created_at).getTime()) /
+                        (1000 * 60 * 60 * 24),
+                    )}{' '}
+                    days
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Listed on {new Date(property.created_at).toLocaleDateString()}
+                  <p className='text-xs text-muted-foreground'>
+                    Listed on{' '}
+                    {new Date(property.created_at).toLocaleDateString()}
                   </p>
                 </CardContent>
               </Card>
@@ -658,22 +771,31 @@ const SuperAdminPropertyDetails = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Property Status</CardTitle>
-                <CardDescription>Quick overview of property performance</CardDescription>
+                <CardDescription>
+                  Quick overview of property performance
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border rounded">
-                    <span className="font-medium">Total Bookings</span>
-                    <span className="text-lg font-bold">{bookings.length}</span>
+                <div className='space-y-3'>
+                  <div className='flex items-center justify-between p-3 border rounded'>
+                    <span className='font-medium'>Total Bookings</span>
+                    <span className='text-lg font-bold'>{bookings.length}</span>
                   </div>
-                  <div className="flex items-center justify-between p-3 border rounded">
-                    <span className="font-medium">Revenue Generated</span>
-                    <span className="text-lg font-bold">${totalRevenue.toLocaleString()}</span>
+                  <div className='flex items-center justify-between p-3 border rounded'>
+                    <span className='font-medium'>Revenue Generated</span>
+                    <span className='text-lg font-bold'>
+                      ${totalRevenue.toLocaleString()}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between p-3 border rounded">
-                    <span className="font-medium">Success Rate</span>
-                    <span className="text-lg font-bold">
-                      {bookings.length > 0 ? Math.round((completedBookings / bookings.length) * 100) : 0}%
+                  <div className='flex items-center justify-between p-3 border rounded'>
+                    <span className='font-medium'>Success Rate</span>
+                    <span className='text-lg font-bold'>
+                      {bookings.length > 0
+                        ? Math.round(
+                            (completedBookings / bookings.length) * 100,
+                          )
+                        : 0}
+                      %
                     </span>
                   </div>
                 </div>
@@ -685,11 +807,12 @@ const SuperAdminPropertyDetails = () => {
         {/* Edit Property Modal */}
         {isEditing && property && (
           <Dialog open={isEditing} onOpenChange={setIsEditing}>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className='max-w-4xl max-h-[90vh] overflow-y-auto'>
               <DialogHeader>
                 <DialogTitle>Edit Property - Super Admin</DialogTitle>
                 <DialogDescription>
-                  Update property information and settings. As a super admin, you can edit all fields.
+                  Update property information and settings. As a super admin,
+                  you can edit all fields.
                 </DialogDescription>
               </DialogHeader>
               <EnhancedPropertyForm

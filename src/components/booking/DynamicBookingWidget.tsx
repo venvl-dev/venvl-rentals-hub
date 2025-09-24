@@ -8,22 +8,37 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import PropertyCalendar from '@/components/calendar/PropertyCalendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Calendar as CalendarIcon, Clock, Users, CreditCard, MapPin, Star, Minus, Plus } from 'lucide-react';
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Users,
+  CreditCard,
+  MapPin,
+  Star,
+  Minus,
+  Plus,
+} from 'lucide-react';
 import { addDays, differenceInDays, addMonths, format } from 'date-fns';
 import { Database } from '@/integrations/supabase/types';
 import { useNavigate } from 'react-router-dom';
-import { 
-  getRentalType, 
-  getDailyPrice, 
-  getMonthlyPrice, 
+import {
+  getRentalType,
+  getDailyPrice,
+  getMonthlyPrice,
   supportsBookingType,
   getAvailableBookingTypes,
   type PropertyRentalData,
-  type BookingType 
+  type BookingType,
 } from '@/lib/rentalTypeUtils';
 
 type BookingStatus = Database['public']['Enums']['booking_status'];
@@ -49,7 +64,10 @@ interface DynamicBookingWidgetProps {
   user: User | null;
 }
 
-const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => {
+const DynamicBookingWidget = ({
+  property,
+  user,
+}: DynamicBookingWidgetProps) => {
   const navigate = useNavigate();
   const [bookingMode, setBookingMode] = useState<'daily' | 'monthly'>('daily');
   const [checkIn, setCheckIn] = useState<Date>();
@@ -97,10 +115,11 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
       // Debug: Log what bookings GuestWidget found
       console.log(`👤 GuestWidget fetchUnavailableDates for ${property.id}:`, {
         totalBookings: bookings?.length || 0,
-        bookings: bookings?.map(b => ({
-          check_in: b.check_in,
-          check_out: b.check_out
-        })) || []
+        bookings:
+          bookings?.map((b) => ({
+            check_in: b.check_in,
+            check_out: b.check_out,
+          })) || [],
       });
 
       // Fetch blocked dates
@@ -112,13 +131,13 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
       if (availabilityError) throw availabilityError;
 
       const blocked: Date[] = [];
-      
+
       // Add booked date ranges
-      bookings?.forEach(booking => {
+      bookings?.forEach((booking) => {
         const start = new Date(booking.check_in);
         const end = new Date(booking.check_out);
         const current = new Date(start);
-        
+
         while (current < end) {
           blocked.push(new Date(current));
           current.setDate(current.getDate() + 1);
@@ -126,14 +145,15 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
       });
 
       // Add manually blocked dates from property_availability table
-      availability?.forEach(item => {
+      availability?.forEach((item) => {
         blocked.push(new Date(item.blocked_date));
       });
 
-      console.log(`🔍 BookingWidget blocking ${blocked.length} dates for property ${property.id}:`, 
-        blocked.map(d => format(d, 'yyyy-MM-dd')).slice(0, 10)
+      console.log(
+        `🔍 BookingWidget blocking ${blocked.length} dates for property ${property.id}:`,
+        blocked.map((d) => format(d, 'yyyy-MM-dd')).slice(0, 10),
       );
-      
+
       setUnavailableDates(blocked);
     } catch (error) {
       console.error('Error fetching unavailable dates:', error);
@@ -150,7 +170,14 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
     } else {
       setTotalPrice(0);
     }
-  }, [bookingMode, checkIn, checkOut, monthlyDuration, dailyPrice, monthlyPrice]);
+  }, [
+    bookingMode,
+    checkIn,
+    checkOut,
+    monthlyDuration,
+    dailyPrice,
+    monthlyPrice,
+  ]);
 
   const handleBooking = async () => {
     if (!user) {
@@ -166,7 +193,8 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
         totalPrice,
       };
       localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
-      window.location.href = '/auth?redirect=' + encodeURIComponent(window.location.pathname);
+      window.location.href =
+        '/auth?redirect=' + encodeURIComponent(window.location.pathname);
       return;
     }
 
@@ -178,7 +206,9 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
       }
       const nights = differenceInDays(checkOut, checkIn);
       if (property.min_nights && nights < property.min_nights) {
-        toast.error(`Minimum stay is ${property.min_nights} night${property.min_nights > 1 ? 's' : ''}`);
+        toast.error(
+          `Minimum stay is ${property.min_nights} night${property.min_nights > 1 ? 's' : ''}`,
+        );
         return;
       }
     } else if (bookingMode === 'monthly') {
@@ -187,26 +217,36 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
         return;
       }
       if (property.min_months && monthlyDuration < property.min_months) {
-        toast.error(`Minimum stay is ${property.min_months} month${property.min_months > 1 ? 's' : ''}`);
+        toast.error(
+          `Minimum stay is ${property.min_months} month${property.min_months > 1 ? 's' : ''}`,
+        );
         return;
       }
     }
 
     // Check availability before proceeding
     const checkInDate = bookingMode === 'daily' ? checkIn! : monthlyStartDate!;
-    const checkOutDate = bookingMode === 'daily' ? checkOut! : addMonths(monthlyStartDate!, monthlyDuration);
-    
+    const checkOutDate =
+      bookingMode === 'daily'
+        ? checkOut!
+        : addMonths(monthlyStartDate!, monthlyDuration);
+
     try {
-      const { data: conflicts, error } = await supabase.rpc('check_booking_conflicts', {
-        p_property_id: property.id,
-        p_check_in: checkInDate.toISOString().split('T')[0],
-        p_check_out: checkOutDate.toISOString().split('T')[0],
-      });
+      const { data: conflicts, error } = await supabase.rpc(
+        'check_booking_conflicts',
+        {
+          p_property_id: property.id,
+          p_check_in: checkInDate.toISOString().split('T')[0],
+          p_check_out: checkOutDate.toISOString().split('T')[0],
+        },
+      );
 
       if (error) throw error;
-      
+
       if (conflicts) {
-        toast.error('Selected dates are no longer available. Please choose different dates.');
+        toast.error(
+          'Selected dates are no longer available. Please choose different dates.',
+        );
         return;
       }
     } catch (error) {
@@ -263,20 +303,20 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
       }
 
       toast.success('Booking request submitted successfully!');
-      
+
       // Reset form
       setCheckIn(undefined);
       setCheckOut(undefined);
       setMonthlyStartDate(undefined);
       setMonthlyDuration(1);
       setGuests(1);
-      
+
       // Refresh unavailable dates
       fetchUnavailableDates();
-      
     } catch (error) {
       console.error('Error creating booking:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to create booking';
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -289,70 +329,81 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
   };
 
   const isDateBlocked = (date: Date) => {
-    return unavailableDates.some(blockedDate => 
-      format(blockedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-    ) || date < new Date();
+    return (
+      unavailableDates.some(
+        (blockedDate) =>
+          format(blockedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'),
+      ) || date < new Date()
+    );
   };
 
   return (
-    <Card className="sticky top-8 shadow-2xl rounded-3xl overflow-hidden border-0">
-      <CardHeader className="bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 p-6">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-xl font-bold flex items-center gap-3">
-            <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-              <CreditCard className="h-5 w-5 text-white" />
+    <Card className='sticky top-8 shadow-2xl rounded-3xl overflow-hidden border-0'>
+      <CardHeader className='bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 p-6'>
+        <div className='flex items-center justify-between'>
+          <CardTitle className='text-xl font-bold flex items-center gap-3'>
+            <div className='w-10 h-10 bg-black rounded-xl flex items-center justify-center'>
+              <CreditCard className='h-5 w-5 text-white' />
             </div>
             Book Your Stay
           </CardTitle>
-          <Badge className="bg-black text-white font-semibold tracking-wide">
+          <Badge className='bg-black text-white font-semibold tracking-wide'>
             VENVL
           </Badge>
         </div>
-        
+
         {/* Property Info */}
-        <div className="space-y-2 pt-4">
-          <div className="flex items-center text-gray-600">
-            <MapPin className="h-4 w-4 mr-2" />
-            <span className="text-sm">{property.city}, {property.state}</span>
+        <div className='space-y-2 pt-4'>
+          <div className='flex items-center text-gray-600'>
+            <MapPin className='h-4 w-4 mr-2' />
+            <span className='text-sm'>
+              {property.city}, {property.state}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="text-sm font-medium">4.9 · 127 reviews</span>
+          <div className='flex items-center gap-2'>
+            <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
+            <span className='text-sm font-medium'>4.9 · 127 reviews</span>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="p-6 space-y-6">
+      <CardContent className='p-6 space-y-6'>
         {/* Booking Mode Selector (only show if property supports both types) */}
         {rentalType === 'both' && (
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold text-gray-900">Booking Type</Label>
-            <div className="inline-flex p-1 bg-muted rounded-lg w-full">
+          <div className='space-y-3'>
+            <Label className='text-sm font-semibold text-gray-900'>
+              Booking Type
+            </Label>
+            <div className='inline-flex p-1 bg-muted rounded-lg w-full'>
               <Button
-                variant="ghost"
+                variant='ghost'
                 onClick={() => setBookingMode('daily')}
                 disabled={!supportsBookingType(property, 'daily')}
                 className={`
                   flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-200
-                  ${bookingMode === 'daily'
-                    ? 'bg-black text-white shadow-sm'
-                    : 'text-muted-foreground'
+                  ${
+                    bookingMode === 'daily'
+                      ? 'bg-black text-white shadow-sm'
+                      : 'text-muted-foreground'
                   }
                   ${!supportsBookingType(property, 'daily') ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
               >
                 Daily stays
               </Button>
-              
+
               <Button
-                variant="ghost"
+                variant='ghost'
                 onClick={() => setBookingMode('monthly')}
-                disabled={!supportsBookingType(property, 'monthly') || !monthlyPrice}
+                disabled={
+                  !supportsBookingType(property, 'monthly') || !monthlyPrice
+                }
                 className={`
                   flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-200
-                  ${bookingMode === 'monthly'
-                    ? 'bg-black text-white shadow-sm'
-                    : 'text-muted-foreground'
+                  ${
+                    bookingMode === 'monthly'
+                      ? 'bg-black text-white shadow-sm'
+                      : 'text-muted-foreground'
                   }
                   ${!supportsBookingType(property, 'monthly') || !monthlyPrice ? 'opacity-50 cursor-not-allowed' : ''}
                 `}
@@ -365,40 +416,46 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
 
         {/* Show rental type info for single-type properties */}
         {rentalType !== 'both' && (
-          <div className="bg-gray-50 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <div className={`
+          <div className='bg-gray-50 rounded-lg p-3'>
+            <div className='flex items-center gap-2'>
+              <div
+                className={`
                 px-2 py-1 rounded-full text-xs font-medium
-                ${rentalType === 'daily' 
-                  ? 'bg-blue-100 text-blue-800' 
-                  : 'bg-green-100 text-green-800'
+                ${
+                  rentalType === 'daily'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-green-100 text-green-800'
                 }
-              `}>
-                {rentalType === 'daily' ? 'Daily Stays Only' : 'Monthly Stays Only'}
+              `}
+              >
+                {rentalType === 'daily'
+                  ? 'Daily Stays Only'
+                  : 'Monthly Stays Only'}
               </div>
-              <span className="text-sm text-gray-600">
-                {rentalType === 'daily' 
+              <span className='text-sm text-gray-600'>
+                {rentalType === 'daily'
                   ? `EGP ${dailyPrice}/night`
-                  : `EGP ${monthlyPrice}/month`
-                }
+                  : `EGP ${monthlyPrice}/month`}
               </span>
             </div>
           </div>
         )}
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode='wait'>
           {/* Daily Booking UI */}
           {bookingMode === 'daily' && (
             <motion.div
-              key="daily-booking"
+              key='daily-booking'
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-6"
+              className='space-y-6'
             >
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold text-gray-900">Select Dates</Label>
+              <div className='space-y-3'>
+                <Label className='text-sm font-semibold text-gray-900'>
+                  Select Dates
+                </Label>
                 <PropertyCalendar
                   propertyId={property.id}
                   rentalType={rentalType}
@@ -406,9 +463,15 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
                     setCheckIn(startDate);
                     setCheckOut(endDate);
                   }}
-                  selectedRange={checkIn && checkOut ? { start: checkIn, end: checkOut } : checkIn ? { start: checkIn } : undefined}
+                  selectedRange={
+                    checkIn && checkOut
+                      ? { start: checkIn, end: checkOut }
+                      : checkIn
+                        ? { start: checkIn }
+                        : undefined
+                  }
                   minNights={property.min_nights || 1}
-                  className="border border-gray-200 rounded-xl"
+                  className='border border-gray-200 rounded-xl'
                 />
               </div>
 
@@ -416,11 +479,11 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className="bg-blue-50 border border-blue-200 rounded-xl p-4"
+                  className='bg-blue-50 border border-blue-200 rounded-xl p-4'
                 >
-                  <div className="text-sm text-blue-800">
-                    <strong>{differenceInDays(checkOut, checkIn)}</strong> nights from{' '}
-                    <strong>{format(checkIn, 'MMM dd')}</strong> to{' '}
+                  <div className='text-sm text-blue-800'>
+                    <strong>{differenceInDays(checkOut, checkIn)}</strong>{' '}
+                    nights from <strong>{format(checkIn, 'MMM dd')}</strong> to{' '}
                     <strong>{format(checkOut, 'MMM dd')}</strong>
                   </div>
                 </motion.div>
@@ -431,66 +494,76 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
           {/* Monthly Booking UI */}
           {bookingMode === 'monthly' && (
             <motion.div
-              key="monthly-booking"
+              key='monthly-booking'
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-6"
+              className='space-y-6'
             >
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold text-gray-900">Start Date</Label>
+              <div className='space-y-3'>
+                <Label className='text-sm font-semibold text-gray-900'>
+                  Start Date
+                </Label>
                 <PropertyCalendar
                   propertyId={property.id}
                   rentalType={rentalType}
                   onDateSelect={(startDate) => {
                     setMonthlyStartDate(startDate);
                   }}
-                  selectedRange={monthlyStartDate ? { start: monthlyStartDate } : undefined}
+                  selectedRange={
+                    monthlyStartDate ? { start: monthlyStartDate } : undefined
+                  }
                   minMonths={property.min_months || 1}
-                  className="border border-gray-200 rounded-xl"
+                  className='border border-gray-200 rounded-xl'
                 />
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-sm font-semibold text-gray-900">Duration</Label>
-                <div className="flex items-center justify-center gap-6 py-4 bg-gray-50 rounded-xl">
+              <div className='space-y-3'>
+                <Label className='text-sm font-semibold text-gray-900'>
+                  Duration
+                </Label>
+                <div className='flex items-center justify-center gap-6 py-4 bg-gray-50 rounded-xl'>
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant='outline'
+                    size='sm'
                     onClick={() => updateMonthlyDuration(-1)}
                     disabled={monthlyDuration <= 1}
-                    className="w-10 h-10 rounded-full"
+                    className='w-10 h-10 rounded-full'
                   >
-                    <Minus className="h-4 w-4" />
+                    <Minus className='h-4 w-4' />
                   </Button>
-                  
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-black">{monthlyDuration}</div>
-                    <div className="text-sm text-gray-500">
+
+                  <div className='text-center'>
+                    <div className='text-3xl font-bold text-black'>
+                      {monthlyDuration}
+                    </div>
+                    <div className='text-sm text-gray-500'>
                       {monthlyDuration === 1 ? 'month' : 'months'}
                     </div>
                   </div>
-                  
+
                   <Button
-                    variant="outline"
-                    size="sm"
+                    variant='outline'
+                    size='sm'
                     onClick={() => updateMonthlyDuration(1)}
                     disabled={monthlyDuration >= 12}
-                    className="w-10 h-10 rounded-full"
+                    className='w-10 h-10 rounded-full'
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className='h-4 w-4' />
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2">
+                <div className='grid grid-cols-4 gap-2'>
                   {[1, 3, 6, 12].map((month) => (
                     <Button
                       key={month}
-                      variant={monthlyDuration === month ? "default" : "outline"}
-                      size="sm"
+                      variant={
+                        monthlyDuration === month ? 'default' : 'outline'
+                      }
+                      size='sm'
                       onClick={() => setMonthlyDuration(month)}
-                      className="h-10 text-sm"
+                      className='h-10 text-sm'
                     >
                       {month}m
                     </Button>
@@ -502,10 +575,11 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: 'auto' }}
-                  className="bg-green-50 border border-green-200 rounded-xl p-4"
+                  className='bg-green-50 border border-green-200 rounded-xl p-4'
                 >
-                  <div className="text-sm text-green-800">
-                    <strong>{monthlyDuration}</strong> {monthlyDuration === 1 ? 'month' : 'months'} starting from{' '}
+                  <div className='text-sm text-green-800'>
+                    <strong>{monthlyDuration}</strong>{' '}
+                    {monthlyDuration === 1 ? 'month' : 'months'} starting from{' '}
                     <strong>{format(monthlyStartDate, 'MMM dd, yyyy')}</strong>
                   </div>
                 </motion.div>
@@ -515,21 +589,26 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
         </AnimatePresence>
 
         {/* Guests */}
-        <div className="space-y-3">
-          <Label className="text-sm font-semibold text-gray-900">Guests</Label>
-          <Select value={guests.toString()} onValueChange={(value) => setGuests(parseInt(value))}>
-            <SelectTrigger className="rounded-xl border-gray-200 focus:border-black">
+        <div className='space-y-3'>
+          <Label className='text-sm font-semibold text-gray-900'>Guests</Label>
+          <Select
+            value={guests.toString()}
+            onValueChange={(value) => setGuests(parseInt(value))}
+          >
+            <SelectTrigger className='rounded-xl border-gray-200 focus:border-black'>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {Array.from({ length: property.max_guests }, (_, i) => i + 1).map((num) => (
-                <SelectItem key={num} value={num.toString()}>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4" />
-                    {num} {num === 1 ? 'guest' : 'guests'}
-                  </div>
-                </SelectItem>
-              ))}
+              {Array.from({ length: property.max_guests }, (_, i) => i + 1).map(
+                (num) => (
+                  <SelectItem key={num} value={num.toString()}>
+                    <div className='flex items-center gap-2'>
+                      <Users className='h-4 w-4' />
+                      {num} {num === 1 ? 'guest' : 'guests'}
+                    </div>
+                  </SelectItem>
+                ),
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -537,39 +616,39 @@ const DynamicBookingWidget = ({ property, user }: DynamicBookingWidgetProps) => 
         <Separator />
 
         {/* Pricing Summary */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-600">
-              {bookingMode === 'daily' 
+        <div className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <span className='text-sm text-gray-600'>
+              {bookingMode === 'daily'
                 ? `EGP ${dailyPrice} × ${checkIn && checkOut ? differenceInDays(checkOut, checkIn) : 0} nights`
-                : `EGP ${monthlyPrice} × ${monthlyDuration} months`
-              }
+                : `EGP ${monthlyPrice} × ${monthlyDuration} months`}
             </span>
-            <span className="font-semibold">EGP {totalPrice}</span>
+            <span className='font-semibold'>EGP {totalPrice}</span>
           </div>
-          
-          <div className="flex items-center justify-between text-lg font-bold">
+
+          <div className='flex items-center justify-between text-lg font-bold'>
             <span>Total</span>
             <span>EGP {totalPrice}</span>
           </div>
         </div>
 
         {/* Book Button */}
-        <motion.div
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
+        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Button
             onClick={handleBooking}
             disabled={isSubmitting || totalPrice === 0}
-            className="w-full bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-800 text-white font-semibold py-4 rounded-2xl shadow-lg transition-all duration-300"
+            className='w-full bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-800 text-white font-semibold py-4 rounded-2xl shadow-lg transition-all duration-300'
           >
-            {isSubmitting ? 'Processing...' : user ? 'Book Now' : 'Login to Book'}
+            {isSubmitting
+              ? 'Processing...'
+              : user
+                ? 'Book Now'
+                : 'Login to Book'}
           </Button>
         </motion.div>
 
         {!user && (
-          <p className="text-xs text-gray-500 text-center">
+          <p className='text-xs text-gray-500 text-center'>
             You'll be redirected to login and then back to complete your booking
           </p>
         )}

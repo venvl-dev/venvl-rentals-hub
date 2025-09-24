@@ -1,11 +1,23 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Calendar, User, Home, DollarSign, BarChart3 } from 'lucide-react';
@@ -42,10 +54,12 @@ const BookingsList = () => {
       // First get bookings with properties
       const { data: bookingsData, error: bookingsError } = await supabase
         .from('bookings')
-        .select(`
+        .select(
+          `
           *,
           properties!inner(title, city, state, host_id)
-        `)
+        `,
+        )
         .eq('properties.host_id', user.data.user.id)
         .order('created_at', { ascending: false });
 
@@ -57,7 +71,9 @@ const BookingsList = () => {
       }
 
       // Get all unique guest IDs
-      const guestIds = [...new Set(bookingsData.map(booking => booking.guest_id))];
+      const guestIds = [
+        ...new Set(bookingsData.map((booking) => booking.guest_id)),
+      ];
 
       // Fetch profiles for all guests
       const { data: profilesData, error: profilesError } = await supabase
@@ -73,15 +89,15 @@ const BookingsList = () => {
       // Map profiles by ID for easy lookup
       const profilesMap = new Map();
       if (profilesData) {
-        profilesData.forEach(profile => {
+        profilesData.forEach((profile) => {
           profilesMap.set(profile.id, profile);
         });
       }
 
       // Combine bookings with profiles
-      const bookingsWithProfiles = bookingsData.map(booking => ({
+      const bookingsWithProfiles = bookingsData.map((booking) => ({
         ...booking,
-        profiles: profilesMap.get(booking.guest_id) || null
+        profiles: profilesMap.get(booking.guest_id) || null,
       }));
 
       setBookings(bookingsWithProfiles as BookingWithJoinedData[]);
@@ -93,7 +109,10 @@ const BookingsList = () => {
     }
   };
 
-  const updateBookingStatus = async (bookingId: string, newStatus: BookingStatus) => {
+  const updateBookingStatus = async (
+    bookingId: string,
+    newStatus: BookingStatus,
+  ) => {
     try {
       const { error } = await supabase
         .from('bookings')
@@ -101,7 +120,7 @@ const BookingsList = () => {
         .eq('id', bookingId);
 
       if (error) throw error;
-      
+
       fetchBookings();
       toast.success(`Booking ${newStatus} successfully`);
     } catch (error) {
@@ -112,53 +131,60 @@ const BookingsList = () => {
 
   const getStatusColor = (status: BookingStatus) => {
     switch (status) {
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'checked_in': return 'bg-purple-100 text-purple-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'confirmed':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      case 'checked_in':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const filteredBookings = statusFilter === 'all' 
-    ? bookings 
-    : bookings.filter(booking => booking.status === statusFilter);
+  const filteredBookings =
+    statusFilter === 'all'
+      ? bookings
+      : bookings.filter((booking) => booking.status === statusFilter);
 
   if (loading) {
     return (
       <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="text-center">Loading bookings...</div>
+        <CardContent className='flex items-center justify-center py-12'>
+          <div className='text-center'>Loading bookings...</div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Bookings Management</h2>
-        <div className="flex gap-3">
+    <div className='space-y-6'>
+      <div className='flex items-center justify-between'>
+        <h2 className='text-2xl font-bold'>Bookings Management</h2>
+        <div className='flex gap-3'>
           <Button
-            variant="outline"
+            variant='outline'
             onClick={() => setShowDashboard(!showDashboard)}
-            className="flex items-center gap-2 rounded-xl"
+            className='flex items-center gap-2 rounded-xl'
           >
-            <BarChart3 className="h-4 w-4" />
+            <BarChart3 className='h-4 w-4' />
             {showDashboard ? 'Hide Dashboard' : 'Show Dashboard'}
           </Button>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filter by status" />
+            <SelectTrigger className='w-48'>
+              <SelectValue placeholder='Filter by status' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Bookings</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="checked_in">Checked In</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value='all'>All Bookings</SelectItem>
+              <SelectItem value='pending'>Pending</SelectItem>
+              <SelectItem value='confirmed'>Confirmed</SelectItem>
+              <SelectItem value='checked_in'>Checked In</SelectItem>
+              <SelectItem value='cancelled'>Cancelled</SelectItem>
+              <SelectItem value='completed'>Completed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -168,12 +194,12 @@ const BookingsList = () => {
 
       {filteredBookings.length === 0 ? (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Calendar className="h-16 w-16 text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No bookings found</h3>
-            <p className="text-gray-600">
-              {statusFilter === 'all' 
-                ? "You don't have any bookings yet" 
+          <CardContent className='flex flex-col items-center justify-center py-12'>
+            <Calendar className='h-16 w-16 text-gray-400 mb-4' />
+            <h3 className='text-xl font-semibold mb-2'>No bookings found</h3>
+            <p className='text-gray-600'>
+              {statusFilter === 'all'
+                ? "You don't have any bookings yet"
                 : `No ${statusFilter} bookings found`}
             </p>
           </CardContent>
@@ -181,8 +207,8 @@ const BookingsList = () => {
       ) : (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
+            <CardTitle className='flex items-center gap-2'>
+              <Calendar className='h-5 w-5' />
               Recent Bookings ({filteredBookings.length})
             </CardTitle>
           </CardHeader>
@@ -203,64 +229,83 @@ const BookingsList = () => {
                 {filteredBookings.map((booking) => (
                   <TableRow key={booking.id}>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
+                      <div className='flex items-center gap-2'>
+                        <User className='h-4 w-4 text-gray-400' />
                         <div>
-                          <div className="font-medium">
-                            {booking.profiles?.first_name && booking.profiles?.last_name 
+                          <div className='font-medium'>
+                            {booking.profiles?.first_name &&
+                            booking.profiles?.last_name
                               ? `${booking.profiles.first_name} ${booking.profiles.last_name}`
                               : 'Unknown Guest'}
                           </div>
-                          <div className="text-sm text-gray-600">
-                            Booked {format(new Date(booking.created_at!), 'MMM dd, yyyy')}
+                          <div className='text-sm text-gray-600'>
+                            Booked{' '}
+                            {format(
+                              new Date(booking.created_at!),
+                              'MMM dd, yyyy',
+                            )}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Home className="h-4 w-4 text-gray-400" />
+                      <div className='flex items-center gap-2'>
+                        <Home className='h-4 w-4 text-gray-400' />
                         <div>
-                          <div className="font-medium">{booking.properties.title}</div>
-                          <div className="text-sm text-gray-600">
-                            {booking.properties.city}, {booking.properties.state}
+                          <div className='font-medium'>
+                            {booking.properties.title}
+                          </div>
+                          <div className='text-sm text-gray-600'>
+                            {booking.properties.city},{' '}
+                            {booking.properties.state}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm">
-                        <div>{format(new Date(booking.check_in), 'MMM dd')} - {format(new Date(booking.check_out), 'MMM dd, yyyy')}</div>
+                      <div className='text-sm'>
+                        <div>
+                          {format(new Date(booking.check_in), 'MMM dd')} -{' '}
+                          {format(new Date(booking.check_out), 'MMM dd, yyyy')}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>{booking.guests}</TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="h-4 w-4 text-gray-400" />
-                        <span className="font-medium">{booking.total_price}</span>
+                      <div className='flex items-center gap-1'>
+                        <DollarSign className='h-4 w-4 text-gray-400' />
+                        <span className='font-medium'>
+                          {booking.total_price}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={`${getStatusColor(booking.status)} border-0`}>
+                      <Badge
+                        className={`${getStatusColor(booking.status)} border-0`}
+                      >
                         {booking.status}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className='flex gap-2'>
                         {booking.status === 'pending' && (
                           <>
                             <Button
-                              size="sm"
-                              onClick={() => updateBookingStatus(booking.id, 'confirmed')}
-                              className="bg-green-600 hover:bg-green-700"
+                              size='sm'
+                              onClick={() =>
+                                updateBookingStatus(booking.id, 'confirmed')
+                              }
+                              className='bg-green-600 hover:bg-green-700'
                             >
                               Approve
                             </Button>
                             <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateBookingStatus(booking.id, 'cancelled')}
-                              className="text-red-600 border-red-300 hover:bg-red-50"
+                              size='sm'
+                              variant='outline'
+                              onClick={() =>
+                                updateBookingStatus(booking.id, 'cancelled')
+                              }
+                              className='text-red-600 border-red-300 hover:bg-red-50'
                             >
                               Decline
                             </Button>
@@ -269,16 +314,20 @@ const BookingsList = () => {
                         {booking.status === 'confirmed' && (
                           <>
                             <Button
-                              size="sm"
-                              onClick={() => updateBookingStatus(booking.id, 'checked_in')}
-                              className="bg-purple-600 hover:bg-purple-700"
+                              size='sm'
+                              onClick={() =>
+                                updateBookingStatus(booking.id, 'checked_in')
+                              }
+                              className='bg-purple-600 hover:bg-purple-700'
                             >
                               Check In
                             </Button>
                             <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateBookingStatus(booking.id, 'completed')}
+                              size='sm'
+                              variant='outline'
+                              onClick={() =>
+                                updateBookingStatus(booking.id, 'completed')
+                              }
                             >
                               Mark Complete
                             </Button>
@@ -286,10 +335,12 @@ const BookingsList = () => {
                         )}
                         {booking.status === 'checked_in' && (
                           <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateBookingStatus(booking.id, 'completed')}
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
+                            size='sm'
+                            variant='outline'
+                            onClick={() =>
+                              updateBookingStatus(booking.id, 'completed')
+                            }
+                            className='bg-blue-600 hover:bg-blue-700 text-white'
                           >
                             Check Out
                           </Button>

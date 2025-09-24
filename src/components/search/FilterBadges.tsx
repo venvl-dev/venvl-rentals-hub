@@ -1,4 +1,3 @@
-
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { X } from 'lucide-react';
@@ -31,7 +30,7 @@ const FilterBadges = ({ filters, onRemoveFilter }: FilterBadgesProps) => {
     badges.push({
       type: 'location',
       label: filters.location,
-      value: filters.location
+      value: filters.location,
     });
   }
 
@@ -40,26 +39,29 @@ const FilterBadges = ({ filters, onRemoveFilter }: FilterBadgesProps) => {
     badges.push({
       type: 'propertyType',
       label: filters.propertyType,
-      value: filters.propertyType
+      value: filters.propertyType,
     });
   }
 
   // Price range badge
-  if (filters.priceRange && (filters.priceRange.min > 0 || filters.priceRange.max < 1000)) {
+  if (
+    filters.priceRange &&
+    (filters.priceRange.min > 0 || filters.priceRange.max < 1000)
+  ) {
     badges.push({
       type: 'priceRange',
       label: `$${filters.priceRange.min || 0} - $${filters.priceRange.max || 1000}`,
-      value: 'priceRange'
+      value: 'priceRange',
     });
   }
 
   // Amenity badges
   if (filters.amenities && filters.amenities.length > 0) {
-    filters.amenities.forEach(amenity => {
+    filters.amenities.forEach((amenity) => {
       badges.push({
         type: 'amenities',
         label: amenity,
-        value: amenity
+        value: amenity,
       });
     });
   }
@@ -68,7 +70,7 @@ const FilterBadges = ({ filters, onRemoveFilter }: FilterBadgesProps) => {
 
   return (
     <motion.div
-      className="flex flex-wrap gap-2 px-2"
+      className='flex flex-wrap gap-2 px-2'
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
@@ -86,12 +88,12 @@ const FilterBadges = ({ filters, onRemoveFilter }: FilterBadgesProps) => {
             whileTap={{ scale: 0.95 }}
           >
             <Badge
-              variant="secondary"
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors cursor-pointer"
+              variant='secondary'
+              className='flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors cursor-pointer'
               onClick={() => onRemoveFilter(badge.type, badge.value)}
             >
-              <span className="capitalize">{badge.label}</span>
-              <X className="h-3 w-3" />
+              <span className='capitalize'>{badge.label}</span>
+              <X className='h-3 w-3' />
             </Badge>
           </motion.div>
         ))}

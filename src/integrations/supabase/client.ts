@@ -7,21 +7,28 @@ const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Create a stub client that shows errors in UI instead of crashing
 const createStubClient = () => {
-  const errorMessage = !SUPABASE_URL 
+  const errorMessage = !SUPABASE_URL
     ? 'Missing VITE_SUPABASE_URL environment variable'
     : 'Missing VITE_SUPABASE_ANON_KEY environment variable';
-    
-  return new Proxy({}, {
-    get() {
-      throw new Error(`${errorMessage}. Please copy .env.example to .env and set your Supabase credentials.`);
-    }
-  }) as any;
+
+  return new Proxy(
+    {},
+    {
+      get() {
+        throw new Error(
+          `${errorMessage}. Please copy .env.example to .env and set your Supabase credentials.`,
+        );
+      },
+    },
+  ) as any;
 };
 
 // Gracefully handle missing environment variables and export the client
 let client;
 if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error('Missing Supabase environment variables. Please set up your .env file.');
+  console.error(
+    'Missing Supabase environment variables. Please set up your .env file.',
+  );
   client = createStubClient();
 } else {
   client = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);

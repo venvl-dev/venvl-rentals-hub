@@ -7,12 +7,14 @@ This guide will help you set up the required Supabase storage buckets for the VE
 You need to create two storage buckets in your Supabase project:
 
 ### 1. property-images
+
 - **Purpose**: Store property listing images
 - **File size limit**: 5MB per file
 - **Allowed file types**: JPEG, PNG, GIF, WebP
 - **Public access**: Yes
 
 ### 2. property-videos
+
 - **Purpose**: Store property listing videos
 - **File size limit**: 50MB per file
 - **Allowed file types**: MP4, MOV, AVI, QuickTime
@@ -30,12 +32,14 @@ You need to create two storage buckets in your Supabase project:
 For each bucket:
 
 **property-images:**
+
 - Name: `property-images`
 - Public bucket: ✅ Yes
 - File size limit: `5242880` (5MB)
 - Allowed MIME types: `image/jpeg,image/png,image/gif,image/webp`
 
 **property-videos:**
+
 - Name: `property-videos`
 - Public bucket: ✅ Yes
 - File size limit: `52428800` (50MB)
@@ -49,6 +53,7 @@ For each bucket, you need to create RLS (Row Level Security) policies:
 2. Click **New Policy** for each bucket
 
 **Policy 1: Allow authenticated users to upload**
+
 ```sql
 CREATE POLICY "Allow authenticated uploads" ON storage.objects
 FOR INSERT TO authenticated
@@ -56,6 +61,7 @@ WITH CHECK (bucket_id = 'property-images'); -- or 'property-videos'
 ```
 
 **Policy 2: Allow public read access**
+
 ```sql
 CREATE POLICY "Allow public access" ON storage.objects
 FOR SELECT TO public
@@ -63,6 +69,7 @@ USING (bucket_id = 'property-images'); -- or 'property-videos'
 ```
 
 **Policy 3: Allow users to delete their own files**
+
 ```sql
 CREATE POLICY "Allow authenticated delete" ON storage.objects
 FOR DELETE TO authenticated
@@ -98,15 +105,18 @@ After setup, verify the buckets work by:
 ## Troubleshooting
 
 ### "Bucket not found" error
+
 - Ensure bucket names are exactly: `property-images` and `property-videos`
 - Check that buckets are created in the correct Supabase project
 
 ### "Access denied" error
+
 - Verify RLS policies are set up correctly
 - Check that buckets are marked as public
 - Ensure you're authenticated when uploading files
 
 ### File upload fails
+
 - Check file size limits (5MB for images, 50MB for videos)
 - Verify file types are allowed
 - Check browser console for detailed error messages
@@ -114,6 +124,7 @@ After setup, verify the buckets work by:
 ## Need Help?
 
 If you encounter issues:
+
 1. Check the Supabase dashboard logs
 2. Verify your environment variables
 3. Ensure your internet connection is stable

@@ -32,34 +32,39 @@ const BookingPricingSummary = ({
         initial={{ opacity: 0, height: 0 }}
         animate={{ opacity: 1, height: 'auto' }}
         exit={{ opacity: 0, height: 0 }}
-        className="space-y-3"
+        className='space-y-3'
       >
-        <Separator className="bg-gray-200" />
-        
+        <Separator className='bg-gray-200' />
+
         {/* Pricing Summary - Simplified */}
-        <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+        <div className='bg-gray-50 rounded-lg p-3 border border-gray-200'>
           {/* Header - Compact */}
-          <div className="flex items-center gap-2 mb-3">
-            <Receipt className="h-4 w-4 text-gray-700" />
-            <span className="text-sm font-semibold text-gray-900">Price summary</span>
+          <div className='flex items-center gap-2 mb-3'>
+            <Receipt className='h-4 w-4 text-gray-700' />
+            <span className='text-sm font-semibold text-gray-900'>
+              Price summary
+            </span>
           </div>
-          
+
           {/* Price Calculation - Streamlined */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm text-gray-700">
-              {bookingMode === 'daily' 
+          <div className='flex items-center justify-between mb-3'>
+            <div className='text-sm text-gray-700'>
+              {bookingMode === 'daily'
                 ? `EGP ${pricePerNight} × ${nights} nights`
-                : `EGP ${monthlyPrice} × ${monthlyDuration} months`
-              }
+                : `EGP ${monthlyPrice} × ${monthlyDuration} months`}
             </div>
-            <span className="font-semibold text-gray-900">EGP {totalPrice}</span>
+            <span className='font-semibold text-gray-900'>
+              EGP {totalPrice}
+            </span>
           </div>
-          
+
           {/* Total - Simplified */}
-          <Separator className="bg-gray-200 mb-3" />
-          <div className="flex items-center justify-between">
-            <span className="text-base font-bold text-gray-900">Total</span>
-            <span className="text-lg font-bold text-gray-900">EGP {totalPrice}</span>
+          <Separator className='bg-gray-200 mb-3' />
+          <div className='flex items-center justify-between'>
+            <span className='text-base font-bold text-gray-900'>Total</span>
+            <span className='text-lg font-bold text-gray-900'>
+              EGP {totalPrice}
+            </span>
           </div>
         </div>
       </motion.div>

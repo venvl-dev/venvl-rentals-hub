@@ -1,4 +1,3 @@
-
 export const getBookingTypeColor = (type: string, status: string) => {
   if (status === 'cancelled') return 'bg-gray-200 text-gray-600';
   switch (type) {

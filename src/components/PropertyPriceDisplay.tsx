@@ -3,7 +3,7 @@ import {
   getDailyPrice,
   getMonthlyPrice,
   type PropertyRentalData,
-} from "@/lib/rentalTypeUtils";
+} from '@/lib/rentalTypeUtils';
 
 interface Property {
   price_per_night: number;
@@ -20,7 +20,7 @@ interface PropertyPriceDisplayProps {
 
 const PropertyPriceDisplay = ({
   property,
-  className = "",
+  className = '',
 }: PropertyPriceDisplayProps) => {
   const rentalType = getRentalType(property);
   const dailyPrice = getDailyPrice(property);
@@ -28,21 +28,21 @@ const PropertyPriceDisplay = ({
 
   return (
     <div className={`space-y-2 ${className}`}>
-      {(rentalType === "daily" || rentalType === "both") && (
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-gray-900">
+      {(rentalType === 'daily' || rentalType === 'both') && (
+        <div className='flex items-center gap-2'>
+          <span className='text-2xl font-bold text-gray-900'>
             EGP {dailyPrice.toLocaleString()}
           </span>
-          <span className="text-gray-600">/ night</span>
+          <span className='text-gray-600'>/ night</span>
         </div>
       )}
 
-      {(rentalType === "monthly" || rentalType === "both") && monthlyPrice && (
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-bold text-gray-900">
+      {(rentalType === 'monthly' || rentalType === 'both') && monthlyPrice && (
+        <div className='flex items-center gap-2'>
+          <span className='text-2xl font-bold text-gray-900'>
             EGP {monthlyPrice.toLocaleString()}
           </span>
-          <span className="text-gray-600">/ month</span>
+          <span className='text-gray-600'>/ month</span>
         </div>
       )}
     </div>

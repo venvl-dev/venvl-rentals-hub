@@ -22,13 +22,13 @@ interface UseDataFetchingReturn<T> {
 export function useDataFetching<T>(
   queryFn: () => Promise<T>,
   dependencies: any[] = [],
-  options: UseDataFetchingOptions = {}
+  options: UseDataFetchingOptions = {},
 ): UseDataFetchingReturn<T> {
   const {
     enabled = true,
     refetchOnWindowFocus = false,
     staleTime = 5 * 60 * 1000, // 5 minutes
-    cacheKey
+    cacheKey,
   } = options;
 
   const { user } = useAuth();
@@ -45,83 +45,90 @@ export function useDataFetching<T>(
     };
   }, []);
 
-  const fetchData = useCallback(async (force = false) => {
-    if (!enabled) return;
+  const fetchData = useCallback(
+    async (force = false) => {
+      if (!enabled) return;
 
-    // Check cache freshness
-    const now = Date.now();
-    if (!force && cacheKey && (now - lastFetchTime.current) < staleTime) {
-      const cached = localStorage.getItem(`cache_${cacheKey}`);
-      if (cached) {
-        try {
-          const parsedData = JSON.parse(cached);
-          if (isMountedRef.current) {
-            setData(parsedData);
-          }
-          return;
-        } catch {
-          // Invalid cache, continue with fetch
-        }
-      }
-    }
-
-    if (isMountedRef.current) {
-      setLoading(true);
-      setError(null);
-    }
-
-    try {
-      const result = await queryFn();
-      
-      if (isMountedRef.current) {
-        setData(result);
-        setError(null);
-        lastFetchTime.current = now;
-
-        // Cache the result
-        if (cacheKey) {
+      // Check cache freshness
+      const now = Date.now();
+      if (!force && cacheKey && now - lastFetchTime.current < staleTime) {
+        const cached = localStorage.getItem(`cache_${cacheKey}`);
+        if (cached) {
           try {
-            localStorage.setItem(`cache_${cacheKey}`, JSON.stringify(result));
-          } catch (cacheError) {
-            // Cache failed, continue without caching
+            const parsedData = JSON.parse(cached);
+            if (isMountedRef.current) {
+              setData(parsedData);
+            }
+            return;
+          } catch {
+            // Invalid cache, continue with fetch
           }
         }
       }
 
-      // Log successful data fetch
-      await logSecurityEvent('data_fetch_success', 'api', user?.id, true);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch data';
-      
       if (isMountedRef.current) {
-        setError(errorMessage);
+        setLoading(true);
+        setError(null);
       }
 
-      await handleError(
-        new CustomError(
-          'Data fetch failed',
-          ErrorCodes.SYSTEM_DATABASE_ERROR,
-          'medium'
-        ),
-        { error: err, userId: user?.id }
-      );
-    } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
-    }
-  }, [queryFn, enabled, cacheKey, staleTime, user?.id, ...dependencies]);
-
-  const mutate = useCallback((newData: T) => {
-    setData(newData);
-    if (cacheKey) {
       try {
-        localStorage.setItem(`cache_${cacheKey}`, JSON.stringify(newData));
-      } catch {
-        // Cache failed, data is still updated in state
+        const result = await queryFn();
+
+        if (isMountedRef.current) {
+          setData(result);
+          setError(null);
+          lastFetchTime.current = now;
+
+          // Cache the result
+          if (cacheKey) {
+            try {
+              localStorage.setItem(`cache_${cacheKey}`, JSON.stringify(result));
+            } catch (cacheError) {
+              // Cache failed, continue without caching
+            }
+          }
+        }
+
+        // Log successful data fetch
+        await logSecurityEvent('data_fetch_success', 'api', user?.id, true);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Failed to fetch data';
+
+        if (isMountedRef.current) {
+          setError(errorMessage);
+        }
+
+        await handleError(
+          new CustomError(
+            'Data fetch failed',
+            ErrorCodes.SYSTEM_DATABASE_ERROR,
+            'medium',
+          ),
+          { error: err, userId: user?.id },
+        );
+      } finally {
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
-    }
-  }, [cacheKey]);
+    },
+    [queryFn, enabled, cacheKey, staleTime, user?.id, ...dependencies],
+  );
+
+  const mutate = useCallback(
+    (newData: T) => {
+      setData(newData);
+      if (cacheKey) {
+        try {
+          localStorage.setItem(`cache_${cacheKey}`, JSON.stringify(newData));
+        } catch {
+          // Cache failed, data is still updated in state
+        }
+      }
+    },
+    [cacheKey],
+  );
 
   useEffect(() => {
     fetchData();
@@ -143,7 +150,7 @@ export function useDataFetching<T>(
     loading,
     error,
     refetch: () => fetchData(true),
-    mutate
+    mutate,
   };
 }
 
@@ -152,7 +159,7 @@ export function useUserProperties(userId?: string) {
   return useDataFetching(
     async () => {
       if (!userId) throw new Error('User ID required');
-      
+
       const { data, error } = await supabase
         .from('properties')
         .select('*')
@@ -166,8 +173,8 @@ export function useUserProperties(userId?: string) {
     {
       enabled: !!userId,
       cacheKey: userId ? `user_properties_${userId}` : undefined,
-      refetchOnWindowFocus: true
-    }
+      refetchOnWindowFocus: true,
+    },
   );
 }
 
@@ -175,13 +182,15 @@ export function useUserBookings(userId?: string) {
   return useDataFetching(
     async () => {
       if (!userId) throw new Error('User ID required');
-      
+
       const { data, error } = await supabase
         .from('bookings')
-        .select(`
+        .select(
+          `
           *,
           property:properties(title, images)
-        `)
+        `,
+        )
         .eq('guest_id', userId)
         .order('created_at', { ascending: false });
 
@@ -191,7 +200,7 @@ export function useUserBookings(userId?: string) {
     [userId],
     {
       enabled: !!userId,
-      cacheKey: userId ? `user_bookings_${userId}` : undefined
-    }
+      cacheKey: userId ? `user_bookings_${userId}` : undefined,
+    },
   );
 }

@@ -1,12 +1,43 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Home, Plus, Edit2, Trash2, Search, Star } from 'lucide-react';
@@ -70,9 +101,9 @@ const PropertyTypeManagement = () => {
     } catch (error) {
       console.error('Error loading property types:', error);
       toast({
-        title: "Error",
-        description: "Failed to load property types",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load property types',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -82,7 +113,7 @@ const PropertyTypeManagement = () => {
   const calculateStats = (typeData: PropertyType[]) => {
     setStats({
       totalTypes: typeData.length,
-      activeTypes: typeData.filter(t => t.is_active).length,
+      activeTypes: typeData.filter((t) => t.is_active).length,
     });
   };
 
@@ -91,15 +122,15 @@ const PropertyTypeManagement = () => {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(type => 
-        type.name?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter((type) =>
+        type.name?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     // Status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(type => 
-        statusFilter === 'active' ? type.is_active : !type.is_active
+      filtered = filtered.filter((type) =>
+        statusFilter === 'active' ? type.is_active : !type.is_active,
       );
     }
 
@@ -117,20 +148,20 @@ const PropertyTypeManagement = () => {
 
   const handleCreate = async () => {
     try {
-      const { error } = await supabase
-        .from('property_types')
-        .insert([{
+      const { error } = await supabase.from('property_types').insert([
+        {
           name: formData.name,
           icon: formData.icon || null,
           display_order: formData.display_order,
           is_active: formData.is_active,
-        }]);
+        },
+      ]);
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Property type created successfully",
+        title: 'Success',
+        description: 'Property type created successfully',
       });
 
       setIsCreateDialogOpen(false);
@@ -139,9 +170,9 @@ const PropertyTypeManagement = () => {
     } catch (error) {
       console.error('Error creating property type:', error);
       toast({
-        title: "Error",
-        description: "Failed to create property type",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to create property type',
+        variant: 'destructive',
       });
     }
   };
@@ -163,8 +194,8 @@ const PropertyTypeManagement = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Property type updated successfully",
+        title: 'Success',
+        description: 'Property type updated successfully',
       });
 
       setIsEditDialogOpen(false);
@@ -174,9 +205,9 @@ const PropertyTypeManagement = () => {
     } catch (error) {
       console.error('Error updating property type:', error);
       toast({
-        title: "Error",
-        description: "Failed to update property type",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update property type',
+        variant: 'destructive',
       });
     }
   };
@@ -194,9 +225,10 @@ const PropertyTypeManagement = () => {
 
       if (propertiesWithType && propertiesWithType.length > 0) {
         toast({
-          title: "Cannot Delete",
-          description: "This property type is being used by existing properties. Please reassign those properties first.",
-          variant: "destructive",
+          title: 'Cannot Delete',
+          description:
+            'This property type is being used by existing properties. Please reassign those properties first.',
+          variant: 'destructive',
         });
         return;
       }
@@ -209,17 +241,17 @@ const PropertyTypeManagement = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Property type deleted successfully",
+        title: 'Success',
+        description: 'Property type deleted successfully',
       });
 
       loadPropertyTypes();
     } catch (error) {
       console.error('Error deleting property type:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete property type",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete property type',
+        variant: 'destructive',
       });
     }
   };
@@ -237,23 +269,27 @@ const PropertyTypeManagement = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading property types...</div>
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-lg'>Loading property types...</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className='container mx-auto px-4 py-8'>
+      <div className='flex items-center justify-between mb-8'>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Property Type Management</h1>
-          <p className="text-muted-foreground mt-2">Manage available property types for listings</p>
+          <h1 className='text-3xl font-bold text-foreground'>
+            Property Type Management
+          </h1>
+          <p className='text-muted-foreground mt-2'>
+            Manage available property types for listings
+          </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className='h-4 w-4 mr-2' />
               Add Property Type
             </Button>
           </DialogTrigger>
@@ -264,103 +300,125 @@ const PropertyTypeManagement = () => {
                 Add a new property type that hosts can select for their listings
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className='space-y-4'>
               <div>
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor='name'>Name</Label>
                 <Input
-                  id="name"
+                  id='name'
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter property type name"
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  placeholder='Enter property type name'
                 />
               </div>
               <div>
-                <Label htmlFor="icon">Icon (optional)</Label>
+                <Label htmlFor='icon'>Icon (optional)</Label>
                 <Input
-                  id="icon"
+                  id='icon'
                   value={formData.icon}
-                  onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-                  placeholder="Enter icon name (lucide-react)"
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, icon: e.target.value }))
+                  }
+                  placeholder='Enter icon name (lucide-react)'
                 />
               </div>
               <div>
-                <Label htmlFor="display_order">Display Order</Label>
+                <Label htmlFor='display_order'>Display Order</Label>
                 <Input
-                  id="display_order"
-                  type="number"
+                  id='display_order'
+                  type='number'
                   value={formData.display_order}
-                  onChange={(e) => setFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
-                  placeholder="0"
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      display_order: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  placeholder='0'
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreate} disabled={!formData.name.trim()}>Create</Button>
+              <Button
+                variant='outline'
+                onClick={() => setIsCreateDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleCreate} disabled={!formData.name.trim()}>
+                Create
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8'>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Property Types</CardTitle>
-            <Home className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              Total Property Types
+            </CardTitle>
+            <Home className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTypes}</div>
+            <div className='text-2xl font-bold'>{stats.totalTypes}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Types</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Active Types</CardTitle>
+            <Star className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.activeTypes}</div>
+            <div className='text-2xl font-bold'>{stats.activeTypes}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Inactive Types</CardTitle>
-            <Home className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              Inactive Types
+            </CardTitle>
+            <Home className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalTypes - stats.activeTypes}</div>
+            <div className='text-2xl font-bold'>
+              {stats.totalTypes - stats.activeTypes}
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
+      <Card className='mb-6'>
         <CardHeader>
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <div className='flex flex-col md:flex-row gap-4'>
+            <div className='flex-1'>
+              <div className='relative'>
+                <Search className='absolute left-3 top-3 h-4 w-4 text-muted-foreground' />
                 <Input
-                  placeholder="Search property types..."
+                  placeholder='Search property types...'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className='pl-10'
                 />
               </div>
             </div>
-            <select 
-              value={statusFilter} 
+            <select
+              value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-input bg-background text-foreground rounded-md"
+              className='px-3 py-2 border border-input bg-background text-foreground rounded-md'
             >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
+              <option value='all'>All Status</option>
+              <option value='active'>Active</option>
+              <option value='inactive'>Inactive</option>
             </select>
           </div>
         </CardContent>
@@ -370,7 +428,9 @@ const PropertyTypeManagement = () => {
       <Card>
         <CardHeader>
           <CardTitle>Property Types ({filteredTypes.length})</CardTitle>
-          <CardDescription>Manage available property types for host listings</CardDescription>
+          <CardDescription>
+            Manage available property types for host listings
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -387,15 +447,15 @@ const PropertyTypeManagement = () => {
             <TableBody>
               {filteredTypes.map((type) => (
                 <TableRow key={type.id}>
-                  <TableCell className="font-medium">{type.name}</TableCell>
+                  <TableCell className='font-medium'>{type.name}</TableCell>
                   <TableCell>
-                    <span className="text-sm text-muted-foreground">
+                    <span className='text-sm text-muted-foreground'>
                       {type.icon || 'No icon'}
                     </span>
                   </TableCell>
                   <TableCell>{type.display_order}</TableCell>
                   <TableCell>
-                    <Badge variant={type.is_active ? "default" : "secondary"}>
+                    <Badge variant={type.is_active ? 'default' : 'secondary'}>
                       {type.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
@@ -403,34 +463,37 @@ const PropertyTypeManagement = () => {
                     {new Date(type.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
+                    <div className='flex items-center space-x-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
                         onClick={() => openEditDialog(type)}
                       >
-                        <Edit2 className="h-4 w-4" />
+                        <Edit2 className='h-4 w-4' />
                       </Button>
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">
-                            <Trash2 className="h-4 w-4" />
+                          <Button variant='destructive' size='sm'>
+                            <Trash2 className='h-4 w-4' />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Property Type</AlertDialogTitle>
+                            <AlertDialogTitle>
+                              Delete Property Type
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete "{type.name}"? This action cannot be undone.
-                              Make sure no properties are using this type first.
+                              Are you sure you want to delete "{type.name}"?
+                              This action cannot be undone. Make sure no
+                              properties are using this type first.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
+                            <AlertDialogAction
                               onClick={() => handleDelete(type.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
                             >
                               Delete
                             </AlertDialogAction>
@@ -445,8 +508,8 @@ const PropertyTypeManagement = () => {
           </Table>
 
           {filteredTypes.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Home className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className='text-center py-8 text-muted-foreground'>
+              <Home className='h-12 w-12 mx-auto mb-4 opacity-50' />
               <p>No property types found matching your criteria</p>
             </div>
           )}
@@ -462,49 +525,70 @@ const PropertyTypeManagement = () => {
               Update property type information
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className='space-y-4'>
             <div>
-              <Label htmlFor="edit-name">Name</Label>
+              <Label htmlFor='edit-name'>Name</Label>
               <Input
-                id="edit-name"
+                id='edit-name'
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter property type name"
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder='Enter property type name'
               />
             </div>
             <div>
-              <Label htmlFor="edit-icon">Icon (optional)</Label>
+              <Label htmlFor='edit-icon'>Icon (optional)</Label>
               <Input
-                id="edit-icon"
+                id='edit-icon'
                 value={formData.icon}
-                onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-                placeholder="Enter icon name (lucide-react)"
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, icon: e.target.value }))
+                }
+                placeholder='Enter icon name (lucide-react)'
               />
             </div>
             <div>
-              <Label htmlFor="edit-display-order">Display Order</Label>
+              <Label htmlFor='edit-display-order'>Display Order</Label>
               <Input
-                id="edit-display-order"
-                type="number"
+                id='edit-display-order'
+                type='number'
                 value={formData.display_order}
-                onChange={(e) => setFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
-                placeholder="0"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    display_order: parseInt(e.target.value) || 0,
+                  }))
+                }
+                placeholder='0'
               />
             </div>
-            <div className="flex items-center space-x-2">
+            <div className='flex items-center space-x-2'>
               <input
-                type="checkbox"
-                id="edit-is-active"
+                type='checkbox'
+                id='edit-is-active'
                 checked={formData.is_active}
-                onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                className="rounded"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    is_active: e.target.checked,
+                  }))
+                }
+                className='rounded'
               />
-              <Label htmlFor="edit-is-active">Active</Label>
+              <Label htmlFor='edit-is-active'>Active</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleEdit} disabled={!formData.name.trim()}>Update</Button>
+            <Button
+              variant='outline'
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEdit} disabled={!formData.name.trim()}>
+              Update
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

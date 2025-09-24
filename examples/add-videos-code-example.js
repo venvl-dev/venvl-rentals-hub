@@ -6,8 +6,8 @@ async function addVideosToProperty(propertyId, videoUrls) {
   try {
     const { data, error } = await supabase
       .from('properties')
-      .update({ 
-        videos: videoUrls 
+      .update({
+        videos: videoUrls,
       })
       .eq('id', propertyId)
       .select();
@@ -30,7 +30,7 @@ const propertyId = 'your-property-id';
 const videos = [
   'https://example.com/property-tour.mp4',
   'https://example.com/kitchen-video.mp4',
-  'https://example.com/bedroom-video.mp4'
+  'https://example.com/bedroom-video.mp4',
 ];
 
 addVideosToProperty(propertyId, videos);
@@ -52,6 +52,6 @@ async function getPropertiesWithoutVideos() {
     .from('properties')
     .select('id, title, videos')
     .or('videos.is.null,videos.eq.{}');
-    
+
   return { data, error };
 }

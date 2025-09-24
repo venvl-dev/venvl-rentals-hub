@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Search, MapPin, Calendar, Users } from 'lucide-react';
@@ -16,7 +15,10 @@ interface VenvlSearchPillProps {
   initialFilters?: Partial<SearchFilters>;
 }
 
-const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => {
+const VenvlSearchPill = ({
+  onSearch,
+  initialFilters,
+}: VenvlSearchPillProps) => {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const isMobile = useIsMobile();
   const [filters, setFilters] = useState<SearchFilters>({
@@ -31,12 +33,15 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
   // Debug current filter state
   console.log('🔍 VenvlSearchPill render - Current filters:', filters);
-  console.log('🔍 VenvlSearchPill render - Current bookingType:', filters.bookingType);
+  console.log(
+    '🔍 VenvlSearchPill render - Current bookingType:',
+    filters.bookingType,
+  );
 
   // Sync internal state with external changes
   useEffect(() => {
     if (initialFilters) {
-      setFilters(prev => ({
+      setFilters((prev) => ({
         ...prev,
         location: initialFilters.location || prev.location,
         checkIn: initialFilters.checkIn || prev.checkIn,
@@ -47,20 +52,36 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
         duration: initialFilters.duration || prev.duration,
       }));
     }
-  }, [initialFilters?.bookingType, initialFilters?.location, initialFilters?.guests]);
+  }, [
+    initialFilters?.bookingType,
+    initialFilters?.location,
+    initialFilters?.guests,
+  ]);
 
   // Trigger search when specific filter properties change
   useEffect(() => {
-    console.log('🔄 VenvlSearchPill useEffect - Triggering search with current filters');
+    console.log(
+      '🔄 VenvlSearchPill useEffect - Triggering search with current filters',
+    );
     onSearch(filters);
-  }, [filters.bookingType, filters.location, filters.guests, filters.checkIn, filters.checkOut, onSearch]);
+  }, [
+    filters.bookingType,
+    filters.location,
+    filters.guests,
+    filters.checkIn,
+    filters.checkOut,
+    onSearch,
+  ]);
 
   const handleSectionClick = (section: string) => {
     setActiveSection(activeSection === section ? null : section);
   };
 
   const handleSearch = () => {
-    console.log('🔍 VenvlSearchPill - handleSearch called with filters:', filters);
+    console.log(
+      '🔍 VenvlSearchPill - handleSearch called with filters:',
+      filters,
+    );
     console.log('🔍 About to call onSearch prop...');
     onSearch(filters);
     console.log('🔍 onSearch prop called successfully');
@@ -70,26 +91,36 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
   const updateFilters = (newFilters: Partial<SearchFilters>) => {
     console.log('🔄 VenvlSearchPill - updateFilters called with:', newFilters);
     console.log('🔄 Current filters before update:', filters);
-    
+
     // Special handling for location updates
     if (newFilters.location !== undefined) {
-      console.log('📍 Location filter update:', 
-        `"${filters.location}" → "${newFilters.location}"`);
+      console.log(
+        '📍 Location filter update:',
+        `"${filters.location}" → "${newFilters.location}"`,
+      );
     }
-    
+
     let updatedFilters = { ...filters, ...newFilters };
-    
+
     // Clear incompatible fields when booking type changes
-    if (newFilters.bookingType && newFilters.bookingType !== filters.bookingType) {
-      console.log('🎯 BOOKING TYPE CHANGED:', filters.bookingType, '→', newFilters.bookingType);
-      
+    if (
+      newFilters.bookingType &&
+      newFilters.bookingType !== filters.bookingType
+    ) {
+      console.log(
+        '🎯 BOOKING TYPE CHANGED:',
+        filters.bookingType,
+        '→',
+        newFilters.bookingType,
+      );
+
       if (newFilters.bookingType === 'monthly') {
         // Monthly bookings don't use checkIn/checkOut dates
         updatedFilters = {
           ...updatedFilters,
           checkIn: undefined,
           checkOut: undefined,
-          flexibleOption: undefined
+          flexibleOption: undefined,
         };
         console.log('📅 Monthly mode: cleared checkIn/checkOut/flexibleOption');
       } else if (newFilters.bookingType === 'daily') {
@@ -97,7 +128,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
         updatedFilters = {
           ...updatedFilters,
           duration: undefined,
-          flexibleOption: undefined
+          flexibleOption: undefined,
         };
         console.log('📅 Daily mode: cleared duration/flexibleOption');
       } else if (newFilters.bookingType === 'flexible') {
@@ -106,14 +137,14 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
           ...updatedFilters,
           checkIn: undefined,
           checkOut: undefined,
-          duration: undefined
+          duration: undefined,
         };
         console.log('📅 Flexible mode: cleared checkIn/checkOut/duration');
       }
     }
-    
+
     console.log('✅ Final updated filters:', updatedFilters);
-    
+
     setFilters(updatedFilters);
     console.log('🚀 Calling onSearch with updated filters...');
     // Immediate search trigger for booking type changes
@@ -130,14 +161,23 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
         weekend: 'Weekend',
         week: 'Week',
         month: 'Month',
-        any: 'Flexible'
+        any: 'Flexible',
       };
-      return flexOptions[filters.flexibleOption as keyof typeof flexOptions] || 'Flexible';
+      return (
+        flexOptions[filters.flexibleOption as keyof typeof flexOptions] ||
+        'Flexible'
+      );
     }
     if (filters.checkIn) {
-      const checkInStr = filters.checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const checkInStr = filters.checkIn.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
       if (filters.checkOut) {
-        const checkOutStr = filters.checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const checkOutStr = filters.checkOut.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        });
         return `${checkInStr} - ${checkOutStr}`;
       }
       return checkInStr;
@@ -147,10 +187,10 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
   if (isMobile) {
     return (
-      <div className="w-full px-4">
+      <div className='w-full px-4'>
         {/* Mobile Booking Type Selector */}
         <motion.div
-          className="mb-6"
+          className='mb-6'
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
@@ -166,7 +206,7 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
         {/* Mobile Compact Search Bar */}
         <motion.div
-          className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden"
+          className='bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden'
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3, delay: 0.1 }}
@@ -179,20 +219,22 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
             onClick={() => handleSectionClick('where')}
             whileTap={{ scale: 0.99 }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <MapPin className="h-4 w-4 text-gray-600" />
+            <div className='flex items-center gap-3'>
+              <div className='w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
+                <MapPin className='h-4 w-4 text-gray-600' />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-gray-500 mb-1">Where</div>
-                <div className="text-sm text-gray-900 truncate">
+              <div className='flex-1 min-w-0'>
+                <div className='text-xs font-medium text-gray-500 mb-1'>
+                  Where
+                </div>
+                <div className='text-sm text-gray-900 truncate'>
                   {filters.location || 'Search destinations'}
                 </div>
               </div>
             </div>
           </motion.div>
 
-          <div className="border-t border-gray-100" />
+          <div className='border-t border-gray-100' />
 
           {/* When Section */}
           <motion.div
@@ -202,20 +244,22 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
             onClick={() => handleSectionClick('when')}
             whileTap={{ scale: 0.99 }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Calendar className="h-4 w-4 text-gray-600" />
+            <div className='flex items-center gap-3'>
+              <div className='w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
+                <Calendar className='h-4 w-4 text-gray-600' />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-gray-500 mb-1">When</div>
-                <div className="text-sm text-gray-900 truncate">
+              <div className='flex-1 min-w-0'>
+                <div className='text-xs font-medium text-gray-500 mb-1'>
+                  When
+                </div>
+                <div className='text-sm text-gray-900 truncate'>
                   {getDateDisplayText()}
                 </div>
               </div>
             </div>
           </motion.div>
 
-          <div className="border-t border-gray-100" />
+          <div className='border-t border-gray-100' />
 
           {/* Who Section */}
           <motion.div
@@ -225,28 +269,30 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
             onClick={() => handleSectionClick('who')}
             whileTap={{ scale: 0.99 }}
           >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Users className="h-4 w-4 text-gray-600" />
+            <div className='flex items-center gap-3'>
+              <div className='w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center'>
+                <Users className='h-4 w-4 text-gray-600' />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-gray-500 mb-1">Who</div>
-                <div className="text-sm text-gray-900 truncate">
+              <div className='flex-1 min-w-0'>
+                <div className='text-xs font-medium text-gray-500 mb-1'>
+                  Who
+                </div>
+                <div className='text-sm text-gray-900 truncate'>
                   {filters.guests} {filters.guests === 1 ? 'guest' : 'guests'}
                 </div>
               </div>
             </div>
           </motion.div>
 
-          <div className="border-t border-gray-100" />
+          <div className='border-t border-gray-100' />
 
           {/* Search Button */}
-          <div className="p-4">
+          <div className='p-4'>
             <Button
               onClick={handleSearch}
-              className="w-full bg-black text-white rounded-xl py-3 font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+              className='w-full bg-black text-white rounded-xl py-3 font-medium transition-colors duration-200 flex items-center justify-center gap-2'
             >
-              <Search className="h-4 w-4" />
+              <Search className='h-4 w-4' />
               Search
             </Button>
           </div>
@@ -256,13 +302,13 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
         <AnimatePresence>
           {activeSection === 'where' && (
             <motion.div
-              className="fixed inset-0 bg-white z-[9999] safe-area-inset"
+              className='fixed inset-0 bg-white z-[9999] safe-area-inset'
               initial={{ opacity: 0, y: '100%' }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: '100%' }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              <div className="flex flex-col h-full">
+              <div className='flex flex-col h-full'>
                 <VenvlDestinationPicker
                   value={filters.location}
                   onChange={(location) => updateFilters({ location })}
@@ -274,13 +320,13 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
           {activeSection === 'when' && (
             <motion.div
-              className="fixed inset-0 bg-white z-[9999] safe-area-inset"
+              className='fixed inset-0 bg-white z-[9999] safe-area-inset'
               initial={{ opacity: 0, y: '100%' }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: '100%' }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              <div className="flex flex-col h-full overflow-auto">
+              <div className='flex flex-col h-full overflow-auto'>
                 <VenvlDatePicker
                   checkIn={filters.checkIn}
                   checkOut={filters.checkOut}
@@ -296,13 +342,13 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
           {activeSection === 'who' && (
             <motion.div
-              className="fixed inset-0 bg-white z-[9999] safe-area-inset"
+              className='fixed inset-0 bg-white z-[9999] safe-area-inset'
               initial={{ opacity: 0, y: '100%' }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: '100%' }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              transition={{ duration: 0.3, ease: 'easeOut' }}
             >
-              <div className="flex flex-col h-full">
+              <div className='flex flex-col h-full'>
                 <VenvlGuestPicker
                   guests={filters.guests}
                   onChange={(guests) => updateFilters({ guests })}
@@ -317,10 +363,10 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto relative">
+    <div className='w-full max-w-4xl mx-auto relative'>
       {/* Desktop Booking Type Selector */}
       <motion.div
-        className="mb-6"
+        className='mb-6'
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -342,14 +388,14 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
 
       {/* Desktop Search Bar */}
       <motion.div
-        className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-visible relative"
+        className='bg-white rounded-2xl shadow-lg border border-gray-200 overflow-visible relative'
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.3, delay: 0.1 }}
       >
-        <div className="flex items-stretch">
+        <div className='flex items-stretch'>
           {/* Where Section */}
-          <div className="flex-1 relative">
+          <div className='flex-1 relative'>
             <motion.div
               className={`p-6 cursor-pointer transition-all duration-200 ${
                 activeSection === 'where' ? 'bg-gray-50' : ''
@@ -357,24 +403,24 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
               onClick={() => handleSectionClick('where')}
               whileTap={{ scale: 0.99 }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <MapPin className="h-5 w-5 text-gray-600" />
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center'>
+                  <MapPin className='h-5 w-5 text-gray-600' />
                 </div>
-                <div className="flex-1">
-                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                <div className='flex-1'>
+                  <div className='text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1'>
                     Where
                   </div>
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className='text-sm font-medium text-gray-900'>
                     {filters.location || 'Search destinations'}
                   </div>
                 </div>
               </div>
             </motion.div>
-            
+
             <AnimatePresence>
               {activeSection === 'where' && (
-                <div className="absolute top-full left-0 right-0 z-[1000] mt-2">
+                <div className='absolute top-full left-0 right-0 z-[1000] mt-2'>
                   <VenvlDestinationPicker
                     value={filters.location}
                     onChange={(location) => updateFilters({ location })}
@@ -385,10 +431,10 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
             </AnimatePresence>
           </div>
 
-          <div className="w-px bg-gray-200" />
+          <div className='w-px bg-gray-200' />
 
           {/* When Section */}
-          <div className="flex-1 relative">
+          <div className='flex-1 relative'>
             <motion.div
               className={`p-6 cursor-pointer transition-all duration-200 ${
                 activeSection === 'when' ? 'bg-gray-50' : ''
@@ -396,24 +442,24 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
               onClick={() => handleSectionClick('when')}
               whileTap={{ scale: 0.99 }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <Calendar className="h-5 w-5 text-gray-600" />
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center'>
+                  <Calendar className='h-5 w-5 text-gray-600' />
                 </div>
-                <div className="flex-1">
-                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                <div className='flex-1'>
+                  <div className='text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1'>
                     When
                   </div>
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className='text-sm font-medium text-gray-900'>
                     {getDateDisplayText()}
                   </div>
                 </div>
               </div>
             </motion.div>
-            
+
             <AnimatePresence>
               {activeSection === 'when' && (
-                <div className="absolute top-full left-1/2 transform -translate-x-1/2 z-[1000] mt-2">
+                <div className='absolute top-full left-1/2 transform -translate-x-1/2 z-[1000] mt-2'>
                   <VenvlDatePicker
                     checkIn={filters.checkIn}
                     checkOut={filters.checkOut}
@@ -428,10 +474,10 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
             </AnimatePresence>
           </div>
 
-          <div className="w-px bg-gray-200" />
+          <div className='w-px bg-gray-200' />
 
           {/* Who Section */}
-          <div className="flex-1 relative">
+          <div className='flex-1 relative'>
             <motion.div
               className={`p-6 cursor-pointer transition-all duration-200 ${
                 activeSection === 'who' ? 'bg-gray-50' : ''
@@ -439,41 +485,41 @@ const VenvlSearchPill = ({ onSearch, initialFilters }: VenvlSearchPillProps) => 
               onClick={() => handleSectionClick('who')}
               whileTap={{ scale: 0.99 }}
             >
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center">
-                  <Users className="h-5 w-5 text-gray-600" />
+              <div className='flex items-center gap-3'>
+                <div className='w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center'>
+                  <Users className='h-5 w-5 text-gray-600' />
                 </div>
-                <div className="flex-1">
-                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                <div className='flex-1'>
+                  <div className='text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1'>
                     Who
                   </div>
-                  <div className="text-sm font-medium text-gray-900">
+                  <div className='text-sm font-medium text-gray-900'>
                     {filters.guests} {filters.guests === 1 ? 'guest' : 'guests'}
                   </div>
                 </div>
               </div>
             </motion.div>
-            
+
             <AnimatePresence>
               {activeSection === 'who' && (
-                <div className="absolute top-full right-0 z-[1000] mt-2">
+                <div className='absolute top-full right-0 z-[1000] mt-2'>
                   <VenvlGuestPicker
                     guests={filters.guests}
                     onChange={(guests) => updateFilters({ guests })}
                     onClose={() => setActiveSection(null)}
                   />
                 </div>
-                )}
+              )}
             </AnimatePresence>
           </div>
 
           {/* Search Button */}
-          <div className="flex items-center p-4">
+          <div className='flex items-center p-4'>
             <Button
               onClick={handleSearch}
-              className="bg-black text-white rounded-xl px-6 py-3 font-medium transition-all duration-200 flex items-center gap-2 shadow-lg"
+              className='bg-black text-white rounded-xl px-6 py-3 font-medium transition-all duration-200 flex items-center gap-2 shadow-lg'
             >
-              <Search className="h-4 w-4" />
+              <Search className='h-4 w-4' />
               Search
             </Button>
           </div>

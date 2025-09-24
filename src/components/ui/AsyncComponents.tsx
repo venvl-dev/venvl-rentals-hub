@@ -3,14 +3,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
-export interface AsyncButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface AsyncButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   success?: boolean;
   error?: boolean;
   loadingText?: string;
   successText?: string;
   errorText?: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+  variant?:
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost'
+    | 'link';
   size?: 'default' | 'sm' | 'lg' | 'icon';
   children: React.ReactNode;
 }
@@ -32,30 +39,30 @@ export const AsyncButton: React.FC<AsyncButtonProps> = ({
     if (loading) {
       return (
         <>
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          <Loader2 className='h-4 w-4 mr-2 animate-spin' />
           {loadingText}
         </>
       );
     }
-    
+
     if (success && successText) {
       return (
         <>
-          <CheckCircle className="h-4 w-4 mr-2" />
+          <CheckCircle className='h-4 w-4 mr-2' />
           {successText}
         </>
       );
     }
-    
+
     if (error && errorText) {
       return (
         <>
-          <AlertCircle className="h-4 w-4 mr-2" />
+          <AlertCircle className='h-4 w-4 mr-2' />
           {errorText}
         </>
       );
     }
-    
+
     return children;
   };
 
@@ -90,15 +97,15 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
   error,
   children,
   loadingComponent,
-  errorComponent
+  errorComponent,
 }) => {
   if (loading) {
     return (
       loadingComponent || (
-        <div className="flex items-center justify-center p-8">
-          <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-sm text-muted-foreground">Loading...</p>
+        <div className='flex items-center justify-center p-8'>
+          <div className='text-center'>
+            <Loader2 className='h-8 w-8 animate-spin mx-auto mb-4 text-primary' />
+            <p className='text-sm text-muted-foreground'>Loading...</p>
           </div>
         </div>
       )
@@ -109,10 +116,10 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
     return (
       errorComponent || (
         <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center space-x-2 text-destructive">
-              <AlertCircle className="h-5 w-5" />
-              <p className="text-sm">{error}</p>
+          <CardContent className='p-6'>
+            <div className='flex items-center space-x-2 text-destructive'>
+              <AlertCircle className='h-5 w-5' />
+              <p className='text-sm'>{error}</p>
             </div>
           </CardContent>
         </Card>
@@ -136,22 +143,22 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   description,
   icon,
   action,
-  className = ''
+  className = '',
 }) => {
   return (
     <div className={`text-center py-12 ${className}`}>
       {icon && (
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+        <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted'>
           {icon}
         </div>
       )}
-      <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+      <h3 className='text-lg font-semibold text-foreground'>{title}</h3>
       {description && (
-        <p className="mt-2 text-sm text-muted-foreground max-w-sm mx-auto">
+        <p className='mt-2 text-sm text-muted-foreground max-w-sm mx-auto'>
           {description}
         </p>
       )}
-      {action && <div className="mt-6">{action}</div>}
+      {action && <div className='mt-6'>{action}</div>}
     </div>
   );
 };

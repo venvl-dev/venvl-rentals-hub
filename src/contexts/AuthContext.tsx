@@ -10,13 +10,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       try {
         switch (event) {
           case 'INITIAL_SESSION':
@@ -24,13 +28,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
-            
+
             // Log successful authentication
             if (session?.user && event === 'SIGNED_IN') {
               console.log('User signed in:', session.user.id);
             }
             break;
-            
+
           case 'SIGNED_OUT':
             if (user) {
               localStorage.removeItem(`user_role_${user.id}`);
@@ -40,25 +44,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(null);
             setLoading(false);
             break;
-            
+
           case 'TOKEN_REFRESHED':
             setSession(session);
             setUser(session?.user ?? null);
             break;
-            
+
           default:
             break;
         }
-        } catch (error) {
-          console.error('Authentication state change error:', error);
-          setLoading(false);
-        }
+      } catch (error) {
+        console.error('Authentication state change error:', error);
+        setLoading(false);
+      }
     });
 
     // Initial session check
     const checkInitialSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
         if (error) {
           console.error('Error getting initial session:', error);
           // Don't treat this as a fatal error - user might just not be logged in
@@ -67,7 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLoading(false);
           return;
         }
-        
+
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);

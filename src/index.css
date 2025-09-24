@@ -109,7 +109,7 @@
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none; /* Firefox */
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none; /* Safari and Chrome */
   }
@@ -144,7 +144,7 @@
   .border-3 {
     border-width: 3px;
   }
-  
+
   .hover\:scale-102:hover {
     transform: scale(1.02);
   }

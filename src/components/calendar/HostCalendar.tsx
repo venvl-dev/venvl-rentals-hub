@@ -1,20 +1,23 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { 
-  getCalendarStatusColor, 
+import {
+  getCalendarStatusColor,
   blockDates,
   unblockDates,
-  clearCalendarCache
+  clearCalendarCache,
 } from '@/lib/calendarUtils';
-import { 
-  generateCalendarDays,
-  CalendarDay
-} from '@/lib/calendarUtils';
-import { format, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar, 
-  Plus, 
+import { generateCalendarDays, CalendarDay } from '@/lib/calendarUtils';
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+} from 'date-fns';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar,
+  Plus,
   X,
   User,
   Clock,
@@ -22,17 +25,29 @@ import {
   Filter,
   Download,
   Ban,
-  Check
+  Check,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -52,15 +67,18 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
   propertyId,
   propertyTitle,
   onBookingClick,
-  className = ''
+  className = '',
 }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [calendarDays, setCalendarDays] = useState<CalendarDay[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [dragMode, setDragMode] = useState<'block' | 'unblock' | null>(null);
-  const [filter, setFilter] = useState<BookingFilter>({ status: 'all', type: 'all' });
-  
+  const [filter, setFilter] = useState<BookingFilter>({
+    status: 'all',
+    type: 'all',
+  });
+
   // Block dates modal
   const [blockModalOpen, setBlockModalOpen] = useState(false);
   const [blockReason, setBlockReason] = useState('');
@@ -71,7 +89,9 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
   // Get current user
   useEffect(() => {
     const getCurrentUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       setUserId(user?.id || null);
     };
     getCurrentUser();
@@ -83,7 +103,7 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
       const days = await generateCalendarDays(
         propertyId,
         currentDate.getFullYear(),
-        currentDate.getMonth()
+        currentDate.getMonth(),
       );
 
       setCalendarDays(days);
@@ -117,10 +137,14 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
 
     // Date selection for blocking/unblocking
     const dateStr = format(date, 'yyyy-MM-dd');
-    const isSelected = selectedDates.some(d => format(d, 'yyyy-MM-dd') === dateStr);
-    
+    const isSelected = selectedDates.some(
+      (d) => format(d, 'yyyy-MM-dd') === dateStr,
+    );
+
     if (isSelected) {
-      setSelectedDates(selectedDates.filter(d => format(d, 'yyyy-MM-dd') !== dateStr));
+      setSelectedDates(
+        selectedDates.filter((d) => format(d, 'yyyy-MM-dd') !== dateStr),
+      );
     } else {
       setSelectedDates([...selectedDates, date]);
     }
@@ -134,9 +158,16 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
 
     setBlockingDates(true);
     try {
-      const success = await blockDates(propertyId, selectedDates, blockReason.trim(), userId);
+      const success = await blockDates(
+        propertyId,
+        selectedDates,
+        blockReason.trim(),
+        userId,
+      );
       if (success) {
-        toast.success(`Blocked ${selectedDates.length} date${selectedDates.length > 1 ? 's' : ''}`);
+        toast.success(
+          `Blocked ${selectedDates.length} date${selectedDates.length > 1 ? 's' : ''}`,
+        );
         setSelectedDates([]);
         setBlockReason('');
         setBlockModalOpen(false);
@@ -160,7 +191,9 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
     try {
       const success = await unblockDates(propertyId, selectedDates);
       if (success) {
-        toast.success(`Unblocked ${selectedDates.length} date${selectedDates.length > 1 ? 's' : ''}`);
+        toast.success(
+          `Unblocked ${selectedDates.length} date${selectedDates.length > 1 ? 's' : ''}`,
+        );
         setSelectedDates([]);
         loadCalendarData();
       } else {
@@ -186,16 +219,23 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
     }
   };
 
-  const isDateSelected = useCallback((date: Date): boolean => {
-    return selectedDates.some(d => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
-  }, [selectedDates]);
+  const isDateSelected = useCallback(
+    (date: Date): boolean => {
+      return selectedDates.some(
+        (d) => format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'),
+      );
+    },
+    [selectedDates],
+  );
 
   // Memoize filtered calendar days to avoid recalculating on every render
   const filteredCalendarDays = useMemo(() => {
-    return calendarDays.map(day => {
+    return calendarDays.map((day) => {
       if (day.bookingData) {
-        const matchesStatus = filter.status === 'all' || day.bookingData.status === filter.status;
-        const matchesType = filter.type === 'all' || day.bookingData.booking_type === filter.type;
+        const matchesStatus =
+          filter.status === 'all' || day.bookingData.status === filter.status;
+        const matchesType =
+          filter.type === 'all' || day.bookingData.booking_type === filter.type;
 
         if (!matchesStatus || !matchesType) {
           // Keep the day as booked but hide booking details for filtered items
@@ -208,14 +248,15 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
 
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-  const renderCalendarDay = useCallback((day: CalendarDay, index: number) => {
-    const isSelected = isDateSelected(day.date);
-    const hasBooking = !!day.bookingData;
+  const renderCalendarDay = useCallback(
+    (day: CalendarDay, index: number) => {
+      const isSelected = isDateSelected(day.date);
+      const hasBooking = !!day.bookingData;
 
-    return (
-      <div
-        key={index}
-        className={`
+      return (
+        <div
+          key={index}
+          className={`
           relative w-full h-16 flex flex-col items-center justify-center text-sm font-medium rounded-lg cursor-pointer
           transition-colors duration-150 border-2
           ${day.isCurrentMonth ? 'text-black' : 'text-gray-400'}
@@ -223,105 +264,117 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
           ${hasBooking ? 'hover:bg-gray-50' : 'hover:bg-gray-100'}
           ${getCalendarStatusColor(day.status)}
         `}
-        onClick={() => handleDateClick(day.date, day)}
-        title={`${format(day.date, 'EEE, MMM d, yyyy')}${hasBooking ? ` - ${day.bookingData!.guest_name}` : ''}`}
-      >
-        <span className="relative z-10 text-xs">
-          {format(day.date, 'd')}
-        </span>
+          onClick={() => handleDateClick(day.date, day)}
+          title={`${format(day.date, 'EEE, MMM d, yyyy')}${hasBooking ? ` - ${day.bookingData!.guest_name}` : ''}`}
+        >
+          <span className='relative z-10 text-xs'>{format(day.date, 'd')}</span>
 
-        {day.isToday && (
-          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full" />
-        )}
+          {day.isToday && (
+            <div className='absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-blue-500 rounded-full' />
+          )}
 
-        {hasBooking && (
-          <div className="flex items-center justify-center mt-1">
-            <div className={`w-2 h-2 rounded-full ${getBookingStatusColor(day.bookingData!.status)}`} />
-          </div>
-        )}
+          {hasBooking && (
+            <div className='flex items-center justify-center mt-1'>
+              <div
+                className={`w-2 h-2 rounded-full ${getBookingStatusColor(day.bookingData!.status)}`}
+              />
+            </div>
+          )}
 
-        {day.status === 'blocked' && (
-          <div className="absolute top-1 right-1">
-            <Ban className="h-3 w-3 text-gray-500" />
-          </div>
-        )}
-      </div>
-    );
-  }, [isDateSelected, handleDateClick]);
+          {day.status === 'blocked' && (
+            <div className='absolute top-1 right-1'>
+              <Ban className='h-3 w-3 text-gray-500' />
+            </div>
+          )}
+        </div>
+      );
+    },
+    [isDateSelected, handleDateClick],
+  );
 
   return (
     <Card className={`w-full ${className}`}>
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
+        <CardTitle className='flex items-center justify-between'>
+          <div className='flex items-center gap-2'>
+            <Calendar className='h-5 w-5' />
             <span>Calendar - {propertyTitle}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={handlePrevMonth}
               disabled={loading}
-              className="rounded-full w-8 h-8 p-0"
+              className='rounded-full w-8 h-8 p-0'
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className='h-4 w-4' />
             </Button>
-            <div className="text-lg font-semibold min-w-[120px] text-center">
+            <div className='text-lg font-semibold min-w-[120px] text-center'>
               {format(currentDate, 'MMM yyyy')}
             </div>
             <Button
-              variant="outline"
-              size="sm"
+              variant='outline'
+              size='sm'
               onClick={handleNextMonth}
               disabled={loading}
-              className="rounded-full w-8 h-8 p-0"
+              className='rounded-full w-8 h-8 p-0'
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className='h-4 w-4' />
             </Button>
           </div>
         </CardTitle>
       </CardHeader>
-      
+
       <CardContent>
         {/* Controls */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+        <div className='flex flex-wrap items-center justify-between gap-4 mb-4'>
           {/* Filters */}
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-gray-500" />
-            <Select value={filter.status} onValueChange={(value) => setFilter({...filter, status: value as any})}>
-              <SelectTrigger className="w-32">
+          <div className='flex items-center gap-2'>
+            <Filter className='h-4 w-4 text-gray-500' />
+            <Select
+              value={filter.status}
+              onValueChange={(value) =>
+                setFilter({ ...filter, status: value as any })
+              }
+            >
+              <SelectTrigger className='w-32'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="checked_in">Checked In</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value='all'>All Status</SelectItem>
+                <SelectItem value='pending'>Pending</SelectItem>
+                <SelectItem value='confirmed'>Confirmed</SelectItem>
+                <SelectItem value='checked_in'>Checked In</SelectItem>
+                <SelectItem value='completed'>Completed</SelectItem>
               </SelectContent>
             </Select>
-            
-            <Select value={filter.type} onValueChange={(value) => setFilter({...filter, type: value as any})}>
-              <SelectTrigger className="w-32">
+
+            <Select
+              value={filter.type}
+              onValueChange={(value) =>
+                setFilter({ ...filter, type: value as any })
+              }
+            >
+              <SelectTrigger className='w-32'>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
+                <SelectItem value='all'>All Types</SelectItem>
+                <SelectItem value='daily'>Daily</SelectItem>
+                <SelectItem value='monthly'>Monthly</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className='flex items-center gap-2'>
             {selectedDates.length > 0 && (
               <>
                 <Dialog open={blockModalOpen} onOpenChange={setBlockModalOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Ban className="h-4 w-4" />
+                    <Button variant='outline' size='sm' className='gap-2'>
+                      <Ban className='h-4 w-4' />
                       Block ({selectedDates.length})
                     </Button>
                   </DialogTrigger>
@@ -329,31 +382,42 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
                     <DialogHeader>
                       <DialogTitle>Block Selected Dates</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
+                    <div className='space-y-4'>
                       <div>
-                        <Label htmlFor="blockReason">Reason for blocking</Label>
+                        <Label htmlFor='blockReason'>Reason for blocking</Label>
                         <Textarea
-                          id="blockReason"
+                          id='blockReason'
                           value={blockReason}
                           onChange={(e) => setBlockReason(e.target.value)}
-                          placeholder="e.g., Maintenance, Personal use, etc."
-                          className="mt-1"
+                          placeholder='e.g., Maintenance, Personal use, etc.'
+                          className='mt-1'
                         />
                       </div>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setBlockModalOpen(false)}>
+                      <div className='flex justify-end gap-2'>
+                        <Button
+                          variant='outline'
+                          onClick={() => setBlockModalOpen(false)}
+                        >
                           Cancel
                         </Button>
-                        <Button onClick={handleBlockDates} disabled={blockingDates}>
+                        <Button
+                          onClick={handleBlockDates}
+                          disabled={blockingDates}
+                        >
                           {blockingDates ? 'Blocking...' : 'Block Dates'}
                         </Button>
                       </div>
                     </div>
                   </DialogContent>
                 </Dialog>
-                
-                <Button variant="outline" size="sm" onClick={handleUnblockDates} className="gap-2">
-                  <Check className="h-4 w-4" />
+
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={handleUnblockDates}
+                  className='gap-2'
+                >
+                  <Check className='h-4 w-4' />
                   Unblock ({selectedDates.length})
                 </Button>
               </>
@@ -362,39 +426,42 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
         </div>
 
         {/* Calendar Legend */}
-        <div className="flex flex-wrap gap-3 mb-4 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-100 border border-green-200 rounded" />
+        <div className='flex flex-wrap gap-3 mb-4 text-xs'>
+          <div className='flex items-center gap-1'>
+            <div className='w-3 h-3 bg-green-100 border border-green-200 rounded' />
             <span>Available</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-green-500 rounded" />
+          <div className='flex items-center gap-1'>
+            <div className='w-3 h-3 bg-green-500 rounded' />
             <span>Confirmed</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-yellow-500 rounded" />
+          <div className='flex items-center gap-1'>
+            <div className='w-3 h-3 bg-yellow-500 rounded' />
             <span>Pending</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-purple-500 rounded" />
+          <div className='flex items-center gap-1'>
+            <div className='w-3 h-3 bg-purple-500 rounded' />
             <span>Checked In</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-blue-500 rounded" />
+          <div className='flex items-center gap-1'>
+            <div className='w-3 h-3 bg-blue-500 rounded' />
             <span>Completed</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-3 h-3 bg-gray-100 border border-gray-200 rounded" />
+          <div className='flex items-center gap-1'>
+            <div className='w-3 h-3 bg-gray-100 border border-gray-200 rounded' />
             <span>Blocked</span>
           </div>
         </div>
 
         {/* Calendar Grid */}
-        <div className="space-y-2">
+        <div className='space-y-2'>
           {/* Day Headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
+          <div className='grid grid-cols-7 gap-1 mb-2'>
             {dayNames.map((day) => (
-              <div key={day} className="text-center text-xs font-medium text-gray-500 py-2">
+              <div
+                key={day}
+                className='text-center text-xs font-medium text-gray-500 py-2'
+              >
                 {day}
               </div>
             ))}
@@ -402,23 +469,26 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
 
           {/* Calendar Days */}
           {loading ? (
-            <div className="grid grid-cols-7 gap-1">
+            <div className='grid grid-cols-7 gap-1'>
               {Array.from({ length: 35 }).map((_, index) => (
-                <Skeleton key={index} className="h-16 w-full rounded-lg" />
+                <Skeleton key={index} className='h-16 w-full rounded-lg' />
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-7 gap-1">
-              {filteredCalendarDays.map((day, index) => renderCalendarDay(day, index))}
+            <div className='grid grid-cols-7 gap-1'>
+              {filteredCalendarDays.map((day, index) =>
+                renderCalendarDay(day, index),
+              )}
             </div>
           )}
         </div>
 
         {/* Selected Dates Info */}
         {selectedDates.length > 0 && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-800">
-              {selectedDates.length} date{selectedDates.length > 1 ? 's' : ''} selected
+          <div className='mt-4 p-3 bg-blue-50 rounded-lg'>
+            <p className='text-sm text-blue-800'>
+              {selectedDates.length} date{selectedDates.length > 1 ? 's' : ''}{' '}
+              selected
             </p>
           </div>
         )}
@@ -427,4 +497,4 @@ const HostCalendar: React.FC<HostCalendarProps> = ({
   );
 };
 
-export default HostCalendar; 
+export default HostCalendar;

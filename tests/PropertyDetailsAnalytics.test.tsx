@@ -31,7 +31,7 @@ vi.mock('@/integrations/supabase/client', () => {
     })),
     rpc: vi.fn(),
   };
-  
+
   return {
     supabase: mockSupabaseClient,
   };
@@ -141,14 +141,14 @@ const renderWithProviders = (component: React.ReactElement) => {
       <MemoryRouter initialEntries={['/admin/properties/test-property-id']}>
         {component}
       </MemoryRouter>
-    </QueryClientProvider>
+    </QueryClientProvider>,
   );
 };
 
 describe('PropertyDetailsAnalytics', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Mock property fetch
     mockSupabaseClient.from.mockImplementation((table: string) => {
       if (table === 'properties') {
@@ -166,7 +166,7 @@ describe('PropertyDetailsAnalytics', () => {
           })),
         };
       }
-      
+
       if (table === 'profiles') {
         return {
           select: vi.fn(() => ({
@@ -179,20 +179,22 @@ describe('PropertyDetailsAnalytics', () => {
           })),
         };
       }
-      
+
       if (table === 'bookings') {
         return {
           select: vi.fn(() => ({
             eq: vi.fn(() => ({
-              order: vi.fn(() => ({
-                mockResolvedValue: {
+              order: vi
+                .fn(() => ({
+                  mockResolvedValue: {
+                    data: mockBookings,
+                    error: null,
+                  },
+                }))
+                .mockResolvedValue({
                   data: mockBookings,
                   error: null,
-                },
-              })).mockResolvedValue({
-                data: mockBookings,
-                error: null,
-              }),
+                }),
             })),
           })),
           insert: vi.fn(() => ({
@@ -232,16 +234,18 @@ describe('PropertyDetailsAnalytics', () => {
 
       // Check property age
       expect(screen.getByText('Property Age')).toBeInTheDocument();
-      
+
       // Check performance insights
       expect(screen.getByText('Performance Insights')).toBeInTheDocument();
-      expect(screen.getByText('This property has 3 total bookings')).toBeInTheDocument();
+      expect(
+        screen.getByText('This property has 3 total bookings'),
+      ).toBeInTheDocument();
     });
   });
 
   it('shows no revenue warning when no completed bookings exist', async () => {
     // Mock with only pending bookings
-    const pendingBookings = mockBookings.map(booking => ({
+    const pendingBookings = mockBookings.map((booking) => ({
       ...booking,
       status: 'pending',
     }));
@@ -274,11 +278,13 @@ describe('PropertyDetailsAnalytics', () => {
     await waitFor(() => {
       // Should show no revenue generated warning
       expect(screen.getByText('No Revenue Generated')).toBeInTheDocument();
-      expect(screen.getByText("This property hasn't generated any revenue yet")).toBeInTheDocument();
-      
+      expect(
+        screen.getByText("This property hasn't generated any revenue yet"),
+      ).toBeInTheDocument();
+
       // Total revenue should be 0
       expect(screen.getByText('$3,350')).toBeInTheDocument(); // Still shows total because pending bookings have prices
-      
+
       // Completed bookings should be 0
       expect(screen.getByText('0')).toBeInTheDocument();
       expect(screen.getByText('0% completion rate')).toBeInTheDocument();
@@ -299,7 +305,9 @@ describe('PropertyDetailsAnalytics', () => {
     // Initial state
     await waitFor(() => {
       expect(screen.getByText('$3,350')).toBeInTheDocument();
-      expect(screen.getByText('This property has 3 total bookings')).toBeInTheDocument();
+      expect(
+        screen.getByText('This property has 3 total bookings'),
+      ).toBeInTheDocument();
     });
 
     // Simulate a new booking being added (this would trigger a refetch in the real app)

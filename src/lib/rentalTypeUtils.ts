@@ -15,7 +15,10 @@ export interface PropertyRentalData {
  * ✅ SIMPLIFIED: Check if property supports a specific booking type
  * Based ONLY on booking_types array - no more confusion!
  */
-export function supportsBookingType(property: PropertyRentalData, bookingType: BookingType): boolean {
+export function supportsBookingType(
+  property: PropertyRentalData,
+  bookingType: BookingType,
+): boolean {
   if (!property.booking_types || !Array.isArray(property.booking_types)) {
     // Default properties to daily if no booking_types specified
     return bookingType === 'daily';
@@ -24,13 +27,22 @@ export function supportsBookingType(property: PropertyRentalData, bookingType: B
   switch (bookingType) {
     case 'daily':
       // Daily: show properties that ONLY support daily (not both)
-      return property.booking_types.includes('daily') && !property.booking_types.includes('monthly');
+      return (
+        property.booking_types.includes('daily') &&
+        !property.booking_types.includes('monthly')
+      );
     case 'monthly':
       // Monthly: show properties that ONLY support monthly (not both)
-      return property.booking_types.includes('monthly') && !property.booking_types.includes('daily');
+      return (
+        property.booking_types.includes('monthly') &&
+        !property.booking_types.includes('daily')
+      );
     case 'flexible':
       // Flexible: show properties that support BOTH daily and monthly
-      return property.booking_types.includes('daily') && property.booking_types.includes('monthly');
+      return (
+        property.booking_types.includes('daily') &&
+        property.booking_types.includes('monthly')
+      );
     default:
       return false;
   }
@@ -43,10 +55,10 @@ export function getBookingTypeLabel(bookingTypes: string[]): string {
   if (!bookingTypes || bookingTypes.length === 0) {
     return 'Daily';
   }
-  
+
   const hasDaily = bookingTypes.includes('daily');
   const hasMonthly = bookingTypes.includes('monthly');
-  
+
   if (hasDaily && hasMonthly) {
     return 'Flexible';
   }
@@ -73,13 +85,19 @@ export function getMonthlyPrice(property: PropertyRentalData): number {
 /**
  * ✅ SIMPLIFIED: Get primary price for display based on booking types
  */
-export function getPrimaryPrice(property: PropertyRentalData): { price: number; unit: string } {
+export function getPrimaryPrice(property: PropertyRentalData): {
+  price: number;
+  unit: string;
+} {
   if (!property.booking_types || property.booking_types.length === 0) {
     return { price: getDailyPrice(property), unit: 'night' };
   }
 
   // If only monthly, show monthly price
-  if (property.booking_types.includes('monthly') && !property.booking_types.includes('daily')) {
+  if (
+    property.booking_types.includes('monthly') &&
+    !property.booking_types.includes('daily')
+  ) {
     return { price: getMonthlyPrice(property), unit: 'month' };
   }
 
@@ -92,27 +110,36 @@ export function getPrimaryPrice(property: PropertyRentalData): { price: number; 
  */
 export function getRentalTypeBadge(bookingTypes: string[]) {
   const label = getBookingTypeLabel(bookingTypes);
-  const colorClass = label === 'Monthly' ? 'bg-purple-100 text-purple-800' :
-                    label === 'Flexible' ? 'bg-blue-100 text-blue-800' :
-                    'bg-green-100 text-green-800';
-  
+  const colorClass =
+    label === 'Monthly'
+      ? 'bg-purple-100 text-purple-800'
+      : label === 'Flexible'
+        ? 'bg-blue-100 text-blue-800'
+        : 'bg-green-100 text-green-800';
+
   return { label, colorClass };
 }
 
 /**
  * ✅ SIMPLIFIED: Get available booking types for a property
  */
-export function getAvailableBookingTypes(property: PropertyRentalData): BookingType[] {
-  if (!property.booking_types || !Array.isArray(property.booking_types) || property.booking_types.length === 0) {
+export function getAvailableBookingTypes(
+  property: PropertyRentalData,
+): BookingType[] {
+  if (
+    !property.booking_types ||
+    !Array.isArray(property.booking_types) ||
+    property.booking_types.length === 0
+  ) {
     return ['daily']; // Default to daily bookings
   }
 
   const availableTypes: BookingType[] = [];
-  
+
   if (property.booking_types.includes('daily')) {
     availableTypes.push('daily');
   }
-  
+
   if (property.booking_types.includes('monthly')) {
     availableTypes.push('monthly');
   }
@@ -128,15 +155,17 @@ export function getAvailableBookingTypes(property: PropertyRentalData): BookingT
 // Legacy compatibility - DEPRECATED
 export const matchesSearchCriteria = supportsBookingType;
 
-// Legacy compatibility - DEPRECATED, use getBookingTypeLabel instead  
-export function getRentalType(property: PropertyRentalData): 'daily' | 'monthly' | 'both' {
+// Legacy compatibility - DEPRECATED, use getBookingTypeLabel instead
+export function getRentalType(
+  property: PropertyRentalData,
+): 'daily' | 'monthly' | 'both' {
   if (!property.booking_types || property.booking_types.length === 0) {
     return 'daily';
   }
-  
+
   const hasDaily = property.booking_types.includes('daily');
   const hasMonthly = property.booking_types.includes('monthly');
-  
+
   if (hasDaily && hasMonthly) {
     return 'both';
   }

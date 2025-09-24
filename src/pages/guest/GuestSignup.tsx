@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import AuthCard from '@/components/auth/AuthCard';
 
@@ -9,7 +8,7 @@ const GuestSignup = () => {
     setMode(mode === 'signin' ? 'signup' : 'signin');
   };
 
-  return <AuthCard mode={mode} onToggleMode={toggleMode} role="guest" />;
+  return <AuthCard mode={mode} onToggleMode={toggleMode} role='guest' />;
 };
 
 export default GuestSignup;

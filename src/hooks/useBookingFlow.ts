@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,155 +32,168 @@ interface UseBookingFlowProps {
 export const useBookingFlow = ({ user, propertyId }: UseBookingFlowProps) => {
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentStep, setCurrentStep] = useState<'booking' | 'summary' | 'confirmation'>('booking');
+  const [currentStep, setCurrentStep] = useState<
+    'booking' | 'summary' | 'confirmation'
+  >('booking');
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
-  const [confirmedBooking, setConfirmedBooking] = useState<ConfirmedBooking | null>(null);
+  const [confirmedBooking, setConfirmedBooking] =
+    useState<ConfirmedBooking | null>(null);
 
-  const checkDateAvailability = useCallback(async (checkIn: Date, checkOut: Date) => {
-    try {
-      const { data, error } = await supabase.rpc('check_booking_conflicts', {
-        p_property_id: propertyId,
-        p_check_in: checkIn.toISOString().split('T')[0],
-        p_check_out: checkOut.toISOString().split('T')[0],
-      });
+  const checkDateAvailability = useCallback(
+    async (checkIn: Date, checkOut: Date) => {
+      try {
+        const { data, error } = await supabase.rpc('check_booking_conflicts', {
+          p_property_id: propertyId,
+          p_check_in: checkIn.toISOString().split('T')[0],
+          p_check_out: checkOut.toISOString().split('T')[0],
+        });
 
-      if (error) throw error;
-      return !data; // Function returns true if there are conflicts, so invert for availability
-    } catch (error) {
-      console.error('Error checking availability:', error);
-      return false;
-    }
-  }, [propertyId]);
+        if (error) throw error;
+        return !data; // Function returns true if there are conflicts, so invert for availability
+      } catch (error) {
+        console.error('Error checking availability:', error);
+        return false;
+      }
+    },
+    [propertyId],
+  );
 
-  const createBooking = useCallback(async (bookingDetails: BookingData) => {
-    if (!user) {
-      toast.error('Please log in to make a booking');
-      navigate('/auth');
-      return null;
-    }
-
-    try {
-      setIsProcessing(true);
-
-      // Check availability first
-      const isAvailable = await checkDateAvailability(
-        new Date(bookingDetails.check_in),
-        new Date(bookingDetails.check_out)
-      );
-
-      if (!isAvailable) {
-        toast.error('Selected dates are no longer available');
+  const createBooking = useCallback(
+    async (bookingDetails: BookingData) => {
+      if (!user) {
+        toast.error('Please log in to make a booking');
+        navigate('/auth');
         return null;
       }
 
-      // Check if user profile exists
-      const { data: profileCheck, error: profileError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', user.id)
-        .single();
-      
-      if (profileError || !profileCheck) {
-        console.error('❌ User profile not found:', profileError);
-        toast.error('User profile not found. Please refresh and try again.');
-        return null;
-      }
+      try {
+        setIsProcessing(true);
 
-      // Get property host_id for the booking
-      const { data: propertyInfo, error: propertyError } = await supabase
-        .from('properties')
-        .select('host_id')
-        .eq('id', bookingDetails.property_id)
-        .single();
+        // Check availability first
+        const isAvailable = await checkDateAvailability(
+          new Date(bookingDetails.check_in),
+          new Date(bookingDetails.check_out),
+        );
 
-      if (propertyError || !propertyInfo) {
-        console.error('❌ Property not found:', propertyError);
-        toast.error('Property not found. Please refresh and try again.');
-        return null;
-      }
-
-      // Validate booking data before inserting
-      const bookingDataToInsert = {
-        property_id: bookingDetails.property_id,
-        guest_id: user.id,
-        host_id: propertyInfo.host_id,
-        check_in: bookingDetails.check_in,
-        check_out: bookingDetails.check_out,
-        guests: bookingDetails.guests,
-        total_price: bookingDetails.total_price,
-        booking_type: bookingDetails.booking_type || 'daily',
-        duration_months: bookingDetails.duration_months,
-        status: bookingDetails.status || 'pending'
-      };
-
-      // Remove undefined values to avoid database issues
-      Object.keys(bookingDataToInsert).forEach(key => {
-        if (bookingDataToInsert[key as keyof typeof bookingDataToInsert] === undefined) {
-          delete bookingDataToInsert[key as keyof typeof bookingDataToInsert];
+        if (!isAvailable) {
+          toast.error('Selected dates are no longer available');
+          return null;
         }
-      });
 
-      // Create booking
-      console.log('🔍 Creating booking with data:', bookingDataToInsert);
-      
-      const { data, error } = await supabase
-        .from('bookings')
-        .insert(bookingDataToInsert)
-        .select()
-        .single();
+        // Check if user profile exists
+        const { data: profileCheck, error: profileError } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', user.id)
+          .single();
 
-      if (error) {
-        console.error('❌ Booking creation failed:');
-        console.error('Error message:', error.message);
-        console.error('Error details:', error.details);
-        console.error('Error hint:', error.hint);
-        console.error('Error code:', error.code);
-        console.error('Full error as JSON:', JSON.stringify(error, null, 2));
-        console.error('Full error object:', error);
-        throw error;
-      }
+        if (profileError || !profileCheck) {
+          console.error('❌ User profile not found:', profileError);
+          toast.error('User profile not found. Please refresh and try again.');
+          return null;
+        }
 
-      // Create notification for host
-      const { data: notificationPropertyData } = await supabase
-        .from('properties')
-        .select('host_id, title')
-        .eq('id', propertyId)
-        .single();
+        // Get property host_id for the booking
+        const { data: propertyInfo, error: propertyError } = await supabase
+          .from('properties')
+          .select('host_id')
+          .eq('id', bookingDetails.property_id)
+          .single();
 
-      if (notificationPropertyData) {
-        await supabase.from('notifications').insert({
-          user_id: notificationPropertyData.host_id,
-          title: 'New Booking Request',
-          message: `You have a new booking request for ${notificationPropertyData.title}`,
-          type: 'booking',
+        if (propertyError || !propertyInfo) {
+          console.error('❌ Property not found:', propertyError);
+          toast.error('Property not found. Please refresh and try again.');
+          return null;
+        }
+
+        // Validate booking data before inserting
+        const bookingDataToInsert = {
+          property_id: bookingDetails.property_id,
+          guest_id: user.id,
+          host_id: propertyInfo.host_id,
+          check_in: bookingDetails.check_in,
+          check_out: bookingDetails.check_out,
+          guests: bookingDetails.guests,
+          total_price: bookingDetails.total_price,
+          booking_type: bookingDetails.booking_type || 'daily',
+          duration_months: bookingDetails.duration_months,
+          status: bookingDetails.status || 'pending',
+        };
+
+        // Remove undefined values to avoid database issues
+        Object.keys(bookingDataToInsert).forEach((key) => {
+          if (
+            bookingDataToInsert[key as keyof typeof bookingDataToInsert] ===
+            undefined
+          ) {
+            delete bookingDataToInsert[key as keyof typeof bookingDataToInsert];
+          }
         });
 
-        // Track booking notification
-        await supabase.from('booking_notifications').insert({
-          booking_id: data.id,
-          recipient_id: notificationPropertyData.host_id,
-          notification_type: 'new_booking',
-        });
-      }
+        // Create booking
+        console.log('🔍 Creating booking with data:', bookingDataToInsert);
 
-      return data;
-    } catch (error) {
-      console.error('=== CATCH BLOCK ERROR ===');
-      console.error('Error type:', typeof error);
-      console.error('Error instanceof Error:', error instanceof Error);
-      console.error('Error as JSON:', JSON.stringify(error, null, 2));
-      console.error('Error object:', error);
-      if (error instanceof Error) {
-        console.error('Error message:', error.message);
-        console.error('Error stack:', error.stack);
+        const { data, error } = await supabase
+          .from('bookings')
+          .insert(bookingDataToInsert)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('❌ Booking creation failed:');
+          console.error('Error message:', error.message);
+          console.error('Error details:', error.details);
+          console.error('Error hint:', error.hint);
+          console.error('Error code:', error.code);
+          console.error('Full error as JSON:', JSON.stringify(error, null, 2));
+          console.error('Full error object:', error);
+          throw error;
+        }
+
+        // Create notification for host
+        const { data: notificationPropertyData } = await supabase
+          .from('properties')
+          .select('host_id, title')
+          .eq('id', propertyId)
+          .single();
+
+        if (notificationPropertyData) {
+          await supabase.from('notifications').insert({
+            user_id: notificationPropertyData.host_id,
+            title: 'New Booking Request',
+            message: `You have a new booking request for ${notificationPropertyData.title}`,
+            type: 'booking',
+          });
+
+          // Track booking notification
+          await supabase.from('booking_notifications').insert({
+            booking_id: data.id,
+            recipient_id: notificationPropertyData.host_id,
+            notification_type: 'new_booking',
+          });
+        }
+
+        return data;
+      } catch (error) {
+        console.error('=== CATCH BLOCK ERROR ===');
+        console.error('Error type:', typeof error);
+        console.error('Error instanceof Error:', error instanceof Error);
+        console.error('Error as JSON:', JSON.stringify(error, null, 2));
+        console.error('Error object:', error);
+        if (error instanceof Error) {
+          console.error('Error message:', error.message);
+          console.error('Error stack:', error.stack);
+        }
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to create booking';
+        toast.error(errorMessage);
+        return null;
+      } finally {
+        setIsProcessing(false);
       }
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create booking';
-      toast.error(errorMessage);
-      return null;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [user, propertyId, checkDateAvailability, navigate]);
+    },
+    [user, propertyId, checkDateAvailability, navigate],
+  );
 
   const proceedToSummary = useCallback((booking: BookingData) => {
     setBookingData(booking);
@@ -193,7 +205,7 @@ export const useBookingFlow = ({ user, propertyId }: UseBookingFlowProps) => {
 
     try {
       setIsProcessing(true);
-      
+
       const booking = await createBooking(bookingData);
       if (booking) {
         setConfirmedBooking(booking);

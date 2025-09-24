@@ -5,7 +5,7 @@ export const useAdminQueryClient = () => {
 
   const invalidateAdminQueries = (queryKeys?: string[][]) => {
     if (queryKeys) {
-      queryKeys.forEach(key => {
+      queryKeys.forEach((key) => {
         queryClient.invalidateQueries({ queryKey: key });
       });
     } else {

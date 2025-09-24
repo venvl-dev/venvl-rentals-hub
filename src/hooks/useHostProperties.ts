@@ -35,7 +35,7 @@ const fetchHostProperties = async (hostId: string): Promise<Property[]> => {
       created_at,
       updated_at,
       host_id
-      `
+      `,
     )
     .eq('host_id', hostId)
     .order('created_at', { ascending: false })

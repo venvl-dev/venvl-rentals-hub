@@ -1,16 +1,61 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Activity, Plus, Edit2, Trash2, Search, Archive, Star } from 'lucide-react';
+import {
+  Activity,
+  Plus,
+  Edit2,
+  Trash2,
+  Search,
+  Archive,
+  Star,
+} from 'lucide-react';
 
 interface Amenity {
   id: string;
@@ -52,7 +97,16 @@ const AmenityManagement = () => {
     is_active: true,
   });
 
-  const categories = ['general', 'kitchen', 'bathroom', 'bedroom', 'entertainment', 'outdoor', 'safety', 'accessibility'];
+  const categories = [
+    'general',
+    'kitchen',
+    'bathroom',
+    'bedroom',
+    'entertainment',
+    'outdoor',
+    'safety',
+    'accessibility',
+  ];
 
   useEffect(() => {
     loadAmenities();
@@ -77,9 +131,9 @@ const AmenityManagement = () => {
     } catch (error) {
       console.error('Error loading amenities:', error);
       toast({
-        title: "Error",
-        description: "Failed to load amenities",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load amenities',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -88,13 +142,14 @@ const AmenityManagement = () => {
 
   const calculateStats = (amenityData: Amenity[]) => {
     const categoryCounts: Record<string, number> = {};
-    amenityData.forEach(amenity => {
-      categoryCounts[amenity.category] = (categoryCounts[amenity.category] || 0) + 1;
+    amenityData.forEach((amenity) => {
+      categoryCounts[amenity.category] =
+        (categoryCounts[amenity.category] || 0) + 1;
     });
 
     setStats({
       totalAmenities: amenityData.length,
-      activeAmenities: amenityData.filter(a => a.is_active).length,
+      activeAmenities: amenityData.filter((a) => a.is_active).length,
       categoryCounts,
     });
   };
@@ -104,21 +159,24 @@ const AmenityManagement = () => {
 
     // Search filter
     if (searchTerm) {
-      filtered = filtered.filter(amenity => 
-        amenity.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        amenity.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (amenity) =>
+          amenity.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          amenity.category?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
     }
 
     // Category filter
     if (categoryFilter !== 'all') {
-      filtered = filtered.filter(amenity => amenity.category === categoryFilter);
+      filtered = filtered.filter(
+        (amenity) => amenity.category === categoryFilter,
+      );
     }
 
     // Status filter
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(amenity => 
-        statusFilter === 'active' ? amenity.is_active : !amenity.is_active
+      filtered = filtered.filter((amenity) =>
+        statusFilter === 'active' ? amenity.is_active : !amenity.is_active,
       );
     }
 
@@ -137,21 +195,21 @@ const AmenityManagement = () => {
 
   const handleCreate = async () => {
     try {
-      const { error } = await supabase
-        .from('amenities')
-        .insert([{
+      const { error } = await supabase.from('amenities').insert([
+        {
           name: formData.name,
           icon: formData.icon || null,
           category: formData.category,
           display_order: formData.display_order,
           is_active: formData.is_active,
-        }]);
+        },
+      ]);
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Amenity created successfully",
+        title: 'Success',
+        description: 'Amenity created successfully',
       });
 
       setIsCreateDialogOpen(false);
@@ -160,9 +218,9 @@ const AmenityManagement = () => {
     } catch (error) {
       console.error('Error creating amenity:', error);
       toast({
-        title: "Error",
-        description: "Failed to create amenity",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to create amenity',
+        variant: 'destructive',
       });
     }
   };
@@ -185,8 +243,8 @@ const AmenityManagement = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Amenity updated successfully",
+        title: 'Success',
+        description: 'Amenity updated successfully',
       });
 
       setIsEditDialogOpen(false);
@@ -196,9 +254,9 @@ const AmenityManagement = () => {
     } catch (error) {
       console.error('Error updating amenity:', error);
       toast({
-        title: "Error",
-        description: "Failed to update amenity",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to update amenity',
+        variant: 'destructive',
       });
     }
   };
@@ -213,17 +271,17 @@ const AmenityManagement = () => {
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Amenity deleted successfully",
+        title: 'Success',
+        description: 'Amenity deleted successfully',
       });
 
       loadAmenities();
     } catch (error) {
       console.error('Error deleting amenity:', error);
       toast({
-        title: "Error",
-        description: "Failed to delete amenity",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete amenity',
+        variant: 'destructive',
       });
     }
   };
@@ -242,23 +300,27 @@ const AmenityManagement = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Loading amenities...</div>
+      <div className='min-h-screen flex items-center justify-center'>
+        <div className='text-lg'>Loading amenities...</div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className='container mx-auto px-4 py-8'>
+      <div className='flex items-center justify-between mb-8'>
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Amenity Management</h1>
-          <p className="text-muted-foreground mt-2">Manage property amenities and categories</p>
+          <h1 className='text-3xl font-bold text-foreground'>
+            Amenity Management
+          </h1>
+          <p className='text-muted-foreground mt-2'>
+            Manage property amenities and categories
+          </p>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className='h-4 w-4 mr-2' />
               Add Amenity
             </Button>
           </DialogTrigger>
@@ -269,36 +331,42 @@ const AmenityManagement = () => {
                 Add a new amenity that properties can include
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className='space-y-4'>
               <div>
-                <Label htmlFor="name">Name</Label>
+                <Label htmlFor='name'>Name</Label>
                 <Input
-                  id="name"
+                  id='name'
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Enter amenity name"
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, name: e.target.value }))
+                  }
+                  placeholder='Enter amenity name'
                 />
               </div>
               <div>
-                <Label htmlFor="icon">Icon (optional)</Label>
+                <Label htmlFor='icon'>Icon (optional)</Label>
                 <Input
-                  id="icon"
+                  id='icon'
                   value={formData.icon}
-                  onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-                  placeholder="Enter icon name (lucide-react)"
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, icon: e.target.value }))
+                  }
+                  placeholder='Enter icon name (lucide-react)'
                 />
               </div>
               <div>
-                <Label htmlFor="category">Category</Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+                <Label htmlFor='category'>Category</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) =>
+                    setFormData((prev) => ({ ...prev, category: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map(category => (
+                    {categories.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category.charAt(0).toUpperCase() + category.slice(1)}
                       </SelectItem>
@@ -307,94 +375,114 @@ const AmenityManagement = () => {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="display_order">Display Order</Label>
+                <Label htmlFor='display_order'>Display Order</Label>
                 <Input
-                  id="display_order"
-                  type="number"
+                  id='display_order'
+                  type='number'
                   value={formData.display_order}
-                  onChange={(e) => setFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
-                  placeholder="0"
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      display_order: parseInt(e.target.value) || 0,
+                    }))
+                  }
+                  placeholder='0'
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleCreate} disabled={!formData.name.trim()}>Create</Button>
+              <Button
+                variant='outline'
+                onClick={() => setIsCreateDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleCreate} disabled={!formData.name.trim()}>
+                Create
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8'>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Amenities</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              Total Amenities
+            </CardTitle>
+            <Activity className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalAmenities}</div>
+            <div className='text-2xl font-bold'>{stats.totalAmenities}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Amenities</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              Active Amenities
+            </CardTitle>
+            <Star className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.activeAmenities}</div>
+            <div className='text-2xl font-bold'>{stats.activeAmenities}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Categories</CardTitle>
-            <Archive className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Categories</CardTitle>
+            <Archive className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{Object.keys(stats.categoryCounts).length}</div>
+            <div className='text-2xl font-bold'>
+              {Object.keys(stats.categoryCounts).length}
+            </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Most Popular</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>Most Popular</CardTitle>
+            <Star className='h-4 w-4 text-muted-foreground' />
           </CardHeader>
           <CardContent>
-            <div className="text-sm font-medium">
-              {Object.entries(stats.categoryCounts).sort(([,a], [,b]) => b - a)[0]?.[0] || 'N/A'}
+            <div className='text-sm font-medium'>
+              {Object.entries(stats.categoryCounts).sort(
+                ([, a], [, b]) => b - a,
+              )[0]?.[0] || 'N/A'}
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card className="mb-6">
+      <Card className='mb-6'>
         <CardHeader>
           <CardTitle>Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+          <div className='flex flex-col md:flex-row gap-4'>
+            <div className='flex-1'>
+              <div className='relative'>
+                <Search className='absolute left-3 top-3 h-4 w-4 text-muted-foreground' />
                 <Input
-                  placeholder="Search amenities..."
+                  placeholder='Search amenities...'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className='pl-10'
                 />
               </div>
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by category" />
+              <SelectTrigger className='w-full md:w-48'>
+                <SelectValue placeholder='Filter by category' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map(category => (
+                <SelectItem value='all'>All Categories</SelectItem>
+                {categories.map((category) => (
                   <SelectItem key={category} value={category}>
                     {category.charAt(0).toUpperCase() + category.slice(1)}
                   </SelectItem>
@@ -402,13 +490,13 @@ const AmenityManagement = () => {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-48">
-                <SelectValue placeholder="Filter by status" />
+              <SelectTrigger className='w-full md:w-48'>
+                <SelectValue placeholder='Filter by status' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value='all'>All Status</SelectItem>
+                <SelectItem value='active'>Active</SelectItem>
+                <SelectItem value='inactive'>Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -419,7 +507,9 @@ const AmenityManagement = () => {
       <Card>
         <CardHeader>
           <CardTitle>Amenities ({filteredAmenities.length})</CardTitle>
-          <CardDescription>Manage property amenities and their categories</CardDescription>
+          <CardDescription>
+            Manage property amenities and their categories
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -436,51 +526,54 @@ const AmenityManagement = () => {
             <TableBody>
               {filteredAmenities.map((amenity) => (
                 <TableRow key={amenity.id}>
-                  <TableCell className="font-medium">{amenity.name}</TableCell>
+                  <TableCell className='font-medium'>{amenity.name}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="capitalize">
+                    <Badge variant='outline' className='capitalize'>
                       {amenity.category}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <span className="text-sm text-muted-foreground">
+                    <span className='text-sm text-muted-foreground'>
                       {amenity.icon || 'No icon'}
                     </span>
                   </TableCell>
                   <TableCell>{amenity.display_order}</TableCell>
                   <TableCell>
-                    <Badge variant={amenity.is_active ? "default" : "secondary"}>
+                    <Badge
+                      variant={amenity.is_active ? 'default' : 'secondary'}
+                    >
                       {amenity.is_active ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
+                    <div className='flex items-center space-x-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
                         onClick={() => openEditDialog(amenity)}
                       >
-                        <Edit2 className="h-4 w-4" />
+                        <Edit2 className='h-4 w-4' />
                       </Button>
 
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm">
-                            <Trash2 className="h-4 w-4" />
+                          <Button variant='destructive' size='sm'>
+                            <Trash2 className='h-4 w-4' />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete Amenity</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to delete "{amenity.name}"? This action cannot be undone.
+                              Are you sure you want to delete "{amenity.name}"?
+                              This action cannot be undone.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction 
+                            <AlertDialogAction
                               onClick={() => handleDelete(amenity.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
                             >
                               Delete
                             </AlertDialogAction>
@@ -495,8 +588,8 @@ const AmenityManagement = () => {
           </Table>
 
           {filteredAmenities.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <div className='text-center py-8 text-muted-foreground'>
+              <Activity className='h-12 w-12 mx-auto mb-4 opacity-50' />
               <p>No amenities found matching your criteria</p>
             </div>
           )}
@@ -508,40 +601,44 @@ const AmenityManagement = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Amenity</DialogTitle>
-            <DialogDescription>
-              Update amenity information
-            </DialogDescription>
+            <DialogDescription>Update amenity information</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className='space-y-4'>
             <div>
-              <Label htmlFor="edit-name">Name</Label>
+              <Label htmlFor='edit-name'>Name</Label>
               <Input
-                id="edit-name"
+                id='edit-name'
                 value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter amenity name"
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, name: e.target.value }))
+                }
+                placeholder='Enter amenity name'
               />
             </div>
             <div>
-              <Label htmlFor="edit-icon">Icon (optional)</Label>
+              <Label htmlFor='edit-icon'>Icon (optional)</Label>
               <Input
-                id="edit-icon"
+                id='edit-icon'
                 value={formData.icon}
-                onChange={(e) => setFormData(prev => ({ ...prev, icon: e.target.value }))}
-                placeholder="Enter icon name (lucide-react)"
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, icon: e.target.value }))
+                }
+                placeholder='Enter icon name (lucide-react)'
               />
             </div>
             <div>
-              <Label htmlFor="edit-category">Category</Label>
-              <Select 
-                value={formData.category} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+              <Label htmlFor='edit-category'>Category</Label>
+              <Select
+                value={formData.category}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({ ...prev, category: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map(category => (
+                  {categories.map((category) => (
                     <SelectItem key={category} value={category}>
                       {category.charAt(0).toUpperCase() + category.slice(1)}
                     </SelectItem>
@@ -550,29 +647,46 @@ const AmenityManagement = () => {
               </Select>
             </div>
             <div>
-              <Label htmlFor="edit-display-order">Display Order</Label>
+              <Label htmlFor='edit-display-order'>Display Order</Label>
               <Input
-                id="edit-display-order"
-                type="number"
+                id='edit-display-order'
+                type='number'
                 value={formData.display_order}
-                onChange={(e) => setFormData(prev => ({ ...prev, display_order: parseInt(e.target.value) || 0 }))}
-                placeholder="0"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    display_order: parseInt(e.target.value) || 0,
+                  }))
+                }
+                placeholder='0'
               />
             </div>
-            <div className="flex items-center space-x-2">
+            <div className='flex items-center space-x-2'>
               <input
-                type="checkbox"
-                id="edit-is-active"
+                type='checkbox'
+                id='edit-is-active'
                 checked={formData.is_active}
-                onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-                className="rounded"
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    is_active: e.target.checked,
+                  }))
+                }
+                className='rounded'
               />
-              <Label htmlFor="edit-is-active">Active</Label>
+              <Label htmlFor='edit-is-active'>Active</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleEdit} disabled={!formData.name.trim()}>Update</Button>
+            <Button
+              variant='outline'
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleEdit} disabled={!formData.name.trim()}>
+              Update
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -45,14 +45,13 @@ interface Property {
   blocked_dates?: string[];
 }
 
-
 const Index = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  
+
   // Use centralized filter store
   const {
     searchFilters,
@@ -64,25 +63,33 @@ const Index = () => {
     getActiveFilterCount,
     getCombinedFilters,
     priceLoading,
-    dbPriceRange
+    dbPriceRange,
   } = useFilterStore();
 
   // Use authentication-aware image preloading
-  const { user, isLoading: authLoading, imagesPreloaded, preloadImages, refreshImages } = useAuthImagePreload();
+  const {
+    user,
+    isLoading: authLoading,
+    imagesPreloaded,
+    preloadImages,
+    refreshImages,
+  } = useAuthImagePreload();
 
   // Use property filtering hook
-  const { filteredProperties, filteringStats } = usePropertyFiltering(properties, getCombinedFilters());
-  
+  const { filteredProperties, filteringStats } = usePropertyFiltering(
+    properties,
+    getCombinedFilters(),
+  );
+
   // Debug filtered properties in Index
   console.log('🏢 INDEX COMPONENT - Filtered Properties Debug:');
   console.log(`🏢 Total properties loaded: ${properties.length}`);
   console.log(`🏢 Filtered properties returned: ${filteredProperties.length}`);
   console.log('🏢 Current filters:', getCombinedFilters());
   console.log('🏢 Sample filtered properties for display:');
-  filteredProperties.slice(0, 3).forEach(p => {
+  filteredProperties.slice(0, 3).forEach((p) => {
     console.log(`🏠 ${p.id.substring(0, 8)}: ${p.title}`);
   });
-  
 
   useEffect(() => {
     fetchProperties();
@@ -116,11 +123,12 @@ const Index = () => {
   const fetchProperties = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Optimized query - fetch all essential fields
       const { data, error } = await supabase
         .from('properties')
-        .select(`
+        .select(
+          `
           id,
           title,
           description,
@@ -145,7 +153,8 @@ const Index = () => {
           approval_status,
           created_at,
           updated_at
-        `)
+        `,
+        )
         .eq('is_active', true)
         .eq('approval_status', 'approved')
         .order('created_at', { ascending: false });
@@ -156,15 +165,17 @@ const Index = () => {
         return;
       }
 
-      
       if (data) {
-        
         // ✅ SIMPLIFIED: Clean amenities and ensure booking_types defaults
-        data.forEach(p => {
+        data.forEach((p) => {
           p.amenities = cleanAmenityIds(p.amenities || []);
-          
+
           // Ensure booking_types has a default value if missing
-          if (!p.booking_types || !Array.isArray(p.booking_types) || p.booking_types.length === 0) {
+          if (
+            !p.booking_types ||
+            !Array.isArray(p.booking_types) ||
+            p.booking_types.length === 0
+          ) {
             p.booking_types = ['daily']; // Default to daily bookings
           }
         });
@@ -180,34 +191,45 @@ const Index = () => {
     }
   }, []);
 
-  const handleSearch = useCallback((filters: any) => {
-    console.log('🏠 Index.tsx - handleSearch received filters:', filters);
-    console.log('🏠 About to call updateSearchFilters...');
-    updateSearchFilters(filters);
-    console.log('🏠 updateSearchFilters called successfully');
-  }, [updateSearchFilters]);
+  const handleSearch = useCallback(
+    (filters: any) => {
+      console.log('🏠 Index.tsx - handleSearch received filters:', filters);
+      console.log('🏠 About to call updateSearchFilters...');
+      updateSearchFilters(filters);
+      console.log('🏠 updateSearchFilters called successfully');
+    },
+    [updateSearchFilters],
+  );
 
-  const handleAdvancedFilters = useCallback((newFilters: any) => {
-    updateAdvancedFilters(newFilters);
-  }, [updateAdvancedFilters]);
+  const handleAdvancedFilters = useCallback(
+    (newFilters: any) => {
+      updateAdvancedFilters(newFilters);
+    },
+    [updateAdvancedFilters],
+  );
 
-  const handleRemoveFilter = useCallback((filterKey: keyof typeof advancedFilters, value?: string) => {
-    const updates: any = {};
-    
-    if (filterKey === 'propertyTypes' && value) {
-      const currentTypes = advancedFilters.propertyTypes || [];
-      updates.propertyTypes = currentTypes.filter(type => type !== value);
-      if (updates.propertyTypes.length === 0) updates.propertyTypes = null;
-    } else if (filterKey === 'amenities' && value) {
-      const currentAmenities = advancedFilters.amenities || [];
-      updates.amenities = currentAmenities.filter(amenity => amenity !== value);
-      if (updates.amenities.length === 0) updates.amenities = null;
-    } else {
-      updates[filterKey] = null;
-    }
-    
-    updateAdvancedFilters(updates);
-  }, [advancedFilters, updateAdvancedFilters]);
+  const handleRemoveFilter = useCallback(
+    (filterKey: keyof typeof advancedFilters, value?: string) => {
+      const updates: any = {};
+
+      if (filterKey === 'propertyTypes' && value) {
+        const currentTypes = advancedFilters.propertyTypes || [];
+        updates.propertyTypes = currentTypes.filter((type) => type !== value);
+        if (updates.propertyTypes.length === 0) updates.propertyTypes = null;
+      } else if (filterKey === 'amenities' && value) {
+        const currentAmenities = advancedFilters.amenities || [];
+        updates.amenities = currentAmenities.filter(
+          (amenity) => amenity !== value,
+        );
+        if (updates.amenities.length === 0) updates.amenities = null;
+      } else {
+        updates[filterKey] = null;
+      }
+
+      updateAdvancedFilters(updates);
+    },
+    [advancedFilters, updateAdvancedFilters],
+  );
 
   const handleClearFilters = useCallback(() => {
     clearAllFilters();
@@ -215,38 +237,41 @@ const Index = () => {
 
   // Enhanced loading state
   const isFullyLoaded = !loading && !authLoading && imagesPreloaded;
-  
+
   // Debug filter state
   console.log('🏠 Index.tsx render - searchFilters from store:', searchFilters);
-  console.log('🏠 Index.tsx render - searchFilters.bookingType:', searchFilters.bookingType);
+  console.log(
+    '🏠 Index.tsx render - searchFilters.bookingType:',
+    searchFilters.bookingType,
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className='min-h-screen bg-gray-50 overflow-x-hidden'>
       <Header />
-      
-      <main className="w-full">
+
+      <main className='w-full'>
         {/* Hero Section */}
-        <section className="relative w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16">
-          <div className="max-w-7xl mx-auto">
-            <motion.div 
-              className="text-center mb-8 sm:mb-12"
+        <section className='relative w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16'>
+          <div className='max-w-7xl mx-auto'>
+            <motion.div
+              className='text-center mb-8 sm:mb-12'
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <motion.h1 
-                className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight"
+              <motion.h1
+                className='text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight'
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
                 Discover your perfect
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 mt-2">
+                <span className='block text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 mt-2'>
                   VENVL experience
                 </span>
               </motion.h1>
-              <motion.p 
-                className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto px-4"
+              <motion.p
+                className='text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto px-4'
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
@@ -257,105 +282,109 @@ const Index = () => {
 
             {/* Search Bar Container */}
             <motion.div
-              className="w-full max-w-4xl mx-auto px-2 sm:px-4 space-y-4"
+              className='w-full max-w-4xl mx-auto px-2 sm:px-4 space-y-4'
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <VenvlSearchPill 
-                onSearch={handleSearch} 
+              <VenvlSearchPill
+                onSearch={handleSearch}
                 initialFilters={searchFilters}
                 key={`search-${searchFilters.bookingType}`}
               />
-              
+
               {/* Advanced Filters Button with Active Filter Count */}
-              <div className="flex justify-center gap-3">
+              <div className='flex justify-center gap-3'>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={() => setShowAdvancedFilters(true)}
-                  className="flex items-center gap-2 rounded-full border-gray-300 hover:border-gray-400 bg-white shadow-sm relative"
+                  className='flex items-center gap-2 rounded-full border-gray-300 hover:border-gray-400 bg-white shadow-sm relative'
                 >
-                  <SlidersHorizontal className="h-4 w-4" />
+                  <SlidersHorizontal className='h-4 w-4' />
                   Advanced filters
                   {getActiveFilterCount > 0 && (
-                    <Badge className="ml-1 bg-black text-white text-xs px-2 py-1 rounded-full">
+                    <Badge className='ml-1 bg-black text-white text-xs px-2 py-1 rounded-full'>
                       {getActiveFilterCount}
                     </Badge>
                   )}
                 </Button>
-                
+
                 {hasActiveFilters && (
                   <Button
-                    variant="ghost"
+                    variant='ghost'
                     onClick={handleClearFilters}
-                    className="flex items-center gap-2 rounded-full text-gray-600 hover:text-gray-900"
+                    className='flex items-center gap-2 rounded-full text-gray-600 hover:text-gray-900'
                   >
                     Clear all
                   </Button>
                 )}
               </div>
-              
             </motion.div>
           </div>
         </section>
 
         {/* Results Section */}
-        <section className="w-full px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12">
-          <div className="max-w-7xl mx-auto">
+        <section className='w-full px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12'>
+          <div className='max-w-7xl mx-auto'>
             {loading || authLoading ? (
-              <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+              <motion.div
+                className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
               >
                 {/* Loading Skeleton Cards */}
                 {[...Array(8)].map((_, index) => (
-                  <div key={index} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-pulse">
-                    <div className="aspect-square bg-gray-200"></div>
-                    <div className="p-4 space-y-3">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                  <div
+                    key={index}
+                    className='bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-pulse'
+                  >
+                    <div className='aspect-square bg-gray-200'></div>
+                    <div className='p-4 space-y-3'>
+                      <div className='h-4 bg-gray-200 rounded w-3/4'></div>
+                      <div className='h-3 bg-gray-200 rounded w-1/2'></div>
+                      <div className='h-4 bg-gray-200 rounded w-1/3'></div>
                     </div>
                   </div>
                 ))}
               </motion.div>
             ) : (
               <>
-                <motion.div 
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4"
+                <motion.div
+                  className='flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8 gap-4'
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.6, delay: 0.7 }}
                 >
-                  <div className="flex items-center gap-4">
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
-                      {filteredProperties.length} propert{filteredProperties.length !== 1 ? 'ies' : 'y'} found
+                  <div className='flex items-center gap-4'>
+                    <h2 className='text-xl sm:text-2xl font-bold text-gray-900'>
+                      {filteredProperties.length} propert
+                      {filteredProperties.length !== 1 ? 'ies' : 'y'} found
                     </h2>
-                    
-                    {hasActiveFilters && filteringStats.total > filteredProperties.length && (
-                      <Badge variant="outline" className="text-xs">
-                        {filteringStats.reduction}% filtered out
-                      </Badge>
-                    )}
+
+                    {hasActiveFilters &&
+                      filteringStats.total > filteredProperties.length && (
+                        <Badge variant='outline' className='text-xs'>
+                          {filteringStats.reduction}% filtered out
+                        </Badge>
+                      )}
                   </div>
-                  
-                  <div className="flex items-center gap-4">
+
+                  <div className='flex items-center gap-4'>
                     {searchFilters.location && (
-                      <div className="text-sm sm:text-base text-gray-600">
+                      <div className='text-sm sm:text-base text-gray-600'>
                         in {searchFilters.location}
                       </div>
                     )}
-                    
+
                     {hasActiveFilters && (
                       <Button
-                        variant="ghost"
-                        size="sm"
+                        variant='ghost'
+                        size='sm'
                         onClick={handleClearFilters}
-                        className="text-gray-500 hover:text-gray-700"
+                        className='text-gray-500 hover:text-gray-700'
                       >
-                        <Filter className="h-4 w-4 mr-1" />
+                        <Filter className='h-4 w-4 mr-1' />
                         Clear filters
                       </Button>
                     )}
@@ -364,8 +393,8 @@ const Index = () => {
 
                 {/* Properties Grid */}
                 {filteredProperties.length > 0 ? (
-                  <motion.div 
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+                  <motion.div
+                    className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.8 }}
@@ -382,18 +411,15 @@ const Index = () => {
                     ))}
                   </motion.div>
                 ) : (
-                  <div className="text-center py-12">
-                    <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <div className='text-center py-12'>
+                    <Search className='h-16 w-16 text-gray-400 mx-auto mb-4' />
+                    <h3 className='text-xl font-semibold text-gray-900 mb-2'>
                       No Properties Found
                     </h3>
-                    <p className="text-gray-600 mb-4">
+                    <p className='text-gray-600 mb-4'>
                       Try adjusting your search criteria or filters
                     </p>
-                    <Button
-                      onClick={handleClearFilters}
-                      variant="outline"
-                    >
+                    <Button onClick={handleClearFilters} variant='outline'>
                       Clear All Filters
                     </Button>
                   </div>

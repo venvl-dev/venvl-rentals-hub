@@ -1,5 +1,13 @@
 import { supabase } from '@/integrations/supabase/client';
-import { format, parseISO, isAfter, isBefore, isEqual, addDays, differenceInDays } from 'date-fns';
+import {
+  format,
+  parseISO,
+  isAfter,
+  isBefore,
+  isEqual,
+  addDays,
+  differenceInDays,
+} from 'date-fns';
 
 export interface BookingCalendarData {
   id: string;
@@ -23,7 +31,14 @@ export interface BlockedDate {
 
 export interface CalendarDay {
   date: Date;
-  status: 'available' | 'booked' | 'blocked' | 'pending' | 'confirmed' | 'checked_in' | 'completed';
+  status:
+    | 'available'
+    | 'booked'
+    | 'blocked'
+    | 'pending'
+    | 'confirmed'
+    | 'checked_in'
+    | 'completed';
   bookingData?: BookingCalendarData;
   blockedReason?: string;
   isToday: boolean;
@@ -50,7 +65,9 @@ function setCachedData(key: string, data: any): void {
 /**
  * Fetch all bookings for a property with optimized query
  */
-export async function fetchPropertyBookings(propertyId: string): Promise<BookingCalendarData[]> {
+export async function fetchPropertyBookings(
+  propertyId: string,
+): Promise<BookingCalendarData[]> {
   const cacheKey = `bookings_${propertyId}`;
   const cached = getCachedData<BookingCalendarData[]>(cacheKey);
   if (cached) return cached;
@@ -58,7 +75,8 @@ export async function fetchPropertyBookings(propertyId: string): Promise<Booking
   try {
     const { data, error } = await supabase
       .from('bookings')
-      .select(`
+      .select(
+        `
         id,
         check_in,
         check_out,
@@ -67,27 +85,27 @@ export async function fetchPropertyBookings(propertyId: string): Promise<Booking
         booking_type,
         total_price,
         profiles:guest_id(first_name, last_name)
-      `)
+      `,
+      )
       .eq('property_id', propertyId)
       .in('status', ['pending', 'confirmed', 'checked_in']) // Removed 'completed' - completed bookings should make dates available again
       .order('check_in', { ascending: true });
 
-
     if (error) throw error;
 
-    const bookings: BookingCalendarData[] = data?.map(booking => ({
-      id: booking.id,
-      check_in: booking.check_in,
-      check_out: booking.check_out,
-      status: booking.status as BookingCalendarData['status'],
-      guest_id: booking.guest_id,
-      booking_type: (booking.booking_type as 'daily' | 'monthly') || 'daily',
-      total_price: booking.total_price,
-      guest_name: (booking as any).profiles ? 
-        `${(booking as any).profiles.first_name} ${(booking as any).profiles.last_name}` : 
-        'Guest'
-    })) || [];
-
+    const bookings: BookingCalendarData[] =
+      data?.map((booking) => ({
+        id: booking.id,
+        check_in: booking.check_in,
+        check_out: booking.check_out,
+        status: booking.status as BookingCalendarData['status'],
+        guest_id: booking.guest_id,
+        booking_type: (booking.booking_type as 'daily' | 'monthly') || 'daily',
+        total_price: booking.total_price,
+        guest_name: (booking as any).profiles
+          ? `${(booking as any).profiles.first_name} ${(booking as any).profiles.last_name}`
+          : 'Guest',
+      })) || [];
 
     setCachedData(cacheKey, bookings);
     return bookings;
@@ -100,7 +118,9 @@ export async function fetchPropertyBookings(propertyId: string): Promise<Booking
 /**
  * Fetch blocked dates for a property
  */
-export async function fetchBlockedDates(propertyId: string): Promise<BlockedDate[]> {
+export async function fetchBlockedDates(
+  propertyId: string,
+): Promise<BlockedDate[]> {
   const cacheKey = `blocked_${propertyId}`;
   const cached = getCachedData<BlockedDate[]>(cacheKey);
   if (cached) return cached;
@@ -114,14 +134,15 @@ export async function fetchBlockedDates(propertyId: string): Promise<BlockedDate
 
     if (error) throw error;
 
-    const blockedDates: BlockedDate[] = data?.map(item => ({
-      id: item.id,
-      property_id: item.property_id,
-      date: item.blocked_date,
-      reason: item.reason || 'Unavailable',
-      created_by: (item as any).created_by || null,
-      created_at: item.created_at
-    })) || [];
+    const blockedDates: BlockedDate[] =
+      data?.map((item) => ({
+        id: item.id,
+        property_id: item.property_id,
+        date: item.blocked_date,
+        reason: item.reason || 'Unavailable',
+        created_by: (item as any).created_by || null,
+        created_at: item.created_at,
+      })) || [];
 
     setCachedData(cacheKey, blockedDates);
     return blockedDates;
@@ -137,21 +158,24 @@ export async function fetchBlockedDates(propertyId: string): Promise<BlockedDate
 export async function checkDateAvailability(
   propertyId: string,
   checkIn: Date,
-  checkOut: Date
+  checkOut: Date,
 ): Promise<{ available: boolean; conflicts: BookingCalendarData[] }> {
   try {
-    const { data: conflicts, error } = await supabase.rpc('check_booking_conflicts', {
-      p_property_id: propertyId,
-      p_check_in: format(checkIn, 'yyyy-MM-dd'),
-      p_check_out: format(checkOut, 'yyyy-MM-dd'),
-      p_exclude_booking_id: null
-    });
+    const { data: conflicts, error } = await supabase.rpc(
+      'check_booking_conflicts',
+      {
+        p_property_id: propertyId,
+        p_check_in: format(checkIn, 'yyyy-MM-dd'),
+        p_check_out: format(checkOut, 'yyyy-MM-dd'),
+        p_exclude_booking_id: null,
+      },
+    );
 
     if (error) throw error;
 
     return {
       available: !conflicts,
-      conflicts: conflicts ? [] : [] // Would contain conflicting bookings if available
+      conflicts: conflicts ? [] : [], // Would contain conflicting bookings if available
     };
   } catch (error) {
     console.error('Error checking date availability:', error);
@@ -166,14 +190,14 @@ export async function blockDates(
   propertyId: string,
   dates: Date[],
   reason: string,
-  userId: string
+  userId: string,
 ): Promise<boolean> {
   try {
-    const blockedDates = dates.map(date => ({
+    const blockedDates = dates.map((date) => ({
       property_id: propertyId,
       blocked_date: format(date, 'yyyy-MM-dd'),
       reason,
-      created_by: userId
+      created_by: userId,
     }));
 
     const { error } = await supabase
@@ -196,10 +220,10 @@ export async function blockDates(
  */
 export async function unblockDates(
   propertyId: string,
-  dates: Date[]
+  dates: Date[],
 ): Promise<boolean> {
   try {
-    const dateStrings = dates.map(date => format(date, 'yyyy-MM-dd'));
+    const dateStrings = dates.map((date) => format(date, 'yyyy-MM-dd'));
 
     const { error } = await supabase
       .from('property_availability')
@@ -224,7 +248,7 @@ export async function unblockDates(
 export async function generateCalendarDays(
   propertyId: string,
   year: number,
-  month: number
+  month: number,
 ): Promise<CalendarDay[]> {
   const cacheKey = `calendar_${propertyId}_${year}_${month}`;
   const cached = getCachedData<CalendarDay[]>(cacheKey);
@@ -232,46 +256,49 @@ export async function generateCalendarDays(
 
   const bookings = await fetchPropertyBookings(propertyId);
   const blockedDates = await fetchBlockedDates(propertyId);
-  
 
   // Removed RLS policy test for performance - only run when debugging
-  
+
   const startDate = new Date(year, month, 1);
   const endDate = new Date(year, month + 1, 0);
   const today = new Date();
-  
+
   const days: CalendarDay[] = [];
 
-  for (let date = new Date(startDate); date <= endDate; date = addDays(date, 1)) {
+  for (
+    let date = new Date(startDate);
+    date <= endDate;
+    date = addDays(date, 1)
+  ) {
     const dateStr = format(date, 'yyyy-MM-dd');
-    
+
     // Check if date is blocked
-    const blockedDate = blockedDates.find(bd => bd.date === dateStr);
+    const blockedDate = blockedDates.find((bd) => bd.date === dateStr);
     if (blockedDate) {
       days.push({
         date: new Date(date),
         status: 'blocked',
         blockedReason: blockedDate.reason,
         isToday: isEqual(date, today),
-        isCurrentMonth: date.getMonth() === month
+        isCurrentMonth: date.getMonth() === month,
       });
       continue;
     }
 
     // Check if date has booking - using same logic as guest booking widget
-    const booking = bookings.find(b => {
+    const booking = bookings.find((b) => {
       const checkIn = parseISO(b.check_in);
       const checkOut = parseISO(b.check_out);
-      
+
       // Create date objects with same time (midnight) for accurate comparison
       const bookingStart = new Date(checkIn);
       const bookingEnd = new Date(checkOut);
       const currentDate = new Date(date);
-      
+
       bookingStart.setHours(0, 0, 0, 0);
       bookingEnd.setHours(0, 0, 0, 0);
       currentDate.setHours(0, 0, 0, 0);
-      
+
       // Include dates from check-in up to (but not including) check-out
       return currentDate >= bookingStart && currentDate < bookingEnd;
     });
@@ -301,18 +328,17 @@ export async function generateCalendarDays(
         status: calendarStatus,
         bookingData: booking,
         isToday: isEqual(date, today),
-        isCurrentMonth: date.getMonth() === month
+        isCurrentMonth: date.getMonth() === month,
       });
     } else {
       days.push({
         date: new Date(date),
         status: 'available',
         isToday: isEqual(date, today),
-        isCurrentMonth: date.getMonth() === month
+        isCurrentMonth: date.getMonth() === month,
       });
     }
   }
-
 
   setCachedData(cacheKey, days);
   return days;
@@ -373,14 +399,17 @@ export function getCalendarStatusLabel(status: CalendarDay['status']): string {
 export function clearCalendarCache(propertyId?: string): void {
   if (propertyId) {
     // Clear specific property cache
-    const keysToDelete = Array.from(calendarCache.keys()).filter(key => 
-      key.includes(propertyId)
+    const keysToDelete = Array.from(calendarCache.keys()).filter((key) =>
+      key.includes(propertyId),
     );
-    keysToDelete.forEach(key => calendarCache.delete(key));
-    console.log(`🧹 Cleared calendar cache for property ${propertyId}`, keysToDelete);
+    keysToDelete.forEach((key) => calendarCache.delete(key));
+    console.log(
+      `🧹 Cleared calendar cache for property ${propertyId}`,
+      keysToDelete,
+    );
   } else {
     // Clear all cache
     calendarCache.clear();
     console.log('🧹 Cleared ALL calendar cache');
   }
-} 
+}

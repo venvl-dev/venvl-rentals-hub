@@ -5,7 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,7 +21,14 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from '../AdminLayout';
 import { Loader2, TestTube } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@/components/ui/form';
 
 interface Setting {
   id: string;
@@ -30,7 +43,7 @@ const emailSchema = z.object({
   smtp_port: z.coerce.number().min(1),
   smtp_user: z.string().nonempty('User required'),
   smtp_pass: z.string().optional(),
-  smtp_secure: z.boolean().default(true)
+  smtp_secure: z.boolean().default(true),
 });
 
 type EmailFormValues = z.infer<typeof emailSchema>;
@@ -42,7 +55,9 @@ const SettingsPage = () => {
 
   useEffect(() => {
     const checkRole = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         setAuthorized(false);
         return;
@@ -69,7 +84,7 @@ const SettingsPage = () => {
         .from('platform_settings')
         .select('*')
         .order('category', { ascending: true });
-      
+
       if (error) throw error;
       return data as Setting[];
     },
@@ -79,10 +94,15 @@ const SettingsPage = () => {
   const { data: smtpSettings } = useQuery({
     queryKey: ['smtp-settings'],
     queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      const { data, error } = await supabase.functions.invoke('get-smtp-settings', {
-        headers: { Authorization: `Bearer ${session?.access_token}` },
-      });
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke(
+        'get-smtp-settings',
+        {
+          headers: { Authorization: `Bearer ${session?.access_token}` },
+        },
+      );
       if (error) throw error;
       return data as Partial<EmailFormValues>;
     },
@@ -121,7 +141,10 @@ const SettingsPage = () => {
     mutationFn: async ({ key, value }: { key: string; value: any }) => {
       let finalValue = value;
       if (key === 'smtp_pass' && value) {
-        const { data: encrypted, error: encErr } = await supabase.rpc('encrypt_sensitive_data', { data: value });
+        const { data: encrypted, error: encErr } = await supabase.rpc(
+          'encrypt_sensitive_data',
+          { data: value },
+        );
         if (encErr) throw encErr;
         finalValue = encrypted;
       }
@@ -130,14 +153,14 @@ const SettingsPage = () => {
         .from('platform_settings')
         .update({ value: finalValue, updated_at: new Date().toISOString() })
         .eq('key', key);
-      
+
       if (error) throw error;
-      
+
       // Log the action
       await supabase.rpc('log_admin_action', {
         p_action: 'update_setting',
         p_resource_type: 'platform_settings',
-        p_metadata: { key, value }
+        p_metadata: { key, value },
       });
     },
     onSuccess: () => {
@@ -163,21 +186,25 @@ const SettingsPage = () => {
         { key: 'smtp_secure', value: values.smtp_secure },
       ];
       if (values.smtp_pass) {
-        const { data: encrypted, error: encErr } = await supabase.rpc('encrypt_sensitive_data', { data: values.smtp_pass });
+        const { data: encrypted, error: encErr } = await supabase.rpc(
+          'encrypt_sensitive_data',
+          { data: values.smtp_pass },
+        );
         if (encErr) throw encErr;
         updates.push({ key: 'smtp_pass', value: encrypted });
       }
 
-      const { error } = await supabase
-        .from('platform_settings')
-        .upsert(updates.map(u => ({ ...u, updated_at: new Date().toISOString() })), { onConflict: 'key' });
+      const { error } = await supabase.from('platform_settings').upsert(
+        updates.map((u) => ({ ...u, updated_at: new Date().toISOString() })),
+        { onConflict: 'key' },
+      );
 
       if (error) throw error;
 
       await supabase.rpc('log_admin_action', {
         p_action: 'update_smtp_settings',
         p_resource_type: 'platform_settings',
-        p_metadata: { keys: updates.map(u => u.key) }
+        p_metadata: { keys: updates.map((u) => u.key) },
       });
     },
     onSuccess: () => {
@@ -190,8 +217,10 @@ const SettingsPage = () => {
   const handleTestEmail = async () => {
     setTestingEmail(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       // Get current user's email for test
       const { data: profile } = await supabase
         .from('profiles')
@@ -199,8 +228,12 @@ const SettingsPage = () => {
         .eq('id', session?.user?.id)
         .single();
 
-      const testEmail = profile?.email || session?.user?.email || getSettingValue('admin_notification_email') || getSettingValue('contact_email');
-      
+      const testEmail =
+        profile?.email ||
+        session?.user?.email ||
+        getSettingValue('admin_notification_email') ||
+        getSettingValue('contact_email');
+
       if (!testEmail) {
         toast.error('No email address found for test');
         return;
@@ -230,7 +263,7 @@ const SettingsPage = () => {
       await supabase.rpc('log_admin_action', {
         p_action: 'send_test_email',
         p_resource_type: 'email',
-        p_metadata: { recipient: testEmail }
+        p_metadata: { recipient: testEmail },
       });
 
       toast.success(`Test email sent successfully to ${testEmail}`);
@@ -242,17 +275,16 @@ const SettingsPage = () => {
     }
   };
 
-
   const getSettingValue = (key: string) => {
-    const setting = settings?.find(s => s.key === key);
+    const setting = settings?.find((s) => s.key === key);
     return setting?.value;
   };
 
   if (authorized === null || isLoading) {
     return (
-      <AdminLayout title="Platform Settings">
-        <div className="flex items-center justify-center p-8">
-          <Loader2 className="h-8 w-8 animate-spin" />
+      <AdminLayout title='Platform Settings'>
+        <div className='flex items-center justify-center p-8'>
+          <Loader2 className='h-8 w-8 animate-spin' />
         </div>
       </AdminLayout>
     );
@@ -260,11 +292,13 @@ const SettingsPage = () => {
 
   if (!authorized) {
     return (
-      <AdminLayout title="Platform Settings">
-        <div className="p-6">
-          <Alert variant="destructive">
+      <AdminLayout title='Platform Settings'>
+        <div className='p-6'>
+          <Alert variant='destructive'>
             <AlertTitle>Access Denied</AlertTitle>
-            <AlertDescription>You must be a super admin to manage settings.</AlertDescription>
+            <AlertDescription>
+              You must be a super admin to manage settings.
+            </AlertDescription>
           </Alert>
         </div>
       </AdminLayout>
@@ -272,18 +306,18 @@ const SettingsPage = () => {
   }
 
   return (
-    <AdminLayout title="Platform Settings">
-      <div className="p-6">
-        <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="commission">Commission</TabsTrigger>
-            <TabsTrigger value="booking">Booking</TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
-            <TabsTrigger value="email">Email</TabsTrigger>
+    <AdminLayout title='Platform Settings'>
+      <div className='p-6'>
+        <Tabs defaultValue='general' className='space-y-6'>
+          <TabsList className='grid w-full grid-cols-5'>
+            <TabsTrigger value='general'>General</TabsTrigger>
+            <TabsTrigger value='commission'>Commission</TabsTrigger>
+            <TabsTrigger value='booking'>Booking</TabsTrigger>
+            <TabsTrigger value='system'>System</TabsTrigger>
+            <TabsTrigger value='email'>Email</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="general" className="space-y-6">
+          <TabsContent value='general' className='space-y-6'>
             <Card>
               <CardHeader>
                 <CardTitle>General Settings</CardTitle>
@@ -291,31 +325,35 @@ const SettingsPage = () => {
                   Configure basic platform information
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="platform-name">Platform Name</Label>
+              <CardContent className='space-y-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='platform-name'>Platform Name</Label>
                   <Input
-                    id="platform-name"
+                    id='platform-name'
                     value={getSettingValue('platform_name') || ''}
-                    onChange={(e) => handleSettingUpdate('platform_name', e.target.value)}
-                    placeholder="VENVL"
+                    onChange={(e) =>
+                      handleSettingUpdate('platform_name', e.target.value)
+                    }
+                    placeholder='VENVL'
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contact-email">Contact Email</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='contact-email'>Contact Email</Label>
                   <Input
-                    id="contact-email"
-                    type="email"
+                    id='contact-email'
+                    type='email'
                     value={getSettingValue('contact_email') || ''}
-                    onChange={(e) => handleSettingUpdate('contact_email', e.target.value)}
-                    placeholder="support@venvl.com"
+                    onChange={(e) =>
+                      handleSettingUpdate('contact_email', e.target.value)
+                    }
+                    placeholder='support@venvl.com'
                   />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="commission" className="space-y-6">
+          <TabsContent value='commission' className='space-y-6'>
             <Card>
               <CardHeader>
                 <CardTitle>Commission Settings</CardTitle>
@@ -323,36 +361,46 @@ const SettingsPage = () => {
                   Configure platform and host fees
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="platform-fee">Platform Fee (%)</Label>
+              <CardContent className='space-y-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='platform-fee'>Platform Fee (%)</Label>
                   <Input
-                    id="platform-fee"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="1"
+                    id='platform-fee'
+                    type='number'
+                    step='0.01'
+                    min='0'
+                    max='1'
                     value={getSettingValue('platform_fee') || 0}
-                    onChange={(e) => handleSettingUpdate('platform_fee', parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      handleSettingUpdate(
+                        'platform_fee',
+                        parseFloat(e.target.value),
+                      )
+                    }
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="host-fee">Host Fee (%)</Label>
+                <div className='space-y-2'>
+                  <Label htmlFor='host-fee'>Host Fee (%)</Label>
                   <Input
-                    id="host-fee"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="1"
+                    id='host-fee'
+                    type='number'
+                    step='0.01'
+                    min='0'
+                    max='1'
                     value={getSettingValue('host_fee') || 0}
-                    onChange={(e) => handleSettingUpdate('host_fee', parseFloat(e.target.value))}
+                    onChange={(e) =>
+                      handleSettingUpdate(
+                        'host_fee',
+                        parseFloat(e.target.value),
+                      )
+                    }
                   />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="booking" className="space-y-6">
+          <TabsContent value='booking' className='space-y-6'>
             <Card>
               <CardHeader>
                 <CardTitle>Booking Controls</CardTitle>
@@ -360,47 +408,54 @@ const SettingsPage = () => {
                   Configure booking limits and restrictions
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="max-properties">Max Properties per Host</Label>
+              <CardContent className='space-y-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='max-properties'>
+                    Max Properties per Host
+                  </Label>
                   <Input
-                    id="max-properties"
-                    type="number"
-                    min="1"
+                    id='max-properties'
+                    type='number'
+                    min='1'
                     value={getSettingValue('max_properties_per_host') || 10}
-                    onChange={(e) => handleSettingUpdate('max_properties_per_host', parseInt(e.target.value))}
+                    onChange={(e) =>
+                      handleSettingUpdate(
+                        'max_properties_per_host',
+                        parseInt(e.target.value),
+                      )
+                    }
                   />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="system" className="space-y-6">
+          <TabsContent value='system' className='space-y-6'>
             <Card>
               <CardHeader>
                 <CardTitle>System Settings</CardTitle>
-                <CardDescription>
-                  Control system-wide features
-                </CardDescription>
+                <CardDescription>Control system-wide features</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
+              <CardContent className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <div className='space-y-0.5'>
                     <Label>Maintenance Mode</Label>
-                    <div className="text-sm text-muted-foreground">
+                    <div className='text-sm text-muted-foreground'>
                       Enable to put the platform in maintenance mode
                     </div>
                   </div>
                   <Switch
                     checked={getSettingValue('maintenance_mode') || false}
-                    onCheckedChange={(checked) => handleSettingUpdate('maintenance_mode', checked)}
+                    onCheckedChange={(checked) =>
+                      handleSettingUpdate('maintenance_mode', checked)
+                    }
                   />
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="email" className="space-y-6">
+          <TabsContent value='email' className='space-y-6'>
             <Card>
               <CardHeader>
                 <CardTitle>Email Settings</CardTitle>
@@ -410,15 +465,18 @@ const SettingsPage = () => {
               </CardHeader>
               <CardContent>
                 <Form {...emailForm}>
-                  <form onSubmit={emailForm.handleSubmit(onSubmitEmail)} className="space-y-4">
+                  <form
+                    onSubmit={emailForm.handleSubmit(onSubmitEmail)}
+                    className='space-y-4'
+                  >
                     <FormField
                       control={emailForm.control}
-                      name="smtp_host"
+                      name='smtp_host'
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>SMTP Host</FormLabel>
                           <FormControl>
-                            <Input placeholder="smtp.example.com" {...field} />
+                            <Input placeholder='smtp.example.com' {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -426,12 +484,12 @@ const SettingsPage = () => {
                     />
                     <FormField
                       control={emailForm.control}
-                      name="smtp_port"
+                      name='smtp_port'
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>SMTP Port</FormLabel>
                           <FormControl>
-                            <Input type="number" {...field} />
+                            <Input type='number' {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -439,7 +497,7 @@ const SettingsPage = () => {
                     />
                     <FormField
                       control={emailForm.control}
-                      name="smtp_user"
+                      name='smtp_user'
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>SMTP Username</FormLabel>
@@ -452,12 +510,12 @@ const SettingsPage = () => {
                     />
                     <FormField
                       control={emailForm.control}
-                      name="smtp_pass"
+                      name='smtp_pass'
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>SMTP Password</FormLabel>
                           <FormControl>
-                            <Input type="password" {...field} />
+                            <Input type='password' {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -465,20 +523,26 @@ const SettingsPage = () => {
                     />
                     <FormField
                       control={emailForm.control}
-                      name="smtp_secure"
+                      name='smtp_secure'
                       render={({ field }) => (
-                        <FormItem className="flex items-center justify-between">
+                        <FormItem className='flex items-center justify-between'>
                           <FormLabel>Use TLS</FormLabel>
                           <FormControl>
-                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
                           </FormControl>
                         </FormItem>
                       )}
                     />
-                    <div className="flex items-center space-x-2 pt-2">
-                      <Button type="submit" disabled={saveEmailSettings.isPending}>
+                    <div className='flex items-center space-x-2 pt-2'>
+                      <Button
+                        type='submit'
+                        disabled={saveEmailSettings.isPending}
+                      >
                         {saveEmailSettings.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <Loader2 className='h-4 w-4 animate-spin mr-2' />
                         ) : (
                           'Save'
                         )}
@@ -486,13 +550,13 @@ const SettingsPage = () => {
                       <Button
                         onClick={handleTestEmail}
                         disabled={testingEmail}
-                        type="button"
-                        variant="outline"
+                        type='button'
+                        variant='outline'
                       >
                         {testingEmail ? (
-                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                          <Loader2 className='h-4 w-4 animate-spin mr-2' />
                         ) : (
-                          <TestTube className="h-4 w-4 mr-2" />
+                          <TestTube className='h-4 w-4 mr-2' />
                         )}
                         Send Test Email
                       </Button>

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import AuthCard from '@/components/auth/AuthCard';
 
@@ -10,7 +9,7 @@ const SuperAdminLogin = () => {
     // No-op for super admin - login only
   };
 
-  return <AuthCard mode={mode} onToggleMode={toggleMode} role="super_admin" />;
+  return <AuthCard mode={mode} onToggleMode={toggleMode} role='super_admin' />;
 };
 
 export default SuperAdminLogin;

@@ -30,7 +30,7 @@ export const SecureForm: React.FC<SecureFormProps> = ({
   fields,
   onSubmit,
   submitText = 'Submit',
-  className = ''
+  className = '',
 }) => {
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -39,7 +39,7 @@ export const SecureForm: React.FC<SecureFormProps> = ({
 
   const clearError = (fieldName: string) => {
     if (errors[fieldName]) {
-      setErrors(prev => ({ ...prev, [fieldName]: '' }));
+      setErrors((prev) => ({ ...prev, [fieldName]: '' }));
     }
     if (generalError) {
       setGeneralError('');
@@ -47,14 +47,14 @@ export const SecureForm: React.FC<SecureFormProps> = ({
   };
 
   const handleInputChange = (fieldName: string, value: string) => {
-    setFormData(prev => ({ ...prev, [fieldName]: value }));
+    setFormData((prev) => ({ ...prev, [fieldName]: value }));
     clearError(fieldName);
   };
 
   const validateForm = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
-    fields.forEach(field => {
+    fields.forEach((field) => {
       const value = formData[field.name] || '';
 
       try {
@@ -70,7 +70,8 @@ export const SecureForm: React.FC<SecureFormProps> = ({
         }
 
         // Input validation and sanitization
-        const maxLength = field.maxLength || (field.type === 'textarea' ? 2000 : 255);
+        const maxLength =
+          field.maxLength || (field.type === 'textarea' ? 2000 : 255);
         const validatedValue = validateInput(value, maxLength);
 
         // Custom field validation
@@ -91,12 +92,11 @@ export const SecureForm: React.FC<SecureFormProps> = ({
 
         // Update form data with validated value
         if (field.sanitize && field.type === 'textarea') {
-          setFormData(prev => ({ 
-            ...prev, 
-            [field.name]: sanitizeHtml(validatedValue) 
+          setFormData((prev) => ({
+            ...prev,
+            [field.name]: sanitizeHtml(validatedValue),
           }));
         }
-
       } catch (error) {
         newErrors[field.name] = (error as Error).message;
       }
@@ -108,7 +108,7 @@ export const SecureForm: React.FC<SecureFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -119,10 +119,11 @@ export const SecureForm: React.FC<SecureFormProps> = ({
     try {
       // Prepare clean data
       const cleanData: Record<string, any> = {};
-      fields.forEach(field => {
+      fields.forEach((field) => {
         const value = formData[field.name];
         if (value !== undefined && value !== '') {
-          cleanData[field.name] = field.type === 'number' ? Number(value) : value;
+          cleanData[field.name] =
+            field.type === 'number' ? Number(value) : value;
         }
       });
 
@@ -132,11 +133,13 @@ export const SecureForm: React.FC<SecureFormProps> = ({
         new CustomError(
           'Form submission failed',
           ErrorCodes.VALIDATION_INVALID_FORMAT,
-          'medium'
+          'medium',
         ),
-        { formTitle: title, error }
+        { formTitle: title, error },
       );
-      setGeneralError('An error occurred while submitting the form. Please try again.');
+      setGeneralError(
+        'An error occurred while submitting the form. Please try again.',
+      );
     } finally {
       setLoading(false);
     }
@@ -152,11 +155,12 @@ export const SecureForm: React.FC<SecureFormProps> = ({
     const commonProps = {
       id: field.name,
       value,
-      onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => 
-        handleInputChange(field.name, e.target.value),
+      onChange: (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+      ) => handleInputChange(field.name, e.target.value),
       disabled: loading,
       className: baseClasses,
-      maxLength: field.maxLength || (field.type === 'textarea' ? 2000 : 255)
+      maxLength: field.maxLength || (field.type === 'textarea' ? 2000 : 255),
     };
 
     switch (field.type) {
@@ -172,7 +176,7 @@ export const SecureForm: React.FC<SecureFormProps> = ({
         return (
           <input
             {...commonProps}
-            type="number"
+            type='number'
             placeholder={`Enter ${field.label.toLowerCase()}`}
           />
         );
@@ -191,41 +195,42 @@ export const SecureForm: React.FC<SecureFormProps> = ({
     <Card className={className}>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        {description && <p className="text-sm text-gray-600">{description}</p>}
+        {description && <p className='text-sm text-gray-600'>{description}</p>}
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className='space-y-4'>
           {/* General Error Display */}
           {generalError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-start space-x-2">
-              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-red-700">{generalError}</span>
+            <div className='p-3 bg-red-50 border border-red-200 rounded-md flex items-start space-x-2'>
+              <AlertCircle className='h-5 w-5 text-red-500 mt-0.5 flex-shrink-0' />
+              <span className='text-sm text-red-700'>{generalError}</span>
             </div>
           )}
 
           {/* Form Fields */}
           {fields.map((field) => (
             <div key={field.name}>
-              <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor={field.name}
+                className='block text-sm font-medium text-gray-700'
+              >
                 {field.label}
-                {field.required && <span className="text-red-500 ml-1">*</span>}
+                {field.required && <span className='text-red-500 ml-1'>*</span>}
               </label>
               {renderField(field)}
               {errors[field.name] && (
-                <p className="mt-1 text-sm text-red-600">{errors[field.name]}</p>
+                <p className='mt-1 text-sm text-red-600'>
+                  {errors[field.name]}
+                </p>
               )}
             </div>
           ))}
 
           {/* Submit Button */}
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full"
-          >
+          <Button type='submit' disabled={loading} className='w-full'>
             {loading ? (
               <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <Loader2 className='h-4 w-4 mr-2 animate-spin' />
                 Processing...
               </>
             ) : (

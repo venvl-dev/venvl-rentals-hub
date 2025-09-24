@@ -1,5 +1,11 @@
-
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, parseISO } from 'date-fns';
+import {
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  parseISO,
+} from 'date-fns';
 import { CalendarBooking } from './types';
 import CalendarDay from './CalendarDay';
 
@@ -10,16 +16,23 @@ interface CalendarGridProps {
   userType: 'host' | 'guest';
 }
 
-const CalendarGrid = ({ currentDate, bookings, filterType, userType }: CalendarGridProps) => {
+const CalendarGrid = ({
+  currentDate,
+  bookings,
+  filterType,
+  userType,
+}: CalendarGridProps) => {
   const getBookingsForDate = (date: Date) => {
-    return bookings.filter(booking => {
-      const checkIn = parseISO(booking.check_in);
-      const checkOut = parseISO(booking.check_out);
-      return date >= checkIn && date <= checkOut;
-    }).filter(booking => {
-      if (filterType === 'all') return true;
-      return booking.booking_type === filterType;
-    });
+    return bookings
+      .filter((booking) => {
+        const checkIn = parseISO(booking.check_in);
+        const checkOut = parseISO(booking.check_out);
+        return date >= checkIn && date <= checkOut;
+      })
+      .filter((booking) => {
+        if (filterType === 'all') return true;
+        return booking.booking_type === filterType;
+      });
   };
 
   const monthStart = startOfMonth(currentDate);
@@ -41,16 +54,19 @@ const CalendarGrid = ({ currentDate, bookings, filterType, userType }: CalendarG
   }
 
   return (
-    <div className="grid grid-cols-7 gap-0 border border-gray-200 rounded-2xl overflow-hidden">
+    <div className='grid grid-cols-7 gap-0 border border-gray-200 rounded-2xl overflow-hidden'>
       {/* Header */}
-      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-        <div key={day} className="bg-gray-100 p-4 text-center font-semibold text-gray-700 border-b border-gray-200">
+      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+        <div
+          key={day}
+          className='bg-gray-100 p-4 text-center font-semibold text-gray-700 border-b border-gray-200'
+        >
           {day}
         </div>
       ))}
-      
+
       {/* Calendar Days */}
-      {weeks.map((week, weekIndex) => 
+      {weeks.map((week, weekIndex) =>
         week.map((date, dayIndex) => (
           <CalendarDay
             key={`${weekIndex}-${dayIndex}`}
@@ -59,7 +75,7 @@ const CalendarGrid = ({ currentDate, bookings, filterType, userType }: CalendarG
             bookings={getBookingsForDate(date)}
             userType={userType}
           />
-        ))
+        )),
       )}
     </div>
   );

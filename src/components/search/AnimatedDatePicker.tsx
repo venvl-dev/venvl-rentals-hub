@@ -1,4 +1,3 @@
-
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface AnimatedDatePickerProps {
@@ -10,25 +9,29 @@ interface AnimatedDatePickerProps {
   minDays?: number;
   minMonths?: number;
   isActive: boolean;
-  onDateChange: (dates: { checkIn?: Date; checkOut?: Date; duration?: number; flexibleOption?: string }) => void;
+  onDateChange: (dates: {
+    checkIn?: Date;
+    checkOut?: Date;
+    duration?: number;
+    flexibleOption?: string;
+  }) => void;
 }
 
-const AnimatedDatePicker = ({ 
-  bookingType, 
-  checkIn, 
-  checkOut, 
+const AnimatedDatePicker = ({
+  bookingType,
+  checkIn,
+  checkOut,
   duration,
   flexibleOption,
   minDays,
   minMonths,
-  isActive 
+  isActive,
 }: AnimatedDatePickerProps) => {
-  
   const getDateDisplayText = () => {
     if (bookingType === 'monthly' && duration) {
       return `${duration} month${duration > 1 ? 's' : ''}`;
     }
-    
+
     if (bookingType === 'flexible') {
       if (minDays && minMonths) {
         return `${minDays}+ days, ${minMonths}+ months`;
@@ -38,24 +41,30 @@ const AnimatedDatePicker = ({
       if (flexibleOption) {
         const options = {
           weekend: 'Weekend stay',
-          week: 'Week stay', 
+          week: 'Week stay',
           month: 'Month stay',
-          any: 'Flexible dates'
+          any: 'Flexible dates',
         };
         return options[flexibleOption as keyof typeof options] || 'Flexible';
       }
       return 'Flexible dates';
     }
-    
+
     if (checkIn) {
-      const checkInStr = checkIn.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const checkInStr = checkIn.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
       if (checkOut) {
-        const checkOutStr = checkOut.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const checkOutStr = checkOut.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        });
         return `${checkInStr} - ${checkOutStr}`;
       }
       return `${checkInStr} - Add dates`;
     }
-    
+
     return 'Add dates';
   };
 
@@ -67,8 +76,8 @@ const AnimatedDatePicker = ({
       exit={{ opacity: 0, x: 10 }}
       transition={{ duration: 0.3 }}
     >
-      <div className="text-xs font-bold uppercase tracking-wider mb-1 opacity-60">
-        <AnimatePresence mode="wait">
+      <div className='text-xs font-bold uppercase tracking-wider mb-1 opacity-60'>
+        <AnimatePresence mode='wait'>
           <motion.span
             key={bookingType}
             initial={{ opacity: 0, y: -10 }}
@@ -76,20 +85,23 @@ const AnimatedDatePicker = ({
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.2 }}
           >
-            {bookingType === 'daily' ? 'Check-in · Check-out' : 
-             bookingType === 'monthly' ? 'Duration' : 'When'}
+            {bookingType === 'daily'
+              ? 'Check-in · Check-out'
+              : bookingType === 'monthly'
+                ? 'Duration'
+                : 'When'}
           </motion.span>
         </AnimatePresence>
       </div>
-      
-      <motion.div 
+
+      <motion.div
         className={`text-sm font-medium truncate transition-colors duration-200 ${
           isActive ? 'text-white' : 'text-gray-900'
         }`}
         animate={{ scale: isActive ? 1.02 : 1 }}
         transition={{ duration: 0.2 }}
       >
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode='wait'>
           <motion.span
             key={`${bookingType}-${getDateDisplayText()}`}
             initial={{ opacity: 0, y: 5 }}

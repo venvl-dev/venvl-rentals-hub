@@ -1,4 +1,3 @@
-
 export interface CalendarBooking {
   id: string;
   property_id: string;

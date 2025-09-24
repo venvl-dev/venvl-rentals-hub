@@ -1,4 +1,3 @@
-
 import { useMemo } from 'react';
 import { differenceInDays } from 'date-fns';
 
@@ -34,7 +33,9 @@ export const useBookingValidation = ({
       } else {
         const nights = differenceInDays(checkOut, checkIn);
         if (minNights && nights < minNights) {
-          errors.push(`Minimum stay is ${minNights} night${minNights > 1 ? 's' : ''}`);
+          errors.push(
+            `Minimum stay is ${minNights} night${minNights > 1 ? 's' : ''}`,
+          );
           canProceed = false;
         }
       }
@@ -44,7 +45,9 @@ export const useBookingValidation = ({
         canProceed = false;
       }
       if (minMonths && monthlyDuration < minMonths) {
-        errors.push(`Minimum stay is ${minMonths} month${minMonths > 1 ? 's' : ''}`);
+        errors.push(
+          `Minimum stay is ${minMonths} month${minMonths > 1 ? 's' : ''}`,
+        );
         canProceed = false;
       }
     }
@@ -58,7 +61,16 @@ export const useBookingValidation = ({
       errors,
       canProceed,
     };
-  }, [bookingMode, checkIn, checkOut, monthlyStartDate, monthlyDuration, minNights, minMonths, totalPrice]);
+  }, [
+    bookingMode,
+    checkIn,
+    checkOut,
+    monthlyStartDate,
+    monthlyDuration,
+    minNights,
+    minMonths,
+    totalPrice,
+  ]);
 
   return validation;
 };
