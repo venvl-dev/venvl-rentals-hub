@@ -18,6 +18,7 @@ import {
 
 interface OptimizedImageProps {
   src: string;
+  preloadSources?: string[]; // URLs of images to preload
   alt: string;
   className?: string;
   fallbackSrc?: string;
@@ -34,6 +35,7 @@ interface OptimizedImageProps {
 
 const OptimizedImage: React.FC<OptimizedImageProps> = ({
   src,
+  preloadSources = [],
   alt,
   className = '',
   fallbackSrc = '/placeholder.svg',
@@ -78,6 +80,18 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
 
     return optimizeImageUrl(src, options);
   }, [src, quality, width, height]);
+
+  preloadSources.forEach((src) => {
+    const optimizedUrl = optimizeImageUrl(src, {
+      quality,
+      width,
+      height,
+      format: getOptimalImageFormat(),
+      fit: 'cover',
+    });
+
+    imageCache.loadImage(optimizedUrl);
+  });
 
   // Handle image load
   const handleLoad = useCallback(() => {

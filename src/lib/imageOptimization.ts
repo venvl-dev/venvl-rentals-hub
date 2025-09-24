@@ -78,6 +78,9 @@ class ImageCache {
     });
 
     this.loadingPromises.set(src, loadingPromise);
+    loadingPromise.then((img) => {
+      this.addToCache(src, img);
+    });
     return loadingPromise;
   }
 
@@ -130,7 +133,12 @@ export function optimizeImageUrl(
   url: string,
   options: ImageOptimizationOptions = {},
 ): string {
-  if (!url || url.startsWith('data:') || url.startsWith('/')) {
+  if (
+    !url ||
+    typeof url != 'string' ||
+    url.startsWith('data:') ||
+    url.startsWith('/')
+  ) {
     return url;
   }
 

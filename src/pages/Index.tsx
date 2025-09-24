@@ -406,7 +406,11 @@ const Index = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4, delay: index * 0.1 }}
                       >
-                        <PropertyCard property={property} />
+                        <PropertyCard
+                          property={property}
+                          properties={filteredProperties}
+                          index={index}
+                        />
                       </motion.div>
                     ))}
                   </motion.div>

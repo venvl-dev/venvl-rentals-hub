@@ -27,31 +27,34 @@ import {
 } from '@/lib/rentalTypeUtils';
 import { getTopAmenities, cleanAmenityIds } from '@/lib/amenitiesUtils';
 import OptimizedImage from '@/components/ui/OptimizedImage';
-
+import { Carousel } from './ui/carousel';
+interface property {
+  id: string;
+  title: string;
+  description: string;
+  price_per_night: number;
+  monthly_price?: number;
+  daily_price?: number;
+  images: string[];
+  city: string;
+  state: string;
+  property_type: string;
+  bedrooms: number;
+  bathrooms: number;
+  max_guests: number;
+  amenities: string[];
+  booking_types?: string[];
+  rental_type?: string;
+  min_nights?: number;
+  min_months?: number;
+}
 interface PropertyCardProps {
-  property: {
-    id: string;
-    title: string;
-    description: string;
-    price_per_night: number;
-    monthly_price?: number;
-    daily_price?: number;
-    images: string[];
-    city: string;
-    state: string;
-    property_type: string;
-    bedrooms: number;
-    bathrooms: number;
-    max_guests: number;
-    amenities: string[];
-    booking_types?: string[];
-    rental_type?: string;
-    min_nights?: number;
-    min_months?: number;
-  } & PropertyRentalData;
+  property: property & PropertyRentalData;
+  index: number;
+  properties: property[];
 }
 
-const PropertyCard = ({ property }: PropertyCardProps) => {
+const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -126,30 +129,6 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     },
     [touchStart, touchEnd, images.length, nextImage, prevImage],
   );
-
-  // Preload next and previous images for smoother transitions
-  useEffect(() => {
-    if (images.length > 1) {
-      const nextIndex = (currentImageIndex + 1) % images.length;
-      const prevIndex = (currentImageIndex - 1 + images.length) % images.length;
-
-      // Preload next image with error handling
-      try {
-        const nextImg = new Image();
-        nextImg.src = images[nextIndex];
-      } catch (error) {
-        console.warn('Failed to preload next image:', error);
-      }
-
-      // Preload previous image with error handling
-      try {
-        const prevImg = new Image();
-        prevImg.src = images[prevIndex];
-      } catch (error) {
-        console.warn('Failed to preload previous image:', error);
-      }
-    }
-  }, [currentImageIndex, images]);
 
   // ✅ SIMPLIFIED: Use new booking type utilities
   const bookingTypes = property.booking_types || ['daily'];
@@ -235,6 +214,24 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
     return Calendar; // Default for Daily
   };
 
+  const sourcesToPreload = [];
+  //  pre-loading images of previous and next images in the carousel
+  if (currentImageIndex == 0) sourcesToPreload.push(images[1]);
+  else if (currentImageIndex == images.length - 1)
+    sourcesToPreload.push(currentImageIndex - 1);
+  else {
+    sourcesToPreload.push(images[currentImageIndex - 1]);
+    sourcesToPreload.push(images[currentImageIndex + 1]);
+  }
+  //  pre loading images of next 6 properties in the list
+  if (properties.length > index + 6)
+    sourcesToPreload.push(properties[index + 6].images[0]);
+  if (index == 0) {
+    for (let i = 1; i < 7; i++) {
+      if (i >= properties.length - 1) break;
+      sourcesToPreload.push(properties[i].images[0]);
+    }
+  }
   return (
     <Card
       className='cursor-pointer overflow-hidden rounded-3xl border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white h-full flex flex-col'
@@ -257,6 +254,7 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
           quality={85}
           width={400}
           height={300}
+          preloadSources={sourcesToPreload}
           style={{
             transform:
               touchEnd && touchStart
@@ -264,24 +262,28 @@ const PropertyCard = ({ property }: PropertyCardProps) => {
                 : 'translateX(0)',
           }}
         />
-
         {/* Image Navigation */}
         {images.length > 1 && (
           <>
-            <button
-              onClick={prevImage}
-              className='absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
-              aria-label='Previous image'
-            >
-              <ChevronLeft className='h-4 w-4 text-gray-900' />
-            </button>
-            <button
-              onClick={nextImage}
-              className='absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
-              aria-label='Next image'
-            >
-              <ChevronRight className='h-4 w-4 text-gray-900' />
-            </button>
+            {currentImageIndex > 0 && (
+              <button
+                onClick={prevImage}
+                className='absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
+                aria-label='Previous image'
+              >
+                <ChevronLeft className='h-4 w-4 text-gray-900' />
+              </button>
+            )}
+
+            {currentImageIndex < images.length - 1 && (
+              <button
+                onClick={nextImage}
+                className='absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
+                aria-label='Next image'
+              >
+                <ChevronRight className='h-4 w-4 text-gray-900' />
+              </button>
+            )}
 
             {/* Image Indicators */}
             <div className='absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10'>
