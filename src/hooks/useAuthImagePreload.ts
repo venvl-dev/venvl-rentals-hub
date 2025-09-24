@@ -51,19 +51,20 @@ export const useAuthImagePreload = () => {
   }, []);
 
   // Preload images for properties
-  const preloadImages = useCallback(
-    async (properties: Property[]) => {
-      if (imagesPreloaded || properties.length === 0) return;
+  const preloadImages = useCallback(async (properties: Property[]) => {
+    setImagesPreloaded((prev) => {
+      if (prev || properties.length === 0) return true;
 
       try {
-        await preloadPropertyImages(properties, 12);
-        setImagesPreloaded(true);
+        preloadPropertyImages(properties, 12).then(() => {
+          return true;
+        });
       } catch (error) {
         console.warn('Failed to preload images:', error);
+        return prev;
       }
-    },
-    [imagesPreloaded],
-  );
+    });
+  }, []);
 
   // Force refresh images (useful after login)
   const refreshImages = useCallback(
