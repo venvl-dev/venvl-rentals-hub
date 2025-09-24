@@ -17,6 +17,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const userId = user?.id;
+
   useEffect(() => {
     const {
       data: { subscription },
@@ -36,9 +38,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             break;
 
           case 'SIGNED_OUT':
-            if (user) {
-              localStorage.removeItem(`user_role_${user.id}`);
-              console.log('User signed out:', user.id);
+            if (userId) {
+              localStorage.removeItem(`user_role_${userId}`);
+              console.log('User signed out:', userId);
             }
             setSession(null);
             setUser(null);
@@ -92,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       subscription.unsubscribe();
     };
-  }, [user]);
+  }, [userId]);
 
   return (
     <AuthContext.Provider value={{ user, session, loading }}>
