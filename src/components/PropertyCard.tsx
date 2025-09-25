@@ -18,7 +18,7 @@ import {
   Calendar,
   Clock,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   getBookingTypeLabel,
   getRentalTypeBadge,
@@ -27,7 +27,15 @@ import {
 } from '@/lib/rentalTypeUtils';
 import { getTopAmenities, cleanAmenityIds } from '@/lib/amenitiesUtils';
 import OptimizedImage from '@/components/ui/OptimizedImage';
-import { Carousel } from './ui/carousel';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from './ui/carousel';
+import { type CarouselApi } from '@/components/ui/carousel';
+
 interface property {
   id: string;
   title: string;
@@ -57,6 +65,21 @@ interface PropertyCardProps {
 const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
   const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [isGrabbing, setIsGrabbing] = useState(false);
+
+  useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    setCurrentImageIndex(api.selectedScrollSnap());
+
+    api.on('select', () => {
+      setCurrentImageIndex(api.selectedScrollSnap());
+    });
+  }, [api]);
+
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -84,19 +107,17 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
   const nextImage = useCallback(
     (e?: React.MouseEvent) => {
       if (e) e.stopPropagation();
-      setCurrentImageIndex((prev) => (prev + 1) % images.length);
+      api?.scrollNext();
     },
-    [images.length],
+    [api],
   );
 
   const prevImage = useCallback(
     (e?: React.MouseEvent) => {
       if (e) e.stopPropagation();
-      setCurrentImageIndex(
-        (prev) => (prev - 1 + images.length) % images.length,
-      );
+      api?.scrollPrev();
     },
-    [images.length],
+    [api],
   );
 
   // Touch handlers for swipe gestures
@@ -234,76 +255,104 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
   }
   return (
     <Card
-      className='cursor-pointer overflow-hidden rounded-3xl border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white h-full flex flex-col'
-      onClick={handleClick}
+      className='   overflow-hidden rounded-3xl border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white h-full flex flex-col '
+      // onClick={handleClick}
     >
       {/* Image Carousel Container */}
       <div
-        className='aspect-[4/3] relative overflow-hidden flex-shrink-0 group select-none'
+        className={`${isGrabbing ? 'cursor-grabbing' : 'cursor-grab'} aspect-[4/3] relative overflow-hidden flex-shrink-0 group select-none `}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
+        onMouseDown={() => setIsGrabbing(true)}
+        onMouseUp={() => setIsGrabbing(false)}
+        onMouseLeave={() => setIsGrabbing(false)}
       >
-        {/* Optimized Image with Lazy Loading */}
-        <OptimizedImage
-          src={images[currentImageIndex]}
-          alt={property.title}
-          className='w-full h-full object-cover'
-          fallbackSrc='https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
-          lazy={true}
-          quality={85}
-          width={400}
-          height={300}
-          preloadSources={sourcesToPreload}
-          style={{
-            transform:
-              touchEnd && touchStart
-                ? `translateX(${(touchEnd - touchStart) * 0.1}px)`
-                : 'translateX(0)',
-          }}
-        />
-        {/* Image Navigation */}
-        {images.length > 1 && (
-          <>
-            {currentImageIndex > 0 && (
-              <button
-                onClick={prevImage}
-                className='absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
-                aria-label='Previous image'
-              >
-                <ChevronLeft className='h-4 w-4 text-gray-900' />
-              </button>
-            )}
-
-            {currentImageIndex < images.length - 1 && (
-              <button
-                onClick={nextImage}
-                className='absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
-                aria-label='Next image'
-              >
-                <ChevronRight className='h-4 w-4 text-gray-900' />
-              </button>
-            )}
-
-            {/* Image Indicators */}
-            <div className='absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10'>
-              {images.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setCurrentImageIndex(index);
+        <Carousel className='h-full ' setApi={setApi}>
+          <CarouselContent className='h-full'>
+            {images.map((src, idx) => (
+              <CarouselItem key={src}>
+                <OptimizedImage
+                  src={src}
+                  alt={property.title}
+                  className='w-full h-full object-cover'
+                  fallbackSrc='https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+                  lazy={true}
+                  quality={85}
+                  width={400}
+                  height={300}
+                  // preloadSources={sourcesToPreload}
+                  style={{
+                    transform:
+                      touchEnd && touchStart
+                        ? `translateX(${(touchEnd - touchStart) * 0.1}px)`
+                        : 'translateX(0)',
                   }}
-                  className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                    index === currentImageIndex
-                      ? 'bg-white shadow-lg'
-                      : 'bg-white/50 hover:bg-white/75'
-                  }`}
                 />
-              ))}
-            </div>
-          </>
-        )}
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+          {/* Optimized Image with Lazy Loading */}
+          {/* <OptimizedImage
+            src={images[currentImageIndex]}
+            alt={property.title}
+            className='w-full h-full object-cover'
+            fallbackSrc='https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+            lazy={true}
+            quality={85}
+            width={400}
+            height={300}
+            preloadSources={sourcesToPreload}
+            style={{
+              transform:
+                touchEnd && touchStart
+                  ? `translateX(${(touchEnd - touchStart) * 0.1}px)`
+                  : 'translateX(0)',
+            }}
+          /> */}
+          {/* Image Navigation */}
+          {images.length > 1 && (
+            <>
+              {currentImageIndex > 0 && (
+                <button
+                  onClick={prevImage}
+                  className='absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
+                  aria-label='Previous image'
+                >
+                  <ChevronLeft className='h-4 w-4 text-gray-900' />
+                </button>
+              )}
+
+              {currentImageIndex < images.length - 1 && (
+                <button
+                  onClick={nextImage}
+                  className='absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
+                  aria-label='Next image'
+                >
+                  <ChevronRight className='h-4 w-4 text-gray-900' />
+                </button>
+              )}
+
+              {/* Image Indicators */}
+              <div className='absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10'>
+                {images.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCurrentImageIndex(index);
+                    }}
+                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                      index === currentImageIndex
+                        ? 'bg-white shadow-lg'
+                        : 'bg-white/50 hover:bg-white/75'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </Carousel>
 
         {/* Rental Type Badge */}
         <div className='absolute top-3 left-3 z-10'>
@@ -334,112 +383,114 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
       </div>
 
       {/* Content Area */}
-      <CardContent className='p-4 sm:p-4 lg:p-6 flex-1 flex flex-col'>
-        <div className='space-y-2 sm:space-y-3 flex-1'>
-          {/* Location */}
-          <div className='flex items-center text-gray-600'>
-            <MapPin className='h-4 w-4 mr-2 flex-shrink-0' />
-            <span className='text-sm font-medium truncate'>
-              {property.city}, {property.state}
-            </span>
-          </div>
+      <Link to={`/property/${property.id}`} className='h-full cursor-pointer'>
+        <CardContent className='p-4 sm:p-4 lg:p-6 flex-1 flex flex-col group hover:scale-[1.01] transition-transform duration-200'>
+          <div className='space-y-2 sm:space-y-3 flex-1'>
+            {/* Location */}
+            <div className='flex items-center text-gray-600'>
+              <MapPin className='h-4 w-4 mr-2 flex-shrink-0' />
+              <span className='text-sm font-medium truncate'>
+                {property.city}, {property.state}
+              </span>
+            </div>
 
-          {/* Title - Single line only */}
-          <h3
-            className='font-bold text-lg sm:text-lg lg:text-xl text-gray-900 truncate leading-tight'
-            title={property.title}
-          >
-            {property.title}
-          </h3>
-
-          {/* Property Details */}
-          <div className='flex items-center gap-3 text-sm text-gray-600 flex-wrap'>
-            <div className='flex items-center gap-1'>
-              <Bed className='h-4 w-4' />
-              <span>{property.bedrooms}</span>
-            </div>
-            <div className='flex items-center gap-1'>
-              <Bath className='h-4 w-4' />
-              <span>{property.bathrooms}</span>
-            </div>
-            <div className='flex items-center gap-1'>
-              <Users className='h-4 w-4' />
-              <span>{property.max_guests}</span>
-            </div>
-            <Badge
-              variant='outline'
-              className='text-xs rounded-full capitalize ml-auto'
+            {/* Title - Single line only */}
+            <h3
+              className=' font-bold text-lg sm:text-lg lg:text-xl text-gray-900 truncate leading-tight'
+              title={property.title}
             >
-              {property.property_type}
-            </Badge>
-          </div>
+              {property.title}
+            </h3>
 
-          {/* Top Amenities - Single line with horizontal scroll */}
-          {topAmenities.length > 0 ? (
-            <div className='w-full'>
-              <div className='flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 scroll-smooth-x touch-pan-x'>
-                <div className='flex items-center gap-2 flex-nowrap min-w-0'>
-                  {topAmenities.slice(0, 5).map((amenity, index) => {
-                    const IconComponent = amenity.icon;
+            {/* Property Details */}
+            <div className='flex items-center gap-3 text-sm text-gray-600 flex-wrap'>
+              <div className='flex items-center gap-1'>
+                <Bed className='h-4 w-4' />
+                <span>{property.bedrooms}</span>
+              </div>
+              <div className='flex items-center gap-1'>
+                <Bath className='h-4 w-4' />
+                <span>{property.bathrooms}</span>
+              </div>
+              <div className='flex items-center gap-1'>
+                <Users className='h-4 w-4' />
+                <span>{property.max_guests}</span>
+              </div>
+              <Badge
+                variant='outline'
+                className='text-xs rounded-full capitalize ml-auto'
+              >
+                {property.property_type}
+              </Badge>
+            </div>
 
-                    return (
-                      <div
-                        key={index}
-                        className='flex items-center gap-1 text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full px-2 py-1 flex-shrink-0 whitespace-nowrap transition-colors duration-200'
-                        title={amenity.name}
-                      >
-                        <div className='w-3 h-3 flex items-center justify-center flex-shrink-0'>
-                          {IconComponent ? (
-                            <IconComponent
-                              className='h-2.5 w-2.5 text-gray-700'
-                              strokeWidth={1.5}
-                            />
-                          ) : (
-                            <div className='w-2.5 h-2.5 rounded-full bg-gray-700'></div>
-                          )}
+            {/* Top Amenities - Single line with horizontal scroll */}
+            {topAmenities.length > 0 ? (
+              <div className='w-full'>
+                <div className='flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 scroll-smooth-x touch-pan-x'>
+                  <div className='flex items-center gap-2 flex-nowrap min-w-0'>
+                    {topAmenities.slice(0, 5).map((amenity, index) => {
+                      const IconComponent = amenity.icon;
+
+                      return (
+                        <div
+                          key={index}
+                          className='flex items-center gap-1 text-xs text-gray-600 bg-gray-50 hover:bg-gray-100 rounded-full px-2 py-1 flex-shrink-0 whitespace-nowrap transition-colors duration-200'
+                          title={amenity.name}
+                        >
+                          <div className='w-3 h-3 flex items-center justify-center flex-shrink-0'>
+                            {IconComponent ? (
+                              <IconComponent
+                                className='h-2.5 w-2.5 text-gray-700'
+                                strokeWidth={1.5}
+                              />
+                            ) : (
+                              <div className='w-2.5 h-2.5 rounded-full bg-gray-700'></div>
+                            )}
+                          </div>
+                          <span className='hidden sm:inline font-medium text-xs'>
+                            {amenity.name}
+                          </span>
                         </div>
-                        <span className='hidden sm:inline font-medium text-xs'>
-                          {amenity.name}
+                      );
+                    })}
+                    {cleanedAmenities.length > 5 && (
+                      <div className='flex items-center text-xs text-gray-500 rounded-full px-2 py-1 flex-shrink-0 bg-gray-100 hover:bg-gray-200 transition-colors duration-200'>
+                        <span className='font-medium whitespace-nowrap'>
+                          +{cleanedAmenities.length - 5}
                         </span>
                       </div>
-                    );
-                  })}
-                  {cleanedAmenities.length > 5 && (
-                    <div className='flex items-center text-xs text-gray-500 rounded-full px-2 py-1 flex-shrink-0 bg-gray-100 hover:bg-gray-200 transition-colors duration-200'>
-                      <span className='font-medium whitespace-nowrap'>
-                        +{cleanedAmenities.length - 5}
-                      </span>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className='text-xs text-gray-400 italic'>
-              No amenities listed
-            </div>
-          )}
+            ) : (
+              <div className='text-xs text-gray-400 italic'>
+                No amenities listed
+              </div>
+            )}
 
-          {/* Description */}
-          <p className='text-sm sm:text-sm lg:text-base text-gray-600 line-clamp-2 leading-relaxed flex-1'>
-            {property.description}
-          </p>
+            {/* Description */}
+            <p className='text-sm sm:text-sm lg:text-base text-gray-600 line-clamp-2 leading-relaxed flex-1'>
+              {property.description}
+            </p>
 
-          {/* Pricing Section */}
-          <div className='mt-auto'>{getPricingDisplay()}</div>
-        </div>
+            {/* Pricing Section */}
+            <div className='mt-auto'>{getPricingDisplay()}</div>
+          </div>
 
-        {/* Book Now Button */}
-        <button
-          className='w-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-2xl transition-all duration-200 shadow-lg mt-3 sm:mt-4 text-xs sm:text-sm lg:text-base hover:from-black hover:to-gray-900'
-          onClick={(e) => {
-            e.stopPropagation();
-            handleClick();
-          }}
-        >
-          Book Now
-        </button>
-      </CardContent>
+          {/* Book Now Button */}
+          <button
+            className='w-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-2xl transition-all duration-200 shadow-lg mt-3 sm:mt-4 text-xs sm:text-sm lg:text-base hover:from-black hover:to-gray-900'
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClick();
+            }}
+          >
+            Book Now
+          </button>
+        </CardContent>
+      </Link>
     </Card>
   );
 };

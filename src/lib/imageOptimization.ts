@@ -1,4 +1,5 @@
 // Image optimization and caching utilities
+
 class ImageCache {
   private cache: Map<string, HTMLImageElement> = new Map();
   private loadingPromises: Map<string, Promise<HTMLImageElement>> = new Map();
@@ -171,12 +172,13 @@ export function optimizeImageUrl(
   const separator = url.includes('?') ? '&' : '?';
   const params = new URLSearchParams();
 
-  if (quality < 100) params.set('q', quality.toString());
-  if (width) params.set('w', width.toString());
-  if (height) params.set('h', height.toString());
+  if (quality < 100) params.set('quality', quality.toString());
+  if (width) params.set('width', width.toString());
+  if (height) params.set('height', height.toString());
   if (format !== 'auto') params.set('f', format);
   if (fit !== 'cover') params.set('fit', fit);
 
+  url = url.replace('/object', '/render/image'); // supabase image transformation
   const paramString = params.toString();
   return paramString ? `${url}${separator}${paramString}` : url;
 }
@@ -188,7 +190,7 @@ export function generateLowQualityPlaceholder(
   height: number = 10,
 ): string {
   return optimizeImageUrl(originalUrl, {
-    quality: 10,
+    quality: 20,
     width,
     height,
     format: 'jpeg',

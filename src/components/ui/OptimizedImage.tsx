@@ -1,20 +1,21 @@
-import React, {
-  useState,
-  useRef,
-  useEffect,
-  useCallback,
-  useMemo,
-} from 'react';
-import { cn } from '@/lib/utils';
 import {
-  imageCache,
-  optimizeImageUrl,
+  createLazyLoadObserver,
   generateLowQualityPlaceholder,
   getOptimalImageFormat,
-  createLazyLoadObserver,
+  imageCache,
   isImageCached,
+  optimizeImageUrl,
   type ImageOptimizationOptions,
 } from '@/lib/imageOptimization';
+import { cn } from '@/lib/utils';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import Loader from './Loader';
 
 interface OptimizedImageProps {
   src: string;
@@ -93,12 +94,13 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     imageCache.loadImage(optimizedUrl);
   });
 
+  const isPlaceholder = optimizedSrc != currentSrc;
   // Handle image load
   const handleLoad = useCallback(() => {
-    setIsLoaded(true);
+    if (!isPlaceholder) setIsLoaded(true);
     setIsError(false);
     onLoad?.();
-  }, [onLoad]);
+  }, [onLoad, isPlaceholder]);
 
   // Handle image error with fallback
   const handleError = useCallback(async () => {
@@ -145,6 +147,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   useEffect(() => {
     if (!isInView || currentSrc === optimizedSrc) return;
 
+    setIsLoaded(false);
     // Check if image is already cached
     if (isImageCached(optimizedSrc)) {
       setCurrentSrc(optimizedSrc);
@@ -157,6 +160,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       .loadImage(optimizedSrc)
       .then(() => {
         setCurrentSrc(optimizedSrc);
+        handleLoad();
       })
       .catch(() => {
         handleError();
@@ -172,15 +176,22 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     }
   }, [isLoaded, src, optimizedSrc]);
 
+  const showLoadingOverlay = !isLoaded;
+
   return (
-    <div className={cn('relative overflow-hidden', className)}>
+    <div className={cn('relative overflow-hidden ', className)}>
+      {showLoadingOverlay && (
+        <span className=' flex items-center justify-center absolute w-full h-full bg-black/50 top-0 left-0 z-20 '>
+          <Loader />
+        </span>
+      )}
       <img
         ref={imgRef}
         src={currentSrc}
         alt={alt}
         className={cn(
           'transition-all duration-500 ease-out',
-          isLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105',
+          isLoaded ? 'opacity-100 scale-100' : 'opacity-70 scale-105',
           className,
         )}
         onLoad={handleLoad}
@@ -189,12 +200,10 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         loading={lazy ? 'lazy' : 'eager'}
         decoding='async'
       />
-
       {/* Progressive loading overlay */}
       {progressive && !isLoaded && currentSrc !== optimizedSrc && (
         <div className='absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse' />
       )}
-
       {/* Loading skeleton */}
       {!isLoaded &&
         !isError &&
@@ -204,7 +213,6 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
             <div className='w-8 h-8 border-2 border-gray-400 border-t-transparent rounded-full animate-spin'></div>
           </div>
         )}
-
       {/* Error state */}
       {isError && (
         <div className='absolute inset-0 bg-gray-100 flex items-center justify-center'>
