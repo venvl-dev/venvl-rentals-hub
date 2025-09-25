@@ -230,12 +230,12 @@ const BookingDateSelector = ({
           (checkIn && checkOut && date >= checkIn && date <= checkOut)
         : monthlyStartDate && dateTime === monthlyStartDate.getTime();
 
-    console.log('🔍 Date click analysis:', {
-      isSelectedDate,
-      lastClickedDate: lastClickedDate?.toDateString(),
-      timeDiff: now - lastClickTime,
-      bookingMode,
-    });
+    // console.log('🔍 Date click analysis:', {
+    //   isSelectedDate,
+    //   lastClickedDate: lastClickedDate?.toDateString(),
+    //   timeDiff: now - lastClickTime,
+    //   bookingMode,
+    // });
 
     // Check for double click (within 500ms on the same selected date)
     if (
@@ -262,6 +262,13 @@ const BookingDateSelector = ({
       return;
     }
 
+    if (
+      Math.abs(differenceInDays(date, checkIn)) <
+      Math.abs(differenceInDays(date, checkOut))
+    )
+      onDateChange({ checkIn: date, checkOut: checkOut });
+    else onDateChange({ checkIn: checkIn, checkOut: date });
+
     // Store click info for double-click detection
     setLastClickedDate(date);
     setLastClickTime(now);
@@ -273,7 +280,7 @@ const BookingDateSelector = ({
     <div className='space-y-4'>
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-3'>
-          <div className='w-8 h-8 bg-gradient-to-r from-gray-800 to-black rounded-lg flex items-center justify-center'>
+          <div className=' w-8 h-8 bg-gradient-to-r from-gray-800 to-black rounded-lg flex items-center justify-center'>
             <CalendarDays className='h-4 w-4 text-white' />
           </div>
           <div>
@@ -316,12 +323,14 @@ const BookingDateSelector = ({
                       console.log('🚫 Ignoring onSelect due to double-click');
                       return;
                     }
+                    console.log('select', range);
 
                     console.log('✅ onSelect triggered:', range);
-                    onDateChange({
-                      checkIn: range?.from,
-                      checkOut: range?.to,
-                    });
+                    if (!checkIn || !checkOut)
+                      onDateChange({
+                        checkIn: range?.from,
+                        checkOut: range?.to,
+                      });
                   }}
                   onDayClick={handleDateClick}
                   disabled={isDateDisabled}
@@ -353,8 +362,10 @@ const BookingDateSelector = ({
                     nav: 'space-x-1 flex items-center',
                     nav_button:
                       'h-8 w-8 bg-white hover:bg-black hover:text-white rounded-md border border-black shadow-sm transition-all duration-200 hover:shadow-md',
-                    nav_button_previous: 'absolute left-1',
-                    nav_button_next: 'absolute right-1',
+                    nav_button_previous:
+                      'absolute left-1 flex items-center justify-center',
+                    nav_button_next:
+                      'absolute right-1 flex items-center justify-center',
                     table: 'border-collapse space-y-2',
                     head_row: 'flex mb-2',
                     head_cell:
