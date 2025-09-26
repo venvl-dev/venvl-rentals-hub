@@ -27,7 +27,7 @@ export interface CombinedFilters extends SearchFilters {
 const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   location: '', // No location filter by default
   guests: 1,
-  bookingType: 'flexible', // Show all properties by default
+  bookingType: 'daily', // Show daily properties by default
 };
 
 const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
@@ -160,12 +160,9 @@ export const useFilterStore = () => {
         dbPriceRange: `${dbPriceRange.min} - ${dbPriceRange.max}`,
       });
 
-      setAdvancedFilters((prev) => ({
-        ...prev,
-        // Initialize to full range once. UI may read it, but hasActiveFilters logic
-        // ensures it is not considered an active filter unless user changes it.
-        priceRange: [dbPriceRange.min, dbPriceRange.max],
-      }));
+      // Don't automatically set priceRange in advancedFilters - keep it null
+      // This ensures price filtering only happens when user explicitly applies it
+      console.log('🔄 Initializing filters but NOT setting priceRange in advancedFilters');
       setIsInitialized(true);
     } else if (hasBookingTypeChanged) {
       // When booking type changes, update only the display range if no user override,
@@ -180,19 +177,12 @@ export const useFilterStore = () => {
         },
       );
 
-      // Only reset to full db range if user has not narrowed it previously.
-      const userHasCustomRange =
-        !!advancedFilters.priceRange &&
-        Array.isArray(advancedFilters.priceRange) &&
-        (advancedFilters.priceRange[0] > dbPriceRange.min ||
-          advancedFilters.priceRange[1] < dbPriceRange.max);
-
-      if (!userHasCustomRange) {
-        setAdvancedFilters((prev) => ({
-          ...prev,
-          priceRange: [dbPriceRange.min, dbPriceRange.max],
-        }));
-      }
+      // Don't automatically set priceRange when booking type changes
+      // This ensures price filtering only happens when user explicitly applies it via Apply button
+      console.log('🔄 Booking type changed but NOT auto-setting priceRange in advancedFilters');
+      console.log('🔄 Old price range:', advancedFilters.priceRange);
+      console.log('🔄 Available DB range for', currentBookingType + ':', [dbPriceRange.min, dbPriceRange.max]);
+      console.log('🔄 Price range will only be applied when user clicks Apply in advanced filters');
     }
 
     prevBookingTypeRef.current = currentBookingType;
@@ -217,15 +207,10 @@ export const useFilterStore = () => {
     setAdvancedFilters(DEFAULT_ADVANCED_FILTERS);
   }, []);
 
-  // Manual sync for external triggers (now deprecated but kept for compatibility)
+  // Manual sync for external triggers (deprecated - price range only set via Apply button)
   const syncPriceRange = useCallback(() => {
-    if (!priceLoading && dbPriceRange && dbPriceRange.min > 0) {
-      setAdvancedFilters((prev) => ({
-        ...prev,
-        priceRange: [dbPriceRange.min, dbPriceRange.max],
-      }));
-    }
-  }, [priceLoading, dbPriceRange]);
+    console.log('🔄 syncPriceRange called but doing nothing - price range only applied via Apply button');
+  }, []);
 
   // Get combined filters for property filtering - memoized for performance
   const getCombinedFilters = useCallback((): CombinedFilters => {

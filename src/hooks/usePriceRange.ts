@@ -13,14 +13,14 @@ export const usePriceRange = (
 ) => {
   const [priceRange, setPriceRange] = useState<PriceRange>({
     min: 0,
-    max: 10000,
+    max: bookingType === 'monthly' ? 700000 : 10000,
     distribution: [],
   });
 
   // More realistic fallback ranges based on typical Egyptian rental market
   const fallbackRange = {
-    min: bookingType === 'monthly' ? 3000 : 100, // Updated minimums
-    max: bookingType === 'monthly' ? 50000 : 3000, // Updated maximums
+    min: bookingType === 'monthly' ? 6000 : 100, // Updated minimums for monthly stays
+    max: bookingType === 'monthly' ? 700000 : 3000, // Updated maximums for monthly stays
     distribution: [],
   };
 
@@ -41,6 +41,7 @@ export const usePriceRange = (
         console.log('📊 Current priceRange state:', priceRange);
 
         // Use direct query to get ALL active, approved properties for accurate price range
+        // Always fetch fresh data from database to ensure monthly selector has latest ranges
         const { data, error } = await supabase
           .from('properties')
           .select(
@@ -79,14 +80,22 @@ export const usePriceRange = (
               price_per_night: property.price_per_night,
               daily_price: property.daily_price,
               monthly_price: property.monthly_price,
+              rental_type: property.rental_type,
+              booking_types: property.booking_types,
             });
 
             if (bookingType === 'daily') {
-              // For daily booking, use daily_price or fallback to price_per_night
+              // For daily booking, only include properties with rental_type 'daily'
+              const supportsDaily = property.rental_type === 'daily';
               const dailyPrice =
                 property.daily_price || property.price_per_night;
-              console.log(`💰 Daily price for ${property.title}:`, dailyPrice);
+              console.log(`💰 Daily check for ${property.title}:`, {
+                dailyPrice,
+                rental_type: property.rental_type,
+                supportsDaily,
+              });
               if (
+                supportsDaily &&
                 dailyPrice &&
                 typeof dailyPrice === 'number' &&
                 dailyPrice > 0
@@ -94,15 +103,14 @@ export const usePriceRange = (
                 prices.push(dailyPrice);
                 console.log(`✅ Added daily price: ${dailyPrice}`);
               } else {
-                console.log(`❌ Skipped daily price (invalid): ${dailyPrice}`);
+                console.log(`❌ Skipped daily price (unsupported or invalid):`, {
+                  dailyPrice,
+                  supportsDaily,
+                });
               }
             } else if (bookingType === 'monthly') {
-              // For monthly booking, use monthly_price only for properties that actually support monthly rental
-              const supportsMonthly =
-                (Array.isArray(property.booking_types) &&
-                  property.booking_types.includes('monthly')) ||
-                property.rental_type === 'monthly' ||
-                property.rental_type === 'both';
+              // For monthly booking, include properties with rental_type 'monthly' OR 'both'
+              const supportsMonthly = property.rental_type === 'monthly' || property.rental_type === 'both';
 
               console.log(`💰 Monthly check for ${property.title}:`, {
                 monthly_price: property.monthly_price,
@@ -111,6 +119,7 @@ export const usePriceRange = (
                 supportsMonthly,
               });
 
+              // Ensure we have a valid monthly price
               if (
                 supportsMonthly &&
                 property.monthly_price &&
@@ -121,14 +130,26 @@ export const usePriceRange = (
                 console.log(
                   `✅ Added monthly price: ${property.monthly_price}`,
                 );
-              } else {
-                console.log(
-                  `❌ Skipped monthly price (unsupported or invalid):`,
-                  {
-                    monthly_price: property.monthly_price,
-                    supportsMonthly,
-                  },
-                );
+              } else if (supportsMonthly) {
+                // If property supports monthly but doesn't have monthly_price, try to derive it
+                const dailyPrice = property.daily_price || property.price_per_night;
+                if (dailyPrice && typeof dailyPrice === 'number' && dailyPrice > 0) {
+                  const estimatedMonthlyPrice = Math.round(dailyPrice * 25); // 25 days per month estimate
+                  prices.push(estimatedMonthlyPrice);
+                  console.log(
+                    `✅ Added estimated monthly price: ${estimatedMonthlyPrice} (from daily: ${dailyPrice})`
+                  );
+                } else {
+                  console.log(
+                    `❌ Skipped monthly price (no valid price found):`,
+                    {
+                      monthly_price: property.monthly_price,
+                      daily_price: property.daily_price,
+                      price_per_night: property.price_per_night,
+                      supportsMonthly,
+                    },
+                  );
+                }
               }
             } else {
               // Default: include all available prices (convert monthly to daily for comparison)
@@ -163,16 +184,18 @@ export const usePriceRange = (
           }
         });
 
-        console.log('Extracted prices:', prices);
+        console.log('🔍 Extracted prices for', bookingType + ':', prices);
+        console.log('🔍 Total prices found:', prices.length);
+        console.log('🔍 Sample prices:', prices.slice(0, 5));
 
         if (prices.length === 0) {
           console.log('⚠️ No prices found for booking type:', bookingType);
           console.log('📊 Using fallback range due to no valid prices');
-
-          console.log('🔄 Fallback range set:', fallbackRange);
+          console.log('🔄 Expected fallback range:', fallbackRange);
 
           if (mounted) {
             setPriceRange(fallbackRange);
+            console.log('🔄 Fallback range actually set:', fallbackRange);
           }
           return;
         }
@@ -181,18 +204,29 @@ export const usePriceRange = (
         const actualMin = Math.min(...prices);
         const actualMax = Math.max(...prices);
 
-        console.log('Calculated price range:', {
+        console.log('🔍 Calculated price range for', bookingType + ':', {
           min: actualMin,
           max: actualMax,
           priceCount: prices.length,
+          bookingType: bookingType,
+          allPrices: prices,
         });
 
         if (mounted) {
-          setPriceRange({
+          const newRange = {
             min: actualMin,
             max: actualMax,
             distribution: [], // Could be enhanced later with histogram data
+          };
+          console.log('🔍 Setting new price range for', bookingType + ':', newRange);
+          console.log('🔍 Price range context:', {
+            bookingType,
+            propertiesProcessed: data.length,
+            pricesFound: prices.length,
+            samplePrices: prices.slice(0, 5),
+            finalRange: `${actualMin} - ${actualMax}`
           });
+          setPriceRange(newRange);
         }
       } catch (error) {
         console.error('Price range fetch error:', error);

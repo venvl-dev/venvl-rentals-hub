@@ -178,6 +178,16 @@ const Index = () => {
           ) {
             p.booking_types = ['daily']; // Default to daily bookings
           }
+
+          // Ensure rental_type has a default value if missing
+          if (!p.rental_type) {
+            // If property has monthly_price, assume it supports both, otherwise daily only
+            if (p.monthly_price && p.monthly_price > 0) {
+              p.rental_type = 'both';
+            } else {
+              p.rental_type = 'daily';
+            }
+          }
         });
 
         setProperties(data);

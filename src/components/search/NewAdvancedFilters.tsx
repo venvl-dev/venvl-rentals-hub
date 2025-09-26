@@ -63,7 +63,7 @@ const NewAdvancedFilters = ({
   // Initialize local state when modal opens
   useEffect(() => {
     if (isOpen) {
-      setBookingType(initialFilters.bookingType || 'daily');
+      setBookingType(initialFilters.bookingType || 'flexible');
       setSelectedPropertyTypes(initialFilters.propertyTypes || []);
       setSelectedAmenities(initialFilters.amenities || []);
       setBedrooms(initialFilters.bedrooms || null);
@@ -81,15 +81,29 @@ const NewAdvancedFilters = ({
 
   // Update price range when db data loads or booking type changes
   useEffect(() => {
+    console.log('🔍 AdvancedFilters price range effect:', {
+      priceLoading,
+      dbPriceRange,
+      bookingType,
+      isPriceRangeCustomized,
+      initialBookingType: initialFilters.bookingType
+    });
+
     if (!priceLoading && dbPriceRange && dbPriceRange.min > 0) {
-      // Only auto-update if not customized or if this is a fresh booking type change
-      if (
-        !isPriceRangeCustomized ||
-        initialFilters.bookingType !== bookingType
-      ) {
-        console.log('Auto-updating price range:', dbPriceRange);
+      // Always use database range when booking type changes, regardless of customization
+      const shouldUpdate = !isPriceRangeCustomized || initialFilters.bookingType !== bookingType;
+
+      console.log('🔍 Should update price range:', shouldUpdate);
+      console.log('🔍 New price range from DB:', dbPriceRange);
+      console.log('🔍 Booking type change detected:', initialFilters.bookingType, '→', bookingType);
+
+      if (shouldUpdate) {
+        console.log('✅ Auto-updating price range for booking type:', bookingType, dbPriceRange);
         setPriceRange([dbPriceRange.min, dbPriceRange.max]);
+
+        // Always reset customization flag when booking type changes to ensure we use DB range
         if (initialFilters.bookingType !== bookingType) {
+          console.log('🔄 Resetting price customization flag due to booking type change');
           setIsPriceRangeCustomized(false);
         }
       }
@@ -152,10 +166,20 @@ const NewAdvancedFilters = ({
   }, []);
 
   const handleBookingTypeChange = useCallback((newBookingType: string) => {
+    console.log('🎯 Booking type changing from', bookingType, 'to', newBookingType);
     setBookingType(newBookingType);
     // Reset price customization when booking type changes
     setIsPriceRangeCustomized(false);
-  }, []);
+
+    // Force immediate price range reset to trigger re-fetch
+    // The useEffect will handle setting the correct range once new data loads
+    if (newBookingType !== bookingType) {
+      console.log('🔄 Forcing price range reset for booking type change');
+      // Set appropriate temporary ranges based on booking type
+      const tempRange = newBookingType === 'monthly' ? [6000, 700000] : [100, 3000];
+      setPriceRange(tempRange); // Temporary values, will be updated by useEffect with actual DB data
+    }
+  }, [bookingType]);
 
   // Helper function to check if user has made selections beyond just booking type
   const hasOtherActiveFilters = useCallback(() => {

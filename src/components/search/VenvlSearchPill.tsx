@@ -26,7 +26,7 @@ const VenvlSearchPill = ({
     checkIn: initialFilters?.checkIn,
     checkOut: initialFilters?.checkOut,
     guests: initialFilters?.guests || 1,
-    bookingType: initialFilters?.bookingType || 'flexible',
+    bookingType: initialFilters?.bookingType || 'daily',
     flexibleOption: initialFilters?.flexibleOption,
     duration: initialFilters?.duration,
   });
@@ -146,10 +146,15 @@ const VenvlSearchPill = ({
     console.log('✅ Final updated filters:', updatedFilters);
 
     setFilters(updatedFilters);
-    console.log('🚀 Calling onSearch with updated filters...');
-    // Immediate search trigger for booking type changes
-    onSearch(updatedFilters);
-    console.log('✅ onSearch called successfully');
+
+    // Don't automatically trigger search for booking type changes - let user manually search
+    if (!newFilters.bookingType || newFilters.bookingType === filters.bookingType) {
+      console.log('🚀 Calling onSearch with updated filters...');
+      onSearch(updatedFilters);
+      console.log('✅ onSearch called successfully');
+    } else {
+      console.log('📌 Booking type changed - filters updated but search not triggered automatically');
+    }
   };
 
   const getDateDisplayText = () => {
@@ -376,12 +381,11 @@ const VenvlSearchPill = ({
           onTypeChange={(type) => {
             console.log('🖥️ Desktop booking type changed to:', type);
             console.log('🖥️ Current filters.bookingType:', filters.bookingType);
-            if (type !== filters.bookingType) {
-              console.log('🖥️ Type actually changed, calling updateFilters...');
-              updateFilters({ bookingType: type });
-            } else {
-              console.log('🖥️ Type is the same, no update needed');
-            }
+            console.log('🖥️ Type comparison:', { incoming: type, current: filters.bookingType, equal: type === filters.bookingType });
+            // Always call updateFilters to ensure proper refresh, even if the type seems the same
+            // This handles cases where the component state might be out of sync
+            console.log('🖥️ Calling updateFilters to ensure proper refresh...');
+            updateFilters({ bookingType: type });
           }}
         />
       </motion.div>

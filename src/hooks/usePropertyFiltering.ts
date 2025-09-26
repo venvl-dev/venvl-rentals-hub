@@ -6,6 +6,7 @@ import {
   type PropertyRentalData,
 } from '@/lib/rentalTypeUtils';
 import { CombinedFilters } from './useFilterStore';
+import { usePriceRange } from './usePriceRange';
 
 interface Property {
   id: string;
@@ -45,6 +46,10 @@ export const usePropertyFiltering = (
     hasFilters: !!filters,
   });
 
+  // Get price range for the current booking type (use main booking type selector)
+  const mainBookingType = filters.bookingType;
+  const { priceRange: dbPriceRange } = usePriceRange(mainBookingType as 'daily' | 'monthly');
+
   // Remove useMemo temporarily to force filtering to run every time
   console.log(
     '🔥 FILTERING RUNNING - usePropertyFiltering recalculating...',
@@ -55,6 +60,7 @@ export const usePropertyFiltering = (
     properties ? properties.length : 'null/undefined',
   );
   console.log('🔥 Filters received:', JSON.stringify(filters, null, 2));
+  console.log('🔥 Advanced filters priceRange specifically:', filters.advancedFilters.priceRange);
 
   const filteredProperties = (() => {
     if (!properties || properties.length === 0) {
@@ -170,51 +176,137 @@ export const usePropertyFiltering = (
       console.log('After guest filter:', filtered.length, 'properties');
     }
 
-    // ✅ SIMPLIFIED: Booking type filter - now just 8 lines instead of 63!
-    const activeBookingType =
-      advancedFilters.bookingType || filters.bookingType;
+    // ✅ BOOKING TYPE FILTER: Show properties based on selected booking type
+    const activeBookingType = filters.bookingType; // Use main booking type selector
 
-    if (activeBookingType) {
+    console.log('🔍 BEFORE BOOKING TYPE FILTER:', {
+      activeBookingType,
+      propertiesCount: filtered.length,
+      firstProperty: filtered[0] ? {
+        id: filtered[0].id,
+        title: filtered[0].title,
+        rental_type: filtered[0].rental_type,
+        monthly_price: filtered[0].monthly_price,
+        price_per_night: filtered[0].price_per_night
+      } : 'None'
+    });
+
+    // ALWAYS apply booking type filter based on main selector
+    if (activeBookingType && activeBookingType !== 'flexible') {
       console.log(
         `🔍 Filtering ${filtered.length} properties for booking type: ${activeBookingType}`,
       );
 
-      // Debug: Show booking types of first few properties
-      console.log('🏠 Sample property booking types:');
-      filtered.slice(0, 5).forEach((p) => {
-        console.log(
-          `   ${p.id.substring(0, 8)}: booking_types=${JSON.stringify(
-            p.rental_type,
-          )}`,
-        );
+      // Debug: Show booking types of ALL properties to understand the data
+      console.log('🏠 ALL property rental types:');
+      const rentalTypeCounts: Record<string, number> = {};
+      filtered.forEach((p) => {
+        const type = p.rental_type || 'null';
+        rentalTypeCounts[type] = (rentalTypeCounts[type] || 0) + 1;
+
+        // Show more details for monthly properties specifically
+        if (p.rental_type === 'monthly' || p.rental_type === 'both') {
+          console.log(
+            `   🔍 MONTHLY PROPERTY: ${p.id.substring(0, 8)}: rental_type="${p.rental_type}", monthly_price="${p.monthly_price}", title="${p.title.substring(0, 30)}..."`,
+          );
+        } else {
+          console.log(
+            `   ${p.id.substring(0, 8)}: rental_type="${p.rental_type}", title="${p.title.substring(0, 30)}..."`,
+          );
+        }
       });
 
-      filtered = filtered.filter(
-        (p) => p.rental_type == 'both' || p.rental_type == activeBookingType,
-      );
+      console.log('🏠 Rental type summary:', rentalTypeCounts);
+      console.log(`🏠 Looking for properties with rental_type === '${activeBookingType}' (strict filtering) when activeBookingType is '${activeBookingType}'`);
 
-      // filtered = filtered.filter(property => {
-      //   const supports = supportsBookingType(property as PropertyRentalData, activeBookingType as BookingType);
-      //   if (activeBookingType === 'monthly') {
-      //     console.log(`🔍 Monthly check for ${property.id.substring(0, 8)}: booking_types=${JSON.stringify(property.booking_types)}, supports=${supports}`);
-      //   }
-      //   return supports;
-      // });
+      filtered = filtered.filter((p) => {
+        // Check if property supports the requested booking type
+        let supports = false;
+
+        if (activeBookingType === 'monthly') {
+          // Monthly: Show ONLY properties with rental_type 'monthly' (strict filtering)
+          supports = p.rental_type === 'monthly';
+        } else if (activeBookingType === 'daily') {
+          // Daily: Show ONLY properties with rental_type 'daily' (strict)
+          supports = p.rental_type === 'daily';
+        } else {
+          // For flexible, show all properties (including 'both' type)
+          supports = true;
+        }
+
+        const debugInfo = {
+          id: p.id.substring(0, 8),
+          title: p.title.substring(0, 30),
+          rental_type: p.rental_type,
+          monthly_price: p.monthly_price,
+          daily_price: p.daily_price,
+          supports_monthly: activeBookingType === 'monthly' ? (p.rental_type === 'monthly') : 'N/A',
+          final_decision: supports
+        };
+
+        if (activeBookingType === 'monthly') {
+          console.log(`🔍 Monthly Property Check:`, debugInfo);
+        } else {
+          console.log(`🔍 Property ${p.id.substring(0, 8)} (${p.title}): rental_type="${p.rental_type}", supports ${activeBookingType}=${supports}`);
+        }
+
+        return supports;
+      });
 
       console.log(
         `🔍 After booking type filter: ${filtered.length} properties remaining`,
       );
+    } else {
+      console.log('🔍 SKIPPING booking type filter - showing all properties');
     }
 
-    // 🎯 ENHANCED PRICE RANGE FILTER with improved accuracy and debugging
-    // TEMPORARILY DISABLE price range filter for monthly bookings to test
+    if (activeBookingType === 'flexible') {
+      // TEMPORARY: For flexible booking type, show ALL properties to debug the issue
+      console.log(
+        `🔍 Flexible booking type - TEMPORARILY showing ALL properties from ${filtered.length} total`,
+      );
 
-    if (
+      // Debug: Show what rental_types we actually have
+      const rentalTypeCounts: Record<string, number> = {};
+      filtered.forEach((p) => {
+        const type = p.rental_type || 'null';
+        rentalTypeCounts[type] = (rentalTypeCounts[type] || 0) + 1;
+      });
+      console.log('🏠 FLEXIBLE MODE - Rental type summary:', rentalTypeCounts);
+
+      // For now, don't filter at all for flexible to see all properties
+      console.log(
+        `🔍 After flexible filter (no filtering): ${filtered.length} properties remaining`,
+      );
+    }
+
+    // 🎯 PRICE RANGE FILTER - Only apply when explicitly applied via Advanced Filters
+    // This ensures price filtering only happens when user clicks "Apply" in NewAdvancedFilters
+    const shouldApplyPriceFilter =
       advancedFilters.priceRange &&
       Array.isArray(advancedFilters.priceRange) &&
-      advancedFilters.priceRange.length === 2
-      //  && activeBookingType !== 'monthly'
-    ) {
+      advancedFilters.priceRange.length === 2 &&
+      dbPriceRange &&
+      dbPriceRange.min > 0 &&
+      // Only apply when user has explicitly applied a different range via Advanced Filters
+      // This means the price range was set through the Apply button, not just booking type change
+      (advancedFilters.priceRange[0] !== dbPriceRange.min ||
+        advancedFilters.priceRange[1] !== dbPriceRange.max);
+
+    console.log('🎯 Price filter check:', {
+      hasAdvancedPriceRange: !!advancedFilters.priceRange,
+      dbPriceRangeExists: !!dbPriceRange,
+      dbPriceRangeValid: dbPriceRange && dbPriceRange.min > 0,
+      userRange: advancedFilters.priceRange,
+      dbRange: dbPriceRange ? [dbPriceRange.min, dbPriceRange.max] : null,
+      isUserModified: advancedFilters.priceRange && dbPriceRange ?
+        (advancedFilters.priceRange[0] !== dbPriceRange.min || advancedFilters.priceRange[1] !== dbPriceRange.max) : false,
+      shouldApply: shouldApplyPriceFilter,
+      activeBookingType,
+      PROBLEM_DETECTED: shouldApplyPriceFilter && !advancedFilters.priceRange ? 'Price filter should not apply without explicit user range!' : 'OK'
+    });
+
+    if (shouldApplyPriceFilter) {
       const [minPrice, maxPrice] = advancedFilters.priceRange;
 
       console.log('🔍 Price range filter activated:', {
@@ -222,6 +314,9 @@ export const usePropertyFiltering = (
         maxPrice,
         activeBookingType,
         propertiesBeforeFilter: filtered.length,
+        dbPriceRange: dbPriceRange ? `${dbPriceRange.min}-${dbPriceRange.max}` : 'null',
+        userPriceRange: `${advancedFilters.priceRange[0]}-${advancedFilters.priceRange[1]}`,
+        isRangeModified: advancedFilters.priceRange[0] !== dbPriceRange?.min || advancedFilters.priceRange[1] !== dbPriceRange?.max
       });
 
       filtered = filtered.filter((property) => {
@@ -235,9 +330,24 @@ export const usePropertyFiltering = (
             ? 'daily_price'
             : 'price_per_night';
         } else if (activeBookingType === 'monthly') {
-          // For monthly filter, compare against actual monthly price, not daily equivalent
-          price = property.monthly_price || 0;
-          priceSource = 'monthly_price';
+          // For monthly filter, compare against actual monthly price, or estimate if not available
+          if (property.monthly_price && property.monthly_price > 0) {
+            price = property.monthly_price;
+            priceSource = 'monthly_price';
+          } else if (property.rental_type === 'monthly' || property.rental_type === 'both') {
+            // Estimate monthly price from daily rate if property supports monthly but lacks monthly_price
+            const dailyPrice = property.daily_price || property.price_per_night;
+            if (dailyPrice && dailyPrice > 0) {
+              price = Math.round(dailyPrice * 25); // 25 days per month estimate
+              priceSource = 'estimated_monthly_price';
+            } else {
+              price = 0;
+              priceSource = 'no_valid_price';
+            }
+          } else {
+            price = 0;
+            priceSource = 'monthly_price_unavailable';
+          }
         }
 
         console.log(`🏠 Property ${property.id} (${property.title}):`, {
@@ -275,6 +385,12 @@ export const usePropertyFiltering = (
         return inRange;
       });
       console.log('🎯 After price filter:', filtered.length, 'properties');
+    } else if (advancedFilters.priceRange && dbPriceRange) {
+      console.log('🔍 Price range filter SKIPPED - using default range:', {
+        userRange: advancedFilters.priceRange,
+        dbRange: [dbPriceRange.min, dbPriceRange.max],
+        reason: 'User has not modified the default price range'
+      });
     }
 
     // Property types filter with better null checking

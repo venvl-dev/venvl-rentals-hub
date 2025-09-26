@@ -333,37 +333,111 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
                 </button>
               )}
 
-              {/* Image Indicators */}
-              <div className='absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2 z-10'>
-                {images.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentImageIndex(index);
-                    }}
-                    className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      index === currentImageIndex
-                        ? 'bg-white shadow-lg'
-                        : 'bg-white/50 hover:bg-white/75'
-                    }`}
-                  />
-                ))}
+              {/* Enhanced Image Indicators */}
+              <div className='absolute bottom-3 left-1/2 transform -translate-x-1/2 flex items-center space-x-1 z-10'>
+                {images.map((_, index) => {
+                  const distanceFromActive = Math.abs(index - currentImageIndex);
+                  const isActive = index === currentImageIndex;
+
+                  // Progressive sizing based on distance from active dot
+                  let size = 'w-1.5 h-1.5'; // smallest (furthest)
+                  let opacity = 'opacity-20'; // most transparent
+
+                  if (isActive) {
+                    size = 'w-3 h-3'; // largest (active)
+                    opacity = 'opacity-100'; // fully opaque
+                  } else if (distanceFromActive === 1) {
+                    size = 'w-2.5 h-2.5'; // medium-large
+                    opacity = 'opacity-80';
+                  } else if (distanceFromActive === 2) {
+                    size = 'w-2 h-2'; // medium
+                    opacity = 'opacity-60';
+                  } else if (distanceFromActive === 3) {
+                    size = 'w-1.5 h-1.5'; // small
+                    opacity = 'opacity-40';
+                  } else {
+                    // Hide dots that are too far (distance > 3)
+                    size = 'w-0 h-0';
+                    opacity = 'opacity-0';
+                  }
+
+                  return (
+                    <button
+                      key={index}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        api?.scrollTo(index);
+                      }}
+                      className={`
+                        ${size} rounded-full transition-all duration-500 ease-out transform
+                        ${opacity}
+                        ${isActive
+                          ? 'bg-white shadow-lg scale-110 ring-2 ring-white/30'
+                          : 'bg-white/70 hover:bg-white/90 hover:scale-105'
+                        }
+                        ${distanceFromActive > 3 ? 'invisible' : 'visible'}
+                      `}
+                      style={{
+                        transitionProperty: 'all',
+                        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
+                      }}
+                    />
+                  );
+                })}
               </div>
             </>
           )}
         </Carousel>
 
-        {/* Rental Type Badge */}
-        <div className='absolute top-3 left-3 z-10'>
-          <Badge
-            className={`text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm ${badge.colorClass}`}
-          >
-            {getBadgeIcon() &&
-              React.createElement(getBadgeIcon(), { className: 'h-3 w-3' })}
-            <span className='hidden sm:inline'>{badge.label}</span>
-            <span className='sm:hidden'>{badge.label.split(' ')[0]}</span>
-          </Badge>
+        {/* Rental Type Badges */}
+        <div className='absolute top-3 left-3 z-10 flex flex-row gap-1'>
+          {(() => {
+            const hasDaily = bookingTypes.includes('daily');
+            const hasMonthly = bookingTypes.includes('monthly');
+            const badges = [];
+
+            if (hasDaily) {
+              badges.push(
+                <Badge
+                  key="daily"
+                  className="text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm bg-green-100 text-green-800"
+                >
+                  <Calendar className='h-3 w-3' />
+                  <span className='hidden sm:inline'>Daily</span>
+                  <span className='sm:hidden'>D</span>
+                </Badge>
+              );
+            }
+
+            if (hasMonthly) {
+              badges.push(
+                <Badge
+                  key="monthly"
+                  className="text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm bg-purple-100 text-purple-800"
+                >
+                  <Clock className='h-3 w-3' />
+                  <span className='hidden sm:inline'>Monthly</span>
+                  <span className='sm:hidden'>M</span>
+                </Badge>
+              );
+            }
+
+            // Fallback to daily if no booking types specified
+            if (badges.length === 0) {
+              badges.push(
+                <Badge
+                  key="daily-default"
+                  className="text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm bg-green-100 text-green-800"
+                >
+                  <Calendar className='h-3 w-3' />
+                  <span className='hidden sm:inline'>Daily</span>
+                  <span className='sm:hidden'>D</span>
+                </Badge>
+              );
+            }
+
+            return badges;
+          })()}
         </div>
 
         {/* Rating Badge */}
