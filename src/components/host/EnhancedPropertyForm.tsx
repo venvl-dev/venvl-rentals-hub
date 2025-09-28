@@ -47,6 +47,17 @@ import {
   cleanAmenityIds,
   getAmenitiesByCategory,
 } from '@/lib/amenitiesUtils';
+import {
+  Dropzone,
+  DropzoneEmptyState,
+} from '@/components/ui/shadcn-io/dropzone';
+import {
+  KanbanBoard,
+  KanbanCards,
+  KanbanHeader,
+  KanbanProvider,
+} from '../ui/shadcn-io/kanban';
+import { DragDropImageList } from './DragDropImageList';
 
 // Dynamic schema creator based on rental type
 const createPropertySchema = (rentalType: RentalType) => {
@@ -103,6 +114,9 @@ const createPropertySchema = (rentalType: RentalType) => {
   }
 };
 
+function handleImageUrlsChange(...x: any) {
+  console.log(x);
+}
 type PropertyFormData = z.infer<ReturnType<typeof createPropertySchema>>;
 
 interface EnhancedPropertyFormProps {
@@ -275,13 +289,14 @@ const EnhancedPropertyForm = ({
     form.setValue('amenities', updated);
   };
 
-  const handleFileUpload = async (files: FileList | null) => {
+  const handleFileUpload = async (files: File[] | FileList | null) => {
     if (!files || files.length === 0) return;
 
     setUploadingImages(true);
 
     try {
-      const uploadPromises = Array.from(files).map(async (file) => {
+      const fileArray = Array.isArray(files) ? files : Array.from(files);
+      const uploadPromises = fileArray.map(async (file) => {
         // Validate file type
         if (!file.type.startsWith('image/')) {
           throw new Error(`${file.name} is not a valid image file`);
@@ -1163,20 +1178,17 @@ const EnhancedPropertyForm = ({
                   </CardHeader>
                   <CardContent className='space-y-6'>
                     {/* File Upload Area */}
-                    <div className='border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-gray-400 transition-colors'>
-                      <input
-                        type='file'
-                        multiple
-                        accept='image/*'
-                        onChange={(e) => handleFileUpload(e.target.files)}
-                        className='hidden'
-                        id='image-upload'
-                        disabled={uploadingImages}
-                      />
-                      <label
-                        htmlFor='image-upload'
-                        className='cursor-pointer block'
-                      >
+                    <Dropzone
+                      onDrop={(acceptedFiles) =>
+                        handleFileUpload(acceptedFiles)
+                      }
+                      accept={{ 'image/*': ['.jpg', '.jpeg', '.png', '.gif'] }}
+                      maxSize={5 * 1024 * 1024}
+                      maxFiles={10}
+                      disabled={uploadingImages}
+                      className='border-2 border-dashed rounded-xl hover:border-gray-400 transition-colors'
+                    >
+                      <DropzoneEmptyState>
                         <div className='space-y-4'>
                           <div className='mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center'>
                             <Upload className='h-8 w-8 text-gray-600' />
@@ -1195,8 +1207,8 @@ const EnhancedPropertyForm = ({
                             </p>
                           </div>
                         </div>
-                      </label>
-                    </div>
+                      </DropzoneEmptyState>
+                    </Dropzone>
 
                     {/* Alternative Upload Button */}
                     <div className='flex justify-center'>
@@ -1216,12 +1228,17 @@ const EnhancedPropertyForm = ({
                     {/* Image Preview Grid */}
                     {imageUrls.length > 0 && (
                       <div className='space-y-4'>
-                        <div className='flex items-center justify-between'>
-                          <h4 className='font-medium text-gray-900'>
-                            Uploaded Images ({imageUrls.length})
-                          </h4>
-                        </div>
-                        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+                        <div className='flex items-center justify-between'></div>
+                        <h4 className='font-medium text-gray-900'>
+                          Uploaded Images ({imageUrls.length})
+                        </h4>
+                        <DragDropImageList
+                          imageUrls={imageUrls}
+                          onReorder={setImageUrls}
+                          onRemove={removeImage}
+                        />
+
+                        {/* <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
                           {imageUrls.map((url, index) => (
                             <motion.div
                               key={index}
@@ -1260,7 +1277,7 @@ const EnhancedPropertyForm = ({
                               )}
                             </motion.div>
                           ))}
-                        </div>
+                        </div> */}
                       </div>
                     )}
 
