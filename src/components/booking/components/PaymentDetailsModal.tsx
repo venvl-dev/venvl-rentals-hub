@@ -75,48 +75,48 @@ const PaymentDetailsModal = ({
         </Button>
       </DialogTrigger>
 
-      <DialogContent className='max-w-md'>
-        <DialogHeader className='pb-4'>
-          <DialogTitle className='flex items-center gap-2 text-lg'>
-            <CreditCard className='h-4 w-4' />
+      <DialogContent className='max-w-sm sm:max-w-md lg:max-w-lg max-h-[90vh] overflow-y-auto'>
+        <DialogHeader className='pb-3 sm:pb-4'>
+          <DialogTitle className='flex items-center gap-2 text-base sm:text-lg'>
+            <CreditCard className='h-4 w-4 sm:h-5 sm:w-5' />
             Payment Information
           </DialogTitle>
         </DialogHeader>
 
-        <div className='space-y-4'>
+        <div className='space-y-3 sm:space-y-4'>
           {/* Payment Status */}
-          <div className='bg-gray-50 rounded-lg p-3'>
-            <div className='flex items-center justify-between mb-2'>
-              <span className='text-sm font-medium'>Payment Status</span>
-              <Badge className={`${paymentStatus.color} border-0`}>
+          <div className='bg-gray-50 rounded-lg p-3 sm:p-4'>
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-2'>
+              <span className='text-sm sm:text-base font-medium'>Payment Status</span>
+              <Badge className={`${paymentStatus.color} border-0 self-start sm:self-auto`}>
                 {paymentStatus.label}
               </Badge>
             </div>
-            <div className='text-xs text-gray-600'>
+            <div className='text-xs sm:text-sm text-gray-600 break-all'>
               Reference: {booking.booking_reference}
             </div>
           </div>
 
           {/* Payment Summary */}
-          <div className='space-y-3'>
-            <h4 className='font-medium'>Amount Charged</h4>
+          <div className='space-y-2 sm:space-y-3'>
+            <h4 className='font-medium text-sm sm:text-base'>Amount Charged</h4>
 
             <div className='space-y-2'>
-              <div className='flex justify-between text-sm'>
+              <div className='flex justify-between text-xs sm:text-sm'>
                 <span>Base amount</span>
-                <span>
+                <span className='font-medium'>
                   {currency} {basePrice.toLocaleString()}
                 </span>
               </div>
 
-              <div className='flex justify-between text-sm text-gray-600'>
+              <div className='flex justify-between text-xs sm:text-sm text-gray-600'>
                 <span>Service fee</span>
                 <span>
                   {currency} {serviceFee.toLocaleString()}
                 </span>
               </div>
 
-              <div className='flex justify-between text-sm text-gray-600'>
+              <div className='flex justify-between text-xs sm:text-sm text-gray-600'>
                 <span>Taxes & fees</span>
                 <span>
                   {currency} {taxes.toLocaleString()}
@@ -125,9 +125,9 @@ const PaymentDetailsModal = ({
 
               <Separator />
 
-              <div className='flex justify-between font-bold'>
+              <div className='flex justify-between font-bold text-sm sm:text-base'>
                 <span>Total Charged</span>
-                <span className='text-lg'>
+                <span className='text-base sm:text-lg'>
                   {currency} {totalCharged.toLocaleString()}
                 </span>
               </div>
@@ -135,23 +135,23 @@ const PaymentDetailsModal = ({
           </div>
 
           {/* Payment Timeline */}
-          <div className='space-y-3'>
-            <h4 className='font-medium'>Payment Timeline</h4>
+          <div className='space-y-2 sm:space-y-3'>
+            <h4 className='font-medium text-sm sm:text-base'>Payment Timeline</h4>
 
-            <div className='space-y-2'>
-              <div className='flex items-center gap-3'>
-                <div className='w-2 h-2 bg-green-500 rounded-full'></div>
-                <div className='text-sm'>
+            <div className='space-y-2 sm:space-y-3'>
+              <div className='flex items-start gap-3'>
+                <div className='w-2 h-2 bg-green-500 rounded-full mt-1 flex-shrink-0'></div>
+                <div className='text-xs sm:text-sm min-w-0'>
                   <div className='font-medium'>Payment Processed</div>
-                  <div className='text-gray-600 text-xs'>
+                  <div className='text-gray-600 text-xs break-words'>
                     {format(createdDate, 'MMM dd, yyyy - h:mm a')}
                   </div>
                 </div>
               </div>
 
-              <div className='flex items-center gap-3'>
-                <div className='w-2 h-2 bg-blue-500 rounded-full'></div>
-                <div className='text-sm'>
+              <div className='flex items-start gap-3'>
+                <div className='w-2 h-2 bg-blue-500 rounded-full mt-1 flex-shrink-0'></div>
+                <div className='text-xs sm:text-sm min-w-0'>
                   <div className='font-medium'>
                     {booking.status === 'confirmed'
                       ? 'Due Date (Met)'
@@ -163,9 +163,9 @@ const PaymentDetailsModal = ({
                 </div>
               </div>
 
-              <div className='flex items-center gap-3'>
-                <div className='w-2 h-2 bg-gray-400 rounded-full'></div>
-                <div className='text-sm'>
+              <div className='flex items-start gap-3'>
+                <div className='w-2 h-2 bg-gray-400 rounded-full mt-1 flex-shrink-0'></div>
+                <div className='text-xs sm:text-sm min-w-0'>
                   <div className='font-medium'>Check-in Date</div>
                   <div className='text-gray-600 text-xs'>
                     {format(checkInDate, 'MMM dd, yyyy')}
@@ -176,10 +176,10 @@ const PaymentDetailsModal = ({
           </div>
 
           {/* Payment Method */}
-          <div className='bg-blue-50 rounded-lg p-3'>
-            <div className='flex gap-2'>
+          <div className='bg-blue-50 rounded-lg p-3 sm:p-4'>
+            <div className='flex gap-2 sm:gap-3'>
               <Info className='h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0' />
-              <div className='text-xs text-blue-700'>
+              <div className='text-xs sm:text-sm text-blue-700 min-w-0'>
                 <div className='font-medium mb-1'>Payment Method</div>
                 <div>
                   Card payment processed securely. Receipt sent to your email.
@@ -194,7 +194,7 @@ const PaymentDetailsModal = ({
               <Button
                 variant='outline'
                 size='sm'
-                className='w-full'
+                className='w-full text-xs sm:text-sm py-2 sm:py-3'
                 onClick={() => {
                   // Handle receipt download or email
                   console.log('Download receipt');

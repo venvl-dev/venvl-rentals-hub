@@ -27,7 +27,7 @@ export interface CombinedFilters extends SearchFilters {
 const DEFAULT_SEARCH_FILTERS: SearchFilters = {
   location: '', // No location filter by default
   guests: 1,
-  bookingType: 'daily', // Show daily properties by default
+  bookingType: 'flexible', // Show flexible properties by default
 };
 
 const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
@@ -247,7 +247,7 @@ export const useFilterStore = () => {
         typeof advancedFilters.bedrooms === 'number') ||
       (advancedFilters.bathrooms !== null &&
         typeof advancedFilters.bathrooms === 'number') ||
-      (advancedFilters.bookingType && advancedFilters.bookingType !== 'daily');
+      (advancedFilters.bookingType && advancedFilters.bookingType !== 'flexible');
 
     return hasSearchFilters || hasAdvancedFilters;
   }, [searchFilters, advancedFilters, priceLoading, dbPriceRange]);
@@ -298,7 +298,7 @@ export const useFilterStore = () => {
     const hasOtherFilters = count > 0;
     if (
       advancedFilters.bookingType &&
-      advancedFilters.bookingType !== 'daily' &&
+      advancedFilters.bookingType !== 'flexible' &&
       hasOtherFilters
     )
       count++;

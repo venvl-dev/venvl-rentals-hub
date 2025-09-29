@@ -390,7 +390,7 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
         </Carousel>
 
         {/* Rental Type Badges */}
-        <div className='absolute top-3 left-3 z-10 flex flex-row gap-1'>
+        <div className='absolute top-2 left-2 z-20 flex flex-row gap-1 max-w-[calc(100%-4rem)]'>
           {(() => {
             const hasDaily = bookingTypes.includes('daily');
             const hasMonthly = bookingTypes.includes('monthly');
@@ -400,11 +400,10 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
               badges.push(
                 <Badge
                   key="daily"
-                  className="text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm bg-green-100 text-green-800"
+                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 sm:gap-1 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm"
                 >
-                  <Calendar className='h-3 w-3' />
-                  <span className='hidden sm:inline'>Daily</span>
-                  <span className='sm:hidden'>D</span>
+                  <Calendar className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
+                  <span className='whitespace-nowrap'>Daily</span>
                 </Badge>
               );
             }
@@ -413,11 +412,10 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
               badges.push(
                 <Badge
                   key="monthly"
-                  className="text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm bg-purple-100 text-purple-800"
+                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 sm:gap-1 backdrop-blur-sm bg-purple-100 text-purple-800 min-w-fit flex-shrink-0 shadow-sm"
                 >
-                  <Clock className='h-3 w-3' />
-                  <span className='hidden sm:inline'>Monthly</span>
-                  <span className='sm:hidden'>M</span>
+                  <Clock className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
+                  <span className='whitespace-nowrap'>Monthly</span>
                 </Badge>
               );
             }
@@ -427,11 +425,10 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
               badges.push(
                 <Badge
                   key="daily-default"
-                  className="text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1 backdrop-blur-sm bg-green-100 text-green-800"
+                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 sm:gap-1 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm"
                 >
-                  <Calendar className='h-3 w-3' />
-                  <span className='hidden sm:inline'>Daily</span>
-                  <span className='sm:hidden'>D</span>
+                  <Calendar className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
+                  <span className='whitespace-nowrap'>Daily</span>
                 </Badge>
               );
             }
@@ -555,7 +552,7 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
 
           {/* Book Now Button */}
           <button
-            className='w-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-2xl transition-all duration-200 shadow-lg mt-3 sm:mt-4 text-xs sm:text-sm lg:text-base hover:from-black hover:to-gray-900'
+            className='w-full bg-gradient-to-r from-gray-900 to-black text-white font-semibold sm:font-extrabold lg:font-medium py-2 sm:py-4 lg:py-2 px-4 sm:px-8 lg:px-4 rounded-2xl lg:rounded-lg transition-all duration-200 shadow-lg sm:shadow-xl lg:shadow-sm mt-3 sm:mt-5 lg:mt-3 text-sm sm:text-base lg:text-sm tracking-normal sm:tracking-wide lg:tracking-normal uppercase sm:uppercase lg:normal-case hover:from-black hover:to-gray-900 hover:shadow-xl lg:hover:shadow-md transform hover:scale-[1.01] sm:hover:scale-[1.03] lg:hover:scale-[1.01] active:scale-[0.99]'
             onClick={(e) => {
               e.stopPropagation();
               handleClick();

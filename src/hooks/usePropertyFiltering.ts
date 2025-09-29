@@ -217,18 +217,18 @@ export const usePropertyFiltering = (
       });
 
       console.log('🏠 Rental type summary:', rentalTypeCounts);
-      console.log(`🏠 Looking for properties with rental_type === '${activeBookingType}' (strict filtering) when activeBookingType is '${activeBookingType}'`);
+      console.log(`🏠 Looking for properties with rental_type === '${activeBookingType}' OR 'both' when activeBookingType is '${activeBookingType}'`);
 
       filtered = filtered.filter((p) => {
         // Check if property supports the requested booking type
         let supports = false;
 
         if (activeBookingType === 'monthly') {
-          // Monthly: Show ONLY properties with rental_type 'monthly' (strict filtering)
-          supports = p.rental_type === 'monthly';
+          // Monthly: Show properties with rental_type 'monthly' OR 'both'
+          supports = p.rental_type === 'monthly' || p.rental_type === 'both';
         } else if (activeBookingType === 'daily') {
-          // Daily: Show ONLY properties with rental_type 'daily' (strict)
-          supports = p.rental_type === 'daily';
+          // Daily: Show properties with rental_type 'daily' OR 'both'
+          supports = p.rental_type === 'daily' || p.rental_type === 'both';
         } else {
           // For flexible, show all properties (including 'both' type)
           supports = true;
@@ -240,7 +240,7 @@ export const usePropertyFiltering = (
           rental_type: p.rental_type,
           monthly_price: p.monthly_price,
           daily_price: p.daily_price,
-          supports_monthly: activeBookingType === 'monthly' ? (p.rental_type === 'monthly') : 'N/A',
+          supports_monthly: activeBookingType === 'monthly' ? (p.rental_type === 'monthly' || p.rental_type === 'both') : 'N/A',
           final_decision: supports
         };
 

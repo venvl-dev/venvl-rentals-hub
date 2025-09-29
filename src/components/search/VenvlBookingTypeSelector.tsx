@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { useMemo, useCallback } from 'react';
 
 interface BookingTypeSelectorProps {
   selectedType: 'daily' | 'monthly' | 'flexible';
@@ -9,12 +10,8 @@ const VenvlBookingTypeSelector = ({
   selectedType,
   onTypeChange,
 }: BookingTypeSelectorProps) => {
-  console.log(
-    '🎛️ VenvlBookingTypeSelector rendered with selectedType:',
-    selectedType,
-  );
-
-  const bookingTypes = [
+  // Memoize booking types to prevent recreation on every render
+  const bookingTypes = useMemo(() => [
     {
       id: 'daily',
       label: 'Daily Stay',
@@ -30,15 +27,12 @@ const VenvlBookingTypeSelector = ({
       label: 'Flexible',
       description: 'Best available deals',
     },
-  ];
+  ], []);
 
-  const handleTypeClick = (type: 'daily' | 'monthly' | 'flexible') => {
-    console.log('🎛️ VenvlBookingTypeSelector - Button clicked:', type);
-    console.log('🎛️ Current selectedType:', selectedType);
-    console.log('🎛️ Calling onTypeChange...');
+  // Memoize the click handler to prevent function recreation
+  const handleTypeClick = useCallback((type: 'daily' | 'monthly' | 'flexible') => {
     onTypeChange(type);
-    console.log('🎛️ onTypeChange called successfully');
-  };
+  }, [onTypeChange]);
 
   return (
     <div className='w-full max-w-md mx-auto'>
@@ -53,7 +47,7 @@ const VenvlBookingTypeSelector = ({
                 handleTypeClick(type.id as 'daily' | 'monthly' | 'flexible')
               }
               className={`
-                flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-200
+                flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-150
                 ${
                   selectedType === type.id
                     ? 'bg-black text-white shadow-sm hover:bg-black hover:text-white'
@@ -78,7 +72,7 @@ const VenvlBookingTypeSelector = ({
                 handleTypeClick(type.id as 'daily' | 'monthly' | 'flexible')
               }
               className={`
-                flex-1 h-8 px-2 text-xs font-medium rounded-md transition-all duration-200
+                flex-1 h-8 px-2 text-xs font-medium rounded-md transition-all duration-150
                 ${
                   selectedType === type.id
                     ? 'bg-black text-white shadow-sm hover:bg-black hover:text-white'

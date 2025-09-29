@@ -38,7 +38,7 @@ const NewAdvancedFilters = ({
 }: NewAdvancedFiltersProps) => {
   // Local state for all filters
   const [bookingType, setBookingType] = useState<string>(
-    initialFilters.bookingType || 'daily',
+    initialFilters.bookingType || 'flexible',
   );
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState<string[]>(
     initialFilters.propertyTypes || [],
@@ -206,7 +206,7 @@ const NewAdvancedFilters = ({
     const filters: Partial<AdvancedFilters> = {
       // Only apply booking type if user has made explicit selections beyond just changing the type
       bookingType:
-        bookingType !== 'daily' && hasOtherActiveFilters() ? bookingType : null,
+        bookingType !== 'flexible' && hasOtherActiveFilters() ? bookingType : null,
       priceRange:
         dbPriceRange &&
         (priceRange[0] !== dbPriceRange.min ||
@@ -237,7 +237,7 @@ const NewAdvancedFilters = ({
   ]);
 
   const handleReset = useCallback(() => {
-    setBookingType('daily');
+    setBookingType('flexible');
     setSelectedPropertyTypes([]);
     setSelectedAmenities([]);
     setBedrooms(null);
@@ -261,7 +261,7 @@ const NewAdvancedFilters = ({
       priceRange[1] !== dbPriceRange.max;
 
     // Only consider booking type as active if there are other filters too
-    return hasOtherFilters || (bookingType !== 'daily' && hasOtherFilters);
+    return hasOtherFilters || (bookingType !== 'flexible' && hasOtherFilters);
   }, [
     bookingType,
     selectedPropertyTypes,
