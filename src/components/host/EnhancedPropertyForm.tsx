@@ -499,7 +499,7 @@ const EnhancedPropertyForm = ({
         booking_types:
           rentalType === 'both' ? ['daily', 'monthly'] : [rentalType],
         is_active: true,
-        approval_status: 'approved',
+        // approval_status: 'approved',
       };
 
       // Only include relevant price fields based on rental type
@@ -521,6 +521,8 @@ const EnhancedPropertyForm = ({
         propertyData.min_nights = data.min_nights;
         propertyData.min_months = data.min_months;
       }
+
+      console.log(propertyData);
 
       // Save property with synchronized amenities data
       if (
@@ -545,10 +547,13 @@ const EnhancedPropertyForm = ({
 
         toast.success('Property updated successfully!');
       } else {
+        console.log('inserting');
         const { data: result, error } = await supabase
           .from('properties')
           .insert(propertyData)
           .select();
+
+        console.log({ data, result, error });
 
         if (error) {
           throw new Error(`Insert failed: ${error.message}`);

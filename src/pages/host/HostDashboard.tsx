@@ -883,6 +883,10 @@ const HostDashboard = () => {
                           <Badge className='bg-gray-900 text-white text-xs px-3 py-1 rounded-full'>
                             Archived
                           </Badge>
+                        ) : property.approval_status == 'pending' ? (
+                          <Badge className='bg-white text-black text-xs px-3 py-1 rounded-full'>
+                            pending
+                          </Badge>
                         ) : (
                           <Badge className='bg-gray-900 text-white text-xs px-3 py-1 rounded-full'>
                             {property.is_active ? 'Active' : 'Inactive'}

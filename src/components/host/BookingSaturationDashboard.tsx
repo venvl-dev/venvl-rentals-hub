@@ -118,9 +118,9 @@ const BookingSaturationDashboard = () => {
         `,
         )
         .eq('properties.host_id', user.data.user.id)
-        .gte('check_in', format(startDate, 'yyyy-MM-dd'))
-        .lte('check_out', format(endDate, 'yyyy-MM-dd'));
-
+        .or(
+          `and(check_in.gte.${format(startDate, 'yyyy-MM-dd')},check_in.lte.${format(endDate, 'yyyy-MM-dd')}),and(check_out.gte.${format(startDate, 'yyyy-MM-dd')},check_out.lte.${format(endDate, 'yyyy-MM-dd')}),and(check_in.lte.${format(startDate, 'yyyy-MM-dd')},check_out.gte.${format(endDate, 'yyyy-MM-dd')})`,
+        );
       if (bookingsError) throw bookingsError;
 
       const totalDaysInRange = differenceInDays(endDate, startDate) + 1;
@@ -148,11 +148,13 @@ const BookingSaturationDashboard = () => {
             const overlapEnd = checkOut > endDate ? endDate : checkOut;
 
             if (overlapStart <= overlapEnd) {
+              const totalsBookedDays = differenceInDays(checkOut, checkIn) + 1;
               const daysBooked = differenceInDays(overlapEnd, overlapStart) + 1;
               bookedDays += daysBooked;
-            }
 
-            totalRevenue += booking.total_price || 0;
+              totalRevenue +=
+                booking.total_price * (daysBooked / totalsBookedDays);
+            }
           });
 
           const occupancyRate =
