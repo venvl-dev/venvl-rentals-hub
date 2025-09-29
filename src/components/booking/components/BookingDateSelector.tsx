@@ -323,9 +323,7 @@ const BookingDateSelector = ({
                       console.log('🚫 Ignoring onSelect due to double-click');
                       return;
                     }
-                    console.log('select', range);
 
-                    console.log('✅ onSelect triggered:', range);
                     if (!checkIn || !checkOut)
                       onDateChange({
                         checkIn: range?.from,

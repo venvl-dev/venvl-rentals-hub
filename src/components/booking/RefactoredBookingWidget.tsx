@@ -286,6 +286,13 @@ const RefactoredBookingWidget = ({
     monthlyPrice,
   ]);
 
+  useEffect(() => {
+    if (checkIn && checkOut && checkIn > checkOut) {
+      setCheckIn(checkOut);
+      setCheckOut(checkIn);
+    }
+  }, [checkIn, checkOut]);
+
   const handleDateChange = useCallback((data: DateChangeData) => {
     if (data.checkIn !== undefined) setCheckIn(data.checkIn);
     if (data.checkOut !== undefined) setCheckOut(data.checkOut);
