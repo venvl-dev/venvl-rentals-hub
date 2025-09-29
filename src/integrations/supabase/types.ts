@@ -7,7 +7,7 @@ export type Json =
   | Json[];
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: '12.2.3 (519615d)';
@@ -249,6 +249,13 @@ export type Database = {
             referencedRelation: 'bookings';
             referencedColumns: ['id'];
           },
+          {
+            foreignKeyName: 'booking_notifications_booking_id_fkey';
+            columns: ['booking_id'];
+            isOneToOne: false;
+            referencedRelation: 'host_bookings_with_details';
+            referencedColumns: ['id'];
+          },
         ];
       };
       bookings: {
@@ -267,6 +274,7 @@ export type Database = {
           flexible_option: string | null;
           guest_id: string;
           guests: number;
+          host_id: string;
           id: string;
           payment_amount: number | null;
           payment_status: string | null;
@@ -291,6 +299,7 @@ export type Database = {
           flexible_option?: string | null;
           guest_id: string;
           guests?: number;
+          host_id: string;
           id?: string;
           payment_amount?: number | null;
           payment_status?: string | null;
@@ -315,6 +324,7 @@ export type Database = {
           flexible_option?: string | null;
           guest_id?: string;
           guests?: number;
+          host_id?: string;
           id?: string;
           payment_amount?: number | null;
           payment_status?: string | null;
@@ -329,7 +339,28 @@ export type Database = {
             foreignKeyName: 'bookings_property_id_fkey';
             columns: ['property_id'];
             isOneToOne: false;
+            referencedRelation: 'active_properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bookings_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
             referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'fk_bookings_guest_id';
+            columns: ['guest_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'fk_bookings_host_id';
+            columns: ['host_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
             referencedColumns: ['id'];
           },
         ];
@@ -408,6 +439,52 @@ export type Database = {
           version?: number | null;
         };
         Relationships: [];
+      };
+      listing_visits: {
+        Row: {
+          created_at: string | null;
+          id: string;
+          property_id: string;
+          user_id: string;
+          visited_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          id?: string;
+          property_id: string;
+          user_id: string;
+          visited_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          id?: string;
+          property_id?: string;
+          user_id?: string;
+          visited_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'listing_visits_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'active_properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'listing_visits_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'listing_visits_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       managed_locations: {
         Row: {
@@ -525,6 +602,13 @@ export type Database = {
             foreignKeyName: 'moderation_reports_reported_property_id_fkey';
             columns: ['reported_property_id'];
             isOneToOne: false;
+            referencedRelation: 'active_properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'moderation_reports_reported_property_id_fkey';
+            columns: ['reported_property_id'];
+            isOneToOne: false;
             referencedRelation: 'properties';
             referencedColumns: ['id'];
           },
@@ -597,6 +681,7 @@ export type Database = {
           first_name: string | null;
           id: string;
           is_active: boolean | null;
+          is_pending: boolean | null;
           last_name: string | null;
           role: Database['public']['Enums']['user_role'];
           updated_at: string;
@@ -607,6 +692,7 @@ export type Database = {
           first_name?: string | null;
           id: string;
           is_active?: boolean | null;
+          is_pending?: boolean | null;
           last_name?: string | null;
           role?: Database['public']['Enums']['user_role'];
           updated_at?: string;
@@ -617,6 +703,7 @@ export type Database = {
           first_name?: string | null;
           id?: string;
           is_active?: boolean | null;
+          is_pending?: boolean | null;
           last_name?: string | null;
           role?: Database['public']['Enums']['user_role'];
           updated_at?: string;
@@ -696,11 +783,13 @@ export type Database = {
           country: string;
           created_at: string | null;
           daily_price: number | null;
+          deleted_at: string | null;
           description: string | null;
           host_id: string;
           id: string;
           images: string[] | null;
           is_active: boolean | null;
+          is_featured: boolean | null;
           latitude: number | null;
           longitude: number | null;
           max_guests: number;
@@ -728,11 +817,13 @@ export type Database = {
           country?: string;
           created_at?: string | null;
           daily_price?: number | null;
+          deleted_at?: string | null;
           description?: string | null;
           host_id: string;
           id?: string;
           images?: string[] | null;
           is_active?: boolean | null;
+          is_featured?: boolean | null;
           latitude?: number | null;
           longitude?: number | null;
           max_guests?: number;
@@ -760,11 +851,13 @@ export type Database = {
           country?: string;
           created_at?: string | null;
           daily_price?: number | null;
+          deleted_at?: string | null;
           description?: string | null;
           host_id?: string;
           id?: string;
           images?: string[] | null;
           is_active?: boolean | null;
+          is_featured?: boolean | null;
           latitude?: number | null;
           longitude?: number | null;
           max_guests?: number;
@@ -780,7 +873,15 @@ export type Database = {
           updated_at?: string | null;
           videos?: string[] | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'fk_properties_host_id';
+            columns: ['host_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       property_amenities: {
         Row: {
@@ -810,6 +911,13 @@ export type Database = {
             foreignKeyName: 'property_amenities_property_id_fkey';
             columns: ['property_id'];
             isOneToOne: false;
+            referencedRelation: 'active_properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'property_amenities_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
             referencedRelation: 'properties';
             referencedColumns: ['id'];
           },
@@ -819,6 +927,7 @@ export type Database = {
         Row: {
           blocked_date: string;
           created_at: string | null;
+          created_by: string | null;
           id: string;
           property_id: string | null;
           reason: string | null;
@@ -827,6 +936,7 @@ export type Database = {
         Insert: {
           blocked_date: string;
           created_at?: string | null;
+          created_by?: string | null;
           id?: string;
           property_id?: string | null;
           reason?: string | null;
@@ -835,12 +945,20 @@ export type Database = {
         Update: {
           blocked_date?: string;
           created_at?: string | null;
+          created_by?: string | null;
           id?: string;
           property_id?: string | null;
           reason?: string | null;
           updated_at?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'property_availability_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'active_properties';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'property_availability_property_id_fkey';
             columns: ['property_id'];
@@ -876,6 +994,13 @@ export type Database = {
           property_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'property_images_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'active_properties';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'property_images_property_id_fkey';
             columns: ['property_id'];
@@ -1075,6 +1200,20 @@ export type Database = {
             referencedColumns: ['id'];
           },
           {
+            foreignKeyName: 'reviews_booking_id_fkey';
+            columns: ['booking_id'];
+            isOneToOne: false;
+            referencedRelation: 'host_bookings_with_details';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'reviews_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'active_properties';
+            referencedColumns: ['id'];
+          },
+          {
             foreignKeyName: 'reviews_property_id_fkey';
             columns: ['property_id'];
             isOneToOne: false;
@@ -1205,7 +1344,170 @@ export type Database = {
       };
     };
     Views: {
-      [_ in never]: never;
+      active_properties: {
+        Row: {
+          address: string | null;
+          amenities: string[] | null;
+          approval_status: string | null;
+          bathrooms: number | null;
+          bedrooms: number | null;
+          blocked_dates: string[] | null;
+          booking_types: string[] | null;
+          city: string | null;
+          country: string | null;
+          created_at: string | null;
+          daily_price: number | null;
+          deleted_at: string | null;
+          description: string | null;
+          host_id: string | null;
+          id: string | null;
+          images: string[] | null;
+          is_active: boolean | null;
+          is_featured: boolean | null;
+          latitude: number | null;
+          longitude: number | null;
+          max_guests: number | null;
+          min_months: number | null;
+          min_nights: number | null;
+          monthly_price: number | null;
+          postal_code: string | null;
+          price_per_night: number | null;
+          property_type: Database['public']['Enums']['property_type'] | null;
+          rental_type: string | null;
+          state: string | null;
+          title: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          address?: string | null;
+          amenities?: string[] | null;
+          approval_status?: string | null;
+          bathrooms?: number | null;
+          bedrooms?: number | null;
+          blocked_dates?: string[] | null;
+          booking_types?: string[] | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string | null;
+          daily_price?: number | null;
+          deleted_at?: string | null;
+          description?: string | null;
+          host_id?: string | null;
+          id?: string | null;
+          images?: string[] | null;
+          is_active?: boolean | null;
+          is_featured?: boolean | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          max_guests?: number | null;
+          min_months?: number | null;
+          min_nights?: number | null;
+          monthly_price?: number | null;
+          postal_code?: string | null;
+          price_per_night?: number | null;
+          property_type?: Database['public']['Enums']['property_type'] | null;
+          rental_type?: string | null;
+          state?: string | null;
+          title?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          address?: string | null;
+          amenities?: string[] | null;
+          approval_status?: string | null;
+          bathrooms?: number | null;
+          bedrooms?: number | null;
+          blocked_dates?: string[] | null;
+          booking_types?: string[] | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string | null;
+          daily_price?: number | null;
+          deleted_at?: string | null;
+          description?: string | null;
+          host_id?: string | null;
+          id?: string | null;
+          images?: string[] | null;
+          is_active?: boolean | null;
+          is_featured?: boolean | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          max_guests?: number | null;
+          min_months?: number | null;
+          min_nights?: number | null;
+          monthly_price?: number | null;
+          postal_code?: string | null;
+          price_per_night?: number | null;
+          property_type?: Database['public']['Enums']['property_type'] | null;
+          rental_type?: string | null;
+          state?: string | null;
+          title?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'fk_properties_host_id';
+            columns: ['host_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      host_bookings_with_details: {
+        Row: {
+          booking_type: string | null;
+          check_in: string | null;
+          check_out: string | null;
+          created_at: string | null;
+          guest_email: string | null;
+          guest_first_name: string | null;
+          guest_full_name: string | null;
+          guest_id: string | null;
+          guest_last_name: string | null;
+          guests: number | null;
+          host_id: string | null;
+          id: string | null;
+          nights: number | null;
+          property_city: string | null;
+          property_id: string | null;
+          property_state: string | null;
+          property_title: string | null;
+          status: Database['public']['Enums']['booking_status'] | null;
+          total_price: number | null;
+          updated_at: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bookings_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'active_properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bookings_property_id_fkey';
+            columns: ['property_id'];
+            isOneToOne: false;
+            referencedRelation: 'properties';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'fk_bookings_guest_id';
+            columns: ['guest_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'fk_bookings_host_id';
+            columns: ['host_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Functions: {
       can_cancel_booking: {
@@ -1214,10 +1516,10 @@ export type Database = {
       };
       check_booking_conflicts: {
         Args: {
-          p_property_id: string;
           p_check_in: string;
           p_check_out: string;
           p_exclude_booking_id?: string;
+          p_property_id: string;
         };
         Returns: boolean;
       };
@@ -1244,8 +1546,31 @@ export type Database = {
       get_price_range: {
         Args: { booking_type_param?: string; price_column?: string };
         Returns: {
-          min_price: number;
           max_price: number;
+          min_price: number;
+        }[];
+      };
+      get_property_visit_stats: {
+        Args: { target_property_id: string };
+        Returns: {
+          total_visits: number;
+          unique_visitors: number;
+          visits_this_month: number;
+          visits_this_week: number;
+          visits_today: number;
+        }[];
+      };
+      get_user_visited_listings: {
+        Args: { limit_count?: number; offset_count?: number };
+        Returns: {
+          city: string;
+          images: string[];
+          last_visited_at: string;
+          price_per_night: number;
+          property_id: string;
+          property_type: Database['public']['Enums']['property_type'];
+          title: string;
+          visit_count: number;
         }[];
       };
       initialize_default_setup: {
@@ -1255,21 +1580,25 @@ export type Database = {
       log_admin_action: {
         Args: {
           p_action: string;
-          p_resource_type?: string;
-          p_resource_id?: string;
           p_metadata?: Json;
+          p_resource_id?: string;
+          p_resource_type?: string;
         };
         Returns: undefined;
       };
       log_security_event: {
         Args: {
           p_action: string;
-          p_resource_type?: string;
-          p_resource_id?: string;
-          p_success?: boolean;
           p_error_message?: string;
+          p_resource_id?: string;
+          p_resource_type?: string;
+          p_success?: boolean;
         };
         Returns: undefined;
+      };
+      restore_property: {
+        Args: { property_id: string };
+        Returns: boolean;
       };
       seed_sample_bookings_and_reviews: {
         Args: { guest_user_id: string };
@@ -1283,19 +1612,27 @@ export type Database = {
         Args: { host_user_id: string };
         Returns: undefined;
       };
-      toggle_user_status: {
-        Args: { target_user_id: string; disable_user: boolean };
+      soft_delete_property: {
+        Args: { property_id: string };
         Returns: boolean;
+      };
+      toggle_user_status: {
+        Args: { disable_user: boolean; target_user_id: string };
+        Returns: boolean;
+      };
+      track_listing_visit: {
+        Args: { target_property_id: string };
+        Returns: string;
       };
       update_user_role: {
         Args: {
-          target_user_id: string;
           new_role: Database['public']['Enums']['user_role'];
+          target_user_id: string;
         };
         Returns: boolean;
       };
       user_has_permission: {
-        Args: { user_id: string; permission: string };
+        Args: { permission: string; user_id: string };
         Returns: boolean;
       };
       validate_input: {
@@ -1311,17 +1648,22 @@ export type Database = {
       booking_status:
         | 'pending'
         | 'confirmed'
+        | 'checked_in'
         | 'cancelled'
-        | 'completed'
-        | 'checked_in';
+        | 'completed';
       property_type:
         | 'apartment'
         | 'house'
         | 'villa'
         | 'studio'
         | 'cabin'
-        | 'loft';
-      user_role: 'guest' | 'host' | 'admin' | 'super_admin';
+        | 'loft'
+        | 'Chalet'
+        | 'Duplex'
+        | 'Townhouse'
+        | 'Twinhouse'
+        | 'Penthouse';
+      user_role: 'guest' | 'host' | 'admin' | 'super_admin' | 'pending';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -1455,12 +1797,24 @@ export const Constants = {
       booking_status: [
         'pending',
         'confirmed',
+        'checked_in',
         'cancelled',
         'completed',
-        'checked_in',
       ],
-      property_type: ['apartment', 'house', 'villa', 'studio', 'cabin', 'loft'],
-      user_role: ['guest', 'host', 'admin', 'super_admin'],
+      property_type: [
+        'apartment',
+        'house',
+        'villa',
+        'studio',
+        'cabin',
+        'loft',
+        'Chalet',
+        'Duplex',
+        'Townhouse',
+        'Twinhouse',
+        'Penthouse',
+      ],
+      user_role: ['guest', 'host', 'admin', 'super_admin', 'pending'],
     },
   },
 } as const;

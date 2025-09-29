@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   Menu,
   X,
+  FileJson,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -58,6 +59,11 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
       label: 'Settings',
       href: '/admin/settings',
       icon: Settings,
+    },
+    {
+      label: 'meta',
+      href: '/admin/meta',
+      icon: FileJson,
     },
     {
       label: 'Audit Logs',

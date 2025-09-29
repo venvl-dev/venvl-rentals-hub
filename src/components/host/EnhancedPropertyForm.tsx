@@ -73,6 +73,11 @@ const createPropertySchema = (rentalType: RentalType) => {
       'studio',
       'cabin',
       'loft',
+      'Chalet',
+      'Duplex',
+      'Townhouse',
+      'Twinhouse',
+      'Penthouse',
     ]),
     address: z.string().min(1, 'Address is required'),
     city: z.string().min(1, 'City is required'),
@@ -181,7 +186,12 @@ const EnhancedPropertyForm = ({
           | 'villa'
           | 'studio'
           | 'cabin'
-          | 'loft') || 'apartment',
+          | 'loft'
+          | 'Chalet'
+          | 'Duplex'
+          | 'Townhouse'
+          | 'Twinhouse'
+          | 'Penthouse') || 'apartment',
       address: editingProperty?.address || '',
       city: editingProperty?.city || '',
       state: editingProperty?.state || '',
@@ -240,6 +250,19 @@ const EnhancedPropertyForm = ({
     }
   }, [watchedRentalType, currentRentalType, form]);
 
+  const propertyTypes = [
+    'apartment',
+    'house',
+    'villa',
+    'studio',
+    'cabin',
+    'loft',
+    'Chalet',
+    'Duplex',
+    'Townhouse',
+    'Twinhouse',
+    'Penthouse',
+  ];
   // Update form when property changes (important for editing mode)
   useEffect(() => {
     if (property) {
@@ -253,7 +276,12 @@ const EnhancedPropertyForm = ({
           | 'villa'
           | 'studio'
           | 'cabin'
-          | 'loft',
+          | 'loft'
+          | 'Chalet'
+          | 'Duplex'
+          | 'Townhouse'
+          | 'Twinhouse'
+          | 'Penthouse',
         address: property.address || '',
         city: property.city || '',
         state: property.state || '',
@@ -695,12 +723,15 @@ const EnhancedPropertyForm = ({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value='apartment'>Apartment</SelectItem>
-                            <SelectItem value='house'>House</SelectItem>
-                            <SelectItem value='villa'>Villa</SelectItem>
-                            <SelectItem value='studio'>Studio</SelectItem>
-                            <SelectItem value='cabin'>Cabin</SelectItem>
-                            <SelectItem value='loft'>Loft</SelectItem>
+                            {propertyTypes.map((type) => (
+                              <SelectItem
+                                className=' capitalize'
+                                key={type}
+                                value={type}
+                              >
+                                {type}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
