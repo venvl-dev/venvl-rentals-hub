@@ -100,7 +100,7 @@ const BookingSummary = ({
   //   }
   // };
   return (
-    <div className='max-w-7xl mx-auto p-3 sm:p-4 lg:p-6'>
+    <div className='max-w-4xl mx-auto p-3 sm:p-4 lg:p-6'>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -114,9 +114,9 @@ const BookingSummary = ({
           </p>
         </div>
 
-        <div className='grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6'>
+        <div className='grid grid-cols-1 gap-4 sm:gap-6 max-w-2xl mx-auto lg:max-w-4xl'>
           {/* Booking Details */}
-          <Card className='rounded-2xl sm:rounded-3xl shadow-lg order-1 lg:order-1'>
+          <Card className='rounded-2xl sm:rounded-3xl shadow-lg'>
             <CardHeader className='pb-3 sm:pb-4 px-4 sm:px-6'>
               <CardTitle className='flex items-center gap-2 sm:gap-3 text-base sm:text-lg lg:text-xl'>
                 <div className='w-8 h-8 sm:w-10 sm:h-10 bg-black rounded-lg sm:rounded-xl flex items-center justify-center'>
@@ -217,7 +217,7 @@ const BookingSummary = ({
           </Card>
 
           {/* Payment Details */}
-          <Card className='rounded-2xl sm:rounded-3xl shadow-lg order-2 lg:order-2'>
+          <Card className='rounded-2xl sm:rounded-3xl shadow-lg'>
             <CardHeader className='pb-3 sm:pb-4 px-4 sm:px-6'>
               <CardTitle className='flex items-center gap-2 sm:gap-3 text-base sm:text-lg lg:text-xl'>
                 <div className='w-8 h-8 sm:w-10 sm:h-10 bg-black rounded-lg sm:rounded-xl flex items-center justify-center'>
