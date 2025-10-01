@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,6 +50,8 @@ import {
   getMonthlyPrice,
   getRentalTypeBadge,
 } from '@/lib/rentalTypeUtils';
+import { calculatePropertyStats, PropertySaturation } from '@/lib/propertUtils';
+import { format, isBefore, subYears } from 'date-fns';
 
 // Enhanced PropertyImage component with error handling and validation
 const PropertyImage = ({
@@ -150,6 +152,59 @@ const HostDashboard = () => {
     isLoading: loading,
     refetch: refetchProperties,
   } = useHostProperties(user?.id, propertyFilter);
+  const [propertiesStatsMap, setPropertiesStatsMap] = useState(
+    new Map<string, PropertySaturation>(),
+  );
+  useEffect(() => {
+    (async () => {
+      // propertiesStatsMap.current = new Map(
+      //   properties.map((property) => [
+      //     property.id,
+      //     calculatePropertyStats(property),
+      //   ]),
+      // Get all bookings for the time range (including all statuses)
+      const endDate = new Date();
+      const startDate = subYears(endDate, 1);
+      const { data: bookingsData, error: bookingsError } = await supabase
+        .from('bookings')
+        .select(
+          `
+          id,
+          property_id,
+          check_in,
+          check_out,
+          total_price,
+          status,
+          properties!inner(host_id, title)
+        `,
+        )
+        .eq('properties.host_id', user.id)
+        .or(
+          `and(check_in.gte.${format(startDate, 'yyyy-MM-dd')},check_in.lte.${format(endDate, 'yyyy-MM-dd')}),and(check_out.gte.${format(startDate, 'yyyy-MM-dd')},check_out.lte.${format(endDate, 'yyyy-MM-dd')}),and(check_in.lte.${format(startDate, 'yyyy-MM-dd')},check_out.gte.${format(endDate, 'yyyy-MM-dd')})`,
+        );
+
+      if (bookingsError) throw bookingsError;
+      const map = new Map<string, PropertySaturation>();
+      for (const property of properties) {
+        const propertyBookings = bookingsData.filter(
+          (booking) => booking.property_id === property.id,
+        );
+        const propertyStats = calculatePropertyStats(
+          property,
+          propertyBookings,
+          {
+            startDate: isBefore(property.created_at, startDate)
+              ? startDate
+              : new Date(property.created_at),
+            endDate,
+          },
+        );
+        map.set(property.id, propertyStats);
+      }
+      setPropertiesStatsMap(map);
+    })();
+  }, [properties, user.id]);
+
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [isFixingAmenities, setIsFixingAmenities] = useState(false);
   const [loadingStates, setLoadingStates] = useState<{
@@ -913,6 +968,45 @@ const HostDashboard = () => {
                           <div>
                             <PropertyPriceDisplay property={property} />
                           </div>
+
+                          {/* Metrics Row */}
+                          <div className='flex items-center justify-between text-sm text-black opacity-70'>
+                            <div className='flex items-center gap-4'>
+                              <div
+                                className='flex items-center gap-1  group hover:opacity-100 transition-opacity'
+                                title='Occupancy Rate'
+                              >
+                                <BarChart3 className='h-4 w-4  ' />
+                                <span className=' font-medium'>
+                                  {
+                                    propertiesStatsMap.get(property.id)
+                                      ?.occupancyRate
+                                  }
+                                  %
+                                </span>
+                              </div>
+                              <div
+                                className='flex items-center gap-1  group hover:opacity-100 transition-opacity'
+                                title='Total Bookings'
+                              >
+                                <Calendar className='h-4 w-4 ' />
+                                <span className=' font-medium'>
+                                  {
+                                    propertiesStatsMap.get(property.id)
+                                      ?.bookedDays
+                                  }
+                                </span>
+                              </div>
+                              <div
+                                className='flex items-center gap-1  group hover:opacity-100 transition-opacity'
+                                title='Visitors'
+                              >
+                                <Users className='h-4 w-4 ' />
+                                <span className=' font-medium'>156</span>
+                              </div>
+                            </div>
+                          </div>
+
                           <div className='flex items-center justify-between text-sm text-gray-600'>
                             <span>
                               {property.bedrooms} bed • {property.bathrooms}{' '}

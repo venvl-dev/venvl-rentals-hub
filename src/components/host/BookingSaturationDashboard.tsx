@@ -1,8 +1,5 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
@@ -10,37 +7,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { calculatePropertyStats, PropertySaturation } from '@/lib/propertUtils';
+import { differenceInDays, format, subDays } from 'date-fns';
 import {
-  CalendarDays,
-  TrendingUp,
-  Home,
-  DollarSign,
-  Users,
-  BarChart3,
-  Clock,
-  CheckCircle,
-  UserCheck,
   Award,
+  BarChart3,
+  CalendarDays,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Home,
+  TrendingUp,
+  UserCheck,
+  Users,
 } from 'lucide-react';
-import {
-  format,
-  subDays,
-  startOfMonth,
-  endOfMonth,
-  differenceInDays,
-  isWithinInterval,
-} from 'date-fns';
-
-interface PropertySaturation {
-  id: string;
-  title: string;
-  totalDays: number;
-  bookedDays: number;
-  occupancyRate: number;
-  revenue: number;
-  bookingsCount: number;
-  avgBookingValue: number;
-}
+import { useEffect, useState } from 'react';
 
 interface SaturationMetrics {
   totalProperties: number;
@@ -123,8 +105,6 @@ const BookingSaturationDashboard = () => {
         );
       if (bookingsError) throw bookingsError;
 
-      const totalDaysInRange = differenceInDays(endDate, startDate) + 1;
-
       // Calculate saturation for each property
       const propertySaturation: PropertySaturation[] = propertiesData.map(
         (property) => {
@@ -132,48 +112,11 @@ const BookingSaturationDashboard = () => {
             bookingsData?.filter(
               (booking) => booking.property_id === property.id,
             ) || [];
-          const confirmedBookings = propertyBookings.filter((b) =>
-            ['confirmed', 'checked_in', 'completed'].includes(b.status),
-          );
 
-          let bookedDays = 0;
-          let totalRevenue = 0;
-
-          confirmedBookings.forEach((booking) => {
-            const checkIn = new Date(booking.check_in);
-            const checkOut = new Date(booking.check_out);
-
-            // Calculate overlapping days within our time range
-            const overlapStart = checkIn < startDate ? startDate : checkIn;
-            const overlapEnd = checkOut > endDate ? endDate : checkOut;
-
-            if (overlapStart <= overlapEnd) {
-              const totalsBookedDays = differenceInDays(checkOut, checkIn) + 1;
-              const daysBooked = differenceInDays(overlapEnd, overlapStart) + 1;
-              bookedDays += daysBooked;
-
-              totalRevenue +=
-                booking.total_price * (daysBooked / totalsBookedDays);
-            }
+          return calculatePropertyStats(property, propertyBookings, {
+            startDate,
+            endDate,
           });
-
-          const occupancyRate =
-            totalDaysInRange > 0 ? (bookedDays / totalDaysInRange) * 100 : 0;
-          const avgBookingValue =
-            confirmedBookings.length > 0
-              ? totalRevenue / confirmedBookings.length
-              : 0;
-
-          return {
-            id: property.id,
-            title: property.title,
-            totalDays: totalDaysInRange,
-            bookedDays,
-            occupancyRate,
-            revenue: totalRevenue,
-            bookingsCount: confirmedBookings.length,
-            avgBookingValue,
-          };
         },
       );
 
