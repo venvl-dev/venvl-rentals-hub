@@ -30,6 +30,7 @@ import React from 'react';
 import { ArrowLeft, ChevronDown, ChevronUp, Play } from 'lucide-react';
 import PropertyImageCarousel from '@/components/PropertyImageCarousel';
 import PropertyVideoPlayer from '@/components/PropertyVideoPlayer';
+import { saveVisit } from '@/lib/propertyVisitsUtils';
 
 interface Property {
   id: string;
@@ -76,6 +77,7 @@ const PropertyListing = () => {
   useEffect(() => {
     if (id) {
       fetchProperty();
+      saveVisit(id);
     }
   }, [id]);
 

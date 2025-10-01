@@ -7,7 +7,7 @@ export interface PropertySaturation {
   title: string;
   totalDays: number;
   bookedDays: number;
-  occupancyRate: number;
+  occupancyRate: number | string;
   revenue: number;
   bookingsCount: number;
   avgBookingValue: number;

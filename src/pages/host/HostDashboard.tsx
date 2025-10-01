@@ -1,128 +1,24 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Plus,
-  Calendar,
-  DollarSign,
-  Users,
-  Home,
-  TrendingUp,
-  Eye,
-  Star,
-  Edit,
-  Trash2,
-  BarChart3,
-  Settings,
-  Loader2,
-  AlertTriangle,
-  CheckCircle,
-  Archive,
-  RotateCcw,
-} from 'lucide-react';
-import { motion } from 'framer-motion';
-import { toast } from 'sonner';
-import BookingsList from '@/components/host/BookingsList';
-import EnhancedPropertyForm from '@/components/host/EnhancedPropertyForm';
 import Header from '@/components/Header';
-import HostStats from '@/components/host/HostStats';
-import HostCalendar from '@/components/calendar/HostCalendar';
-import SimplePropertyTest from '@/components/host/SimplePropertyTest';
-import { Property } from '@/types/property';
-import useHostProperties from '@/hooks/useHostProperties';
+import AnalyticsTab from '@/components/host/AnalyticsTab';
+import BookingsList from '@/components/host/BookingsList';
+import CalendarTab from '@/components/host/CalendarTab';
+import EnhancedPropertyForm from '@/components/host/EnhancedPropertyForm';
+import PropertiesTab from '@/components/host/PropertiesTab';
+import SettingsTab from '@/components/host/SettingsTab';
+import { Button } from '@/components/ui/button';
 import DeleteConfirmationModal from '@/components/ui/delete-confirmation-modal';
 import PauseConfirmationModal from '@/components/ui/pause-confirmation-modal';
-import {
-  getRentalType,
-  getDailyPrice,
-  getMonthlyPrice,
-  getRentalTypeBadge,
-} from '@/lib/rentalTypeUtils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useAuth } from '@/contexts/AuthContext';
+import useHostProperties from '@/hooks/useHostProperties';
+import { supabase } from '@/integrations/supabase/client';
 import { calculatePropertyStats, PropertySaturation } from '@/lib/propertUtils';
+import { Property } from '@/types/property';
 import { format, isBefore, subYears } from 'date-fns';
-
-// Enhanced PropertyImage component with error handling and validation
-const PropertyImage = ({
-  src,
-  alt,
-  className,
-}: {
-  src?: string;
-  alt: string;
-  className?: string;
-}) => {
-  const [imageSrc, setImageSrc] = useState(src);
-  const [imageError, setImageError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    setImageSrc(src);
-    setImageError(false);
-    setIsLoading(true);
-  }, [src]);
-
-  const isValidUrl = (url: string): boolean => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const handleImageLoad = () => {
-    setIsLoading(false);
-    setImageError(false);
-  };
-
-  const handleImageError = () => {
-    setIsLoading(false);
-    setImageError(true);
-    setImageSrc('/placeholder.svg');
-  };
-
-  // Use placeholder if no src or invalid URL
-  const finalSrc =
-    imageSrc && isValidUrl(imageSrc) ? imageSrc : '/placeholder.svg';
-
-  return (
-    <div className={`relative ${className}`}>
-      {isLoading && (
-        <div className='absolute inset-0 bg-gray-200 flex items-center justify-center'>
-          <Loader2 className='h-6 w-6 animate-spin text-gray-400' />
-        </div>
-      )}
-      <img
-        src={finalSrc}
-        alt={alt}
-        className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-300`}
-        onLoad={handleImageLoad}
-        onError={handleImageError}
-        loading='lazy'
-      />
-      {imageError && (
-        <div className='absolute inset-0 bg-gray-100 flex items-center justify-center'>
-          <div className='text-center text-gray-500'>
-            <Home className='h-8 w-8 mx-auto mb-2 opacity-40' />
-            <span className='text-sm'>No Image</span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
+import { BarChart3, Calendar, Home, Plus, Settings, Users } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const HostDashboard = () => {
   const navigate = useNavigate();
@@ -151,17 +47,12 @@ const HostDashboard = () => {
     data: properties = [],
     isLoading: loading,
     refetch: refetchProperties,
-  } = useHostProperties(user?.id, propertyFilter);
+  } = useHostProperties(user?.id);
   const [propertiesStatsMap, setPropertiesStatsMap] = useState(
     new Map<string, PropertySaturation>(),
   );
   useEffect(() => {
     (async () => {
-      // propertiesStatsMap.current = new Map(
-      //   properties.map((property) => [
-      //     property.id,
-      //     calculatePropertyStats(property),
-      //   ]),
       // Get all bookings for the time range (including all statuses)
       const endDate = new Date();
       const startDate = subYears(endDate, 1);
@@ -570,191 +461,14 @@ const HostDashboard = () => {
     [refetchProperties, setLoadingState],
   );
 
-  const fixAmenities = useCallback(async () => {
-    setIsFixingAmenities(true);
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('🔧 Starting amenities fix process...');
-    }
-
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
-
-      // Mapping of old amenity IDs to new ones
-      const amenityMapping: Record<string, string> = {
-        wifi: 'WiFi',
-        kitchen: 'Kitchen',
-        air_conditioning: 'Air Conditioning',
-        heating: 'Heating',
-        tv: 'TV',
-        netflix: 'Netflix',
-        sound_system: 'Sound System',
-        gaming_console: 'Gaming Console',
-        parking: 'Free Parking',
-        private_entrance: 'Private Entrance',
-        security: 'Security',
-        balcony: 'Balcony',
-        washing_machine: 'Washing Machine',
-        workspace: 'Workspace',
-        closet: 'Closet',
-      };
-
-      // Get all user's properties
-      const { data: userProperties, error: fetchError } = await supabase
-        .from('properties')
-        .select('id, amenities')
-        .eq('host_id', user.user.id);
-
-      if (fetchError) throw fetchError;
-
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('🔧 Found properties to fix:', userProperties);
-      }
-
-      // Update each property's amenities
-      for (const property of userProperties || []) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(
-            `🔧 Fixing amenities for property ${property.id}:`,
-            property.amenities,
-          );
-        }
-
-        const updatedAmenities =
-          property.amenities?.map((amenity: string) => {
-            const newAmenity = amenityMapping[amenity] || amenity;
-            if (newAmenity !== amenity) {
-              if (process.env.NODE_ENV !== 'production') {
-                console.log(`🔧 Mapping ${amenity} → ${newAmenity}`);
-              }
-            }
-            return newAmenity;
-          }) || [];
-
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(
-            `🔧 Updated amenities for ${property.id}:`,
-            updatedAmenities,
-          );
-        }
-
-        const { error: updateError } = await supabase
-          .from('properties')
-          .update({ amenities: updatedAmenities })
-          .eq('id', property.id);
-
-        if (updateError) throw updateError;
-      }
-
-      // Refresh properties list
-      await refetchProperties();
-
-      toast.success('Amenities fixed successfully! All properties updated.');
-      if (process.env.NODE_ENV !== 'production') {
-        console.log('✅ Amenities fix completed successfully');
-      }
-    } catch (error) {
-      console.error('❌ Error fixing amenities:', error);
-      toast.error('Failed to fix amenities');
-    } finally {
-      setIsFixingAmenities(false);
-    }
-  }, [refetchProperties]);
-
-  const getStatusColor = useMemo(
-    () => (status: string) => {
-      switch (status) {
-        case 'approved':
-          return 'bg-green-100 text-green-800';
-        case 'pending':
-          return 'bg-yellow-100 text-yellow-800';
-        case 'rejected':
-          return 'bg-red-100 text-red-800';
-        default:
-          return 'bg-gray-100 text-gray-800';
-      }
-    },
-    [],
-  );
-
-  // Enhanced price formatting utility with edge case handling
-  const formatPrice = useCallback(
-    (price: number | null | undefined): string => {
-      // Handle null, undefined, or zero
-      if (!price || price === 0) return 'EGP 0';
-
-      // Handle negative numbers
-      if (price < 0) return 'EGP 0';
-
-      // Handle extremely large numbers (over 1 billion)
-      if (price > 1000000000) return 'EGP 999,999,999+';
-
-      return new Intl.NumberFormat('en-EG', {
-        style: 'currency',
-        currency: 'EGP',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      })
-        .format(price)
-        .replace('EGP', 'EGP ');
-    },
-    [],
-  );
-
-  // Memoized PropertyPriceDisplay component to prevent unnecessary re-renders
-  const PropertyPriceDisplay = useCallback(
-    ({ property }: { property: Property }) => {
-      const rentalType = getRentalType(property);
-      const dailyPrice = getDailyPrice(property);
-      const monthlyPrice = getMonthlyPrice(property);
-
-      return (
-        <div className='space-y-1'>
-          {rentalType === 'daily' && (
-            <div className='font-semibold text-lg text-gray-900'>
-              {formatPrice(dailyPrice)}/night
-            </div>
-          )}
-          {rentalType === 'monthly' && (
-            <div className='font-semibold text-lg text-gray-900'>
-              {formatPrice(monthlyPrice)}/month
-            </div>
-          )}
-          {rentalType === 'both' && (
-            <div className='space-y-0.5'>
-              <div className='font-semibold text-lg text-gray-900'>
-                {formatPrice(dailyPrice)}/night
-              </div>
-              <div className='text-sm text-gray-500'>
-                {formatPrice(monthlyPrice)}/month
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    },
-    [formatPrice],
-  );
-
-  // Helper function to simplify button state management
-  const getButtonState = useCallback(
-    (property: Property) => {
-      const loading = loadingStates[property.id];
-      const isStatusLoading =
-        loading?.loading &&
-        (loading.action.includes('activating') ||
-          loading.action.includes('pausing'));
-
-      return {
-        isLoading: isStatusLoading,
-        loadingText:
-          loading?.action === 'activating' ? 'Activating...' : 'Pausing...',
-        buttonText: property.is_active ? 'Pause' : 'Activate',
-        icon: property.is_active ? AlertTriangle : CheckCircle,
-      };
-    },
-    [loadingStates],
-  );
+  const handleAddProperty = useCallback(() => {
+    console.log('🔍 Add New Property button clicked');
+    console.log('🔍 Current editingProperty before:', editingProperty);
+    // Use a special marker object to indicate "add new property" mode
+    const newPropertyMarker = { id: 'new-property' } as Property;
+    console.log('🔍 Setting editingProperty to:', newPropertyMarker);
+    setEditingProperty(newPropertyMarker);
+  }, [editingProperty]);
 
   if (loading || authLoading) {
     return (
@@ -802,17 +516,7 @@ const HostDashboard = () => {
             </p>
           </div>
           <Button
-            onClick={() => {
-              console.log('🔍 Add New Property button clicked');
-              console.log(
-                '🔍 Current editingProperty before:',
-                editingProperty,
-              );
-              // Use a special marker object to indicate "add new property" mode
-              const newPropertyMarker = { id: 'new-property' } as Property;
-              console.log('🔍 Setting editingProperty to:', newPropertyMarker);
-              setEditingProperty(newPropertyMarker);
-            }}
+            onClick={handleAddProperty}
             className='flex items-center gap-2 bg-black text-white hover:bg-gray-800 rounded-2xl px-6 py-3'
           >
             <Plus className='h-4 w-4' />
@@ -864,279 +568,19 @@ const HostDashboard = () => {
           </TabsList>
 
           <TabsContent value='properties'>
-            <div className='flex items-center justify-between mb-6'>
-              <div>
-                <h2 className='text-2xl font-bold'>Your Properties</h2>
-                <p className='text-gray-600'>
-                  Manage and monitor your property listings
-                </p>
-              </div>
-              <div className='flex items-center gap-4'>
-                <div className='flex items-center gap-2'>
-                  <span className='text-sm text-gray-600'>Filter:</span>
-                  <Select
-                    value={propertyFilter}
-                    onValueChange={(value: 'active' | 'archived' | 'all') =>
-                      setPropertyFilter(value)
-                    }
-                  >
-                    <SelectTrigger className='w-48 rounded-xl'>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='active'>Active Properties</SelectItem>
-                      <SelectItem value='archived'>
-                        Archived Properties
-                      </SelectItem>
-                      <SelectItem value='all'>All Properties</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {properties.length === 0 ? (
-              <Card className='rounded-3xl shadow-lg'>
-                <CardContent className='flex flex-col items-center justify-center py-12'>
-                  <Home className='h-16 w-16 text-gray-400 mb-4' />
-                  <h3 className='text-xl font-semibold mb-2'>
-                    No properties yet
-                  </h3>
-                  <p className='text-gray-600 mb-4'>
-                    Start by adding your first property to begin hosting
-                  </p>
-                  <Button
-                    onClick={() => {
-                      console.log('🔍 Add Your First Property button clicked');
-                      const newPropertyMarker = {
-                        id: 'new-property',
-                      } as Property;
-                      setEditingProperty(newPropertyMarker);
-                    }}
-                    className='bg-black text-white hover:bg-gray-800 rounded-2xl'
-                  >
-                    <Plus className='h-4 w-4 mr-2' />
-                    Add Your First Property
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch'>
-                {properties.map((property) => (
-                  <Card
-                    key={property.id}
-                    className='overflow-hidden rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col bg-white h-full'
-                  >
-                    <div className='h-48 relative flex-shrink-0'>
-                      <PropertyImage
-                        src={property.images?.[0]}
-                        alt={property.title}
-                        className='w-full h-full object-cover'
-                      />
-                      <div className='absolute top-3 right-3'>
-                        {property.deleted_at ? (
-                          <Badge className='bg-gray-900 text-white text-xs px-3 py-1 rounded-full'>
-                            Archived
-                          </Badge>
-                        ) : property.approval_status == 'pending' ? (
-                          <Badge className='bg-white text-black text-xs px-3 py-1 rounded-full'>
-                            pending
-                          </Badge>
-                        ) : (
-                          <Badge className='bg-gray-900 text-white text-xs px-3 py-1 rounded-full'>
-                            {property.is_active ? 'Active' : 'Inactive'}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-
-                    <CardContent className='p-0 flex flex-col flex-1'>
-                      <div className='p-6 pb-4 flex-1 flex flex-col'>
-                        <div className='h-16 flex flex-col justify-start'>
-                          <h3 className='font-semibold text-xl mb-1 line-clamp-2 text-gray-900'>
-                            {property.title}
-                          </h3>
-                        </div>
-                        <p className='text-sm text-gray-500 mb-3'>
-                          {property.city}, {property.state}
-                        </p>
-                        <p className='text-sm text-gray-600 line-clamp-2 leading-relaxed mb-4 flex-1'>
-                          {property.description}
-                        </p>
-
-                        <div className='space-y-3 mt-auto'>
-                          <div>
-                            <PropertyPriceDisplay property={property} />
-                          </div>
-
-                          {/* Metrics Row */}
-                          <div className='flex items-center justify-between text-sm text-black opacity-70'>
-                            <div className='flex items-center gap-4'>
-                              <div
-                                className='flex items-center gap-1  group hover:opacity-100 transition-opacity'
-                                title='Occupancy Rate'
-                              >
-                                <BarChart3 className='h-4 w-4  ' />
-                                <span className=' font-medium'>
-                                  {
-                                    propertiesStatsMap.get(property.id)
-                                      ?.occupancyRate
-                                  }
-                                  %
-                                </span>
-                              </div>
-                              <div
-                                className='flex items-center gap-1  group hover:opacity-100 transition-opacity'
-                                title='Total Bookings'
-                              >
-                                <Calendar className='h-4 w-4 ' />
-                                <span className=' font-medium'>
-                                  {
-                                    propertiesStatsMap.get(property.id)
-                                      ?.bookedDays
-                                  }
-                                </span>
-                              </div>
-                              <div
-                                className='flex items-center gap-1  group hover:opacity-100 transition-opacity'
-                                title='Visitors'
-                              >
-                                <Users className='h-4 w-4 ' />
-                                <span className=' font-medium'>156</span>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className='flex items-center justify-between text-sm text-gray-600'>
-                            <span>
-                              {property.bedrooms} bed • {property.bathrooms}{' '}
-                              bath
-                            </span>
-                            <Badge
-                              variant='outline'
-                              className='text-purple-600 border-purple-200 bg-purple-50 text-xs'
-                            >
-                              Flexible Booking
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className='px-6 pb-6 mt-auto'>
-                        <div className='flex gap-2'>
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            onClick={() => navigate(`/property/${property.id}`)}
-                            className='flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700'
-                          >
-                            <Eye className='h-4 w-4 mr-1' />
-                            View
-                          </Button>
-
-                          {/* Show different actions based on property status */}
-                          {property.deleted_at ? (
-                            // Archived property actions
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              onClick={() => handleRestoreClick(property)}
-                              disabled={
-                                loadingStates[property.id]?.loading &&
-                                loadingStates[property.id]?.action ===
-                                  'restoring'
-                              }
-                              className='flex-1 rounded-lg border-green-300 hover:bg-green-50 text-green-700'
-                              title={`Restore "${property.title}"`}
-                            >
-                              {loadingStates[property.id]?.loading &&
-                              loadingStates[property.id]?.action ===
-                                'restoring' ? (
-                                <>
-                                  <Loader2 className='h-4 w-4 mr-1 animate-spin' />
-                                  Restoring...
-                                </>
-                              ) : (
-                                <>
-                                  <RotateCcw className='h-4 w-4 mr-1' />
-                                  Restore
-                                </>
-                              )}
-                            </Button>
-                          ) : (
-                            // Active property actions
-                            <>
-                              <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={() => handleEdit(property)}
-                                className='flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700'
-                              >
-                                <Edit className='h-4 w-4 mr-1' />
-                                Edit
-                              </Button>
-                              {(() => {
-                                const buttonState = getButtonState(property);
-                                const IconComponent = buttonState.icon;
-
-                                return (
-                                  <Button
-                                    variant='outline'
-                                    size='sm'
-                                    onClick={() =>
-                                      property.is_active
-                                        ? handlePauseClick(property)
-                                        : handleActivateProperty(
-                                            property.id,
-                                            property.title,
-                                          )
-                                    }
-                                    disabled={buttonState.isLoading}
-                                    className='flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700'
-                                  >
-                                    {buttonState.isLoading ? (
-                                      <>
-                                        <Loader2 className='h-4 w-4 mr-1 animate-spin' />
-                                        {buttonState.loadingText}
-                                      </>
-                                    ) : (
-                                      <>
-                                        <IconComponent className='h-4 w-4 mr-1' />
-                                        {buttonState.buttonText}
-                                      </>
-                                    )}
-                                  </Button>
-                                );
-                              })()}
-                              <Button
-                                variant='outline'
-                                size='sm'
-                                onClick={() => handleDeleteClick(property)}
-                                disabled={
-                                  loadingStates[property.id]?.loading &&
-                                  loadingStates[property.id]?.action ===
-                                    'deleting'
-                                }
-                                className='w-10 rounded-lg border-red-300 hover:bg-red-50 text-red-600 p-0 flex items-center justify-center'
-                                title={`Archive "${property.title}"`}
-                              >
-                                {loadingStates[property.id]?.loading &&
-                                loadingStates[property.id]?.action ===
-                                  'deleting' ? (
-                                  <Loader2 className='h-4 w-4 animate-spin' />
-                                ) : (
-                                  <Archive className='h-4 w-4' />
-                                )}
-                              </Button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+            <PropertiesTab
+              properties={properties}
+              propertiesStatsMap={propertiesStatsMap}
+              propertyFilter={propertyFilter}
+              setPropertyFilter={setPropertyFilter}
+              loadingStates={loadingStates}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+              onPause={handlePauseClick}
+              onActivate={handleActivateProperty}
+              onRestore={handleRestoreClick}
+              onAddProperty={handleAddProperty}
+            />
           </TabsContent>
 
           <TabsContent value='bookings'>
@@ -1144,151 +588,22 @@ const HostDashboard = () => {
           </TabsContent>
 
           <TabsContent value='calendar'>
-            {properties.length === 0 ? (
-              <Card className='rounded-3xl shadow-lg'>
-                <CardContent className='flex flex-col items-center justify-center py-12'>
-                  <Calendar className='h-16 w-16 text-gray-400 mb-4' />
-                  <h3 className='text-xl font-semibold mb-2'>
-                    No properties to display
-                  </h3>
-                  <p className='text-gray-600 mb-4'>
-                    Add properties to view their booking calendars
-                  </p>
-                  <Button
-                    onClick={() => {
-                      console.log('🔍 Add Your First Property button clicked');
-                      const newPropertyMarker = {
-                        id: 'new-property',
-                      } as Property;
-                      setEditingProperty(newPropertyMarker);
-                    }}
-                    className='bg-black text-white hover:bg-gray-800 rounded-2xl'
-                  >
-                    <Plus className='h-4 w-4 mr-2' />
-                    Add Your First Property
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className='space-y-8'>
-                {properties.map((property) => (
-                  <motion.div
-                    key={property.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <HostCalendar
-                      propertyId={property.id}
-                      propertyTitle={property.title}
-                      onBookingClick={(bookingId) =>
-                        console.log('Booking clicked:', bookingId)
-                      }
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            )}
+            <CalendarTab
+              properties={properties}
+              onAddProperty={handleAddProperty}
+            />
           </TabsContent>
 
           <TabsContent value='analytics'>
-            <HostStats />
+            <AnalyticsTab />
           </TabsContent>
 
           <TabsContent value='settings'>
-            <div className='space-y-6'>
-              {/* Amenities Debug & Fix Tool */}
-              <Card className='rounded-3xl shadow-lg border-orange-200 bg-orange-50'>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2 text-orange-800'>
-                    <Settings className='h-5 w-5' />
-                    Amenities Debug & Fix Tool
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  <div className='bg-white p-4 rounded-2xl border border-orange-200'>
-                    <h4 className='font-semibold text-orange-800 mb-3'>
-                      What this tool does:
-                    </h4>
-                    <ul className='space-y-2 text-sm text-orange-700'>
-                      <li className='flex items-center gap-2'>
-                        <div className='w-2 h-2 bg-orange-500 rounded-full'></div>
-                        <span>
-                          Updates old amenity IDs (wifi, kitchen) to new format
-                          (WiFi, Kitchen)
-                        </span>
-                      </li>
-                      <li className='flex items-center gap-2'>
-                        <div className='w-2 h-2 bg-orange-500 rounded-full'></div>
-                        <span>
-                          Fixes amenities display issues in property forms and
-                          pages
-                        </span>
-                      </li>
-                      <li className='flex items-center gap-2'>
-                        <div className='w-2 h-2 bg-orange-500 rounded-full'></div>
-                        <span>
-                          Ensures amenities show with proper icons instead of
-                          gray dots
-                        </span>
-                      </li>
-                      <li className='flex items-center gap-2'>
-                        <div className='w-2 h-2 bg-orange-500 rounded-full'></div>
-                        <span>
-                          Synchronizes amenities between edit forms and property
-                          display
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-
-                  <div className='bg-yellow-50 p-4 rounded-2xl border border-yellow-200'>
-                    <p className='text-sm text-yellow-800'>
-                      <strong>Debug Info:</strong> Check browser console for
-                      detailed logs while using this tool. Look for 🔧 emoji
-                      logs to track the fix process.
-                    </p>
-                  </div>
-
-                  <Button
-                    onClick={fixAmenities}
-                    disabled={isFixingAmenities}
-                    className='w-full bg-orange-600 hover:bg-orange-700 text-white rounded-2xl py-3'
-                    size='lg'
-                  >
-                    {isFixingAmenities ? (
-                      <>
-                        <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent'></div>
-                        Fixing Amenities...
-                      </>
-                    ) : (
-                      <>
-                        <Settings className='mr-2 h-4 w-4' />
-                        Fix All Property Amenities
-                      </>
-                    )}
-                  </Button>
-
-                  <p className='text-xs text-orange-600 text-center'>
-                    This will update all your properties with the new amenity
-                    format. Check console for details.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <SimplePropertyTest />
-
-              <Card className='rounded-3xl shadow-lg'>
-                <CardHeader>
-                  <CardTitle>Host Settings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className='text-gray-600'>
-                    Host settings will be available soon.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            <SettingsTab
+              isFixingAmenities={isFixingAmenities}
+              setIsFixingAmenities={setIsFixingAmenities}
+              refetchProperties={refetchProperties}
+            />
           </TabsContent>
         </Tabs>
       </div>

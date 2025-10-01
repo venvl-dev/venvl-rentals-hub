@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "vitest",
     "test-amenities": "node scripts/test-new-amenities.js",
-    "migrate-amenities": "node scripts/migrate-to-new-amenities.js"
+    "migrate-amenities": "node scripts/migrate-to-new-amenities.js",
+    "supabase-types": "npx supabase gen types typescript --project-id xhzgistgvcbmcfczcrib  --schema public > ./src/integrations/supabase/types.ts  "
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
