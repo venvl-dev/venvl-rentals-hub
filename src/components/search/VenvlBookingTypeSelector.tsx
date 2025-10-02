@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useEffect, memo } from 'react';
 
 interface BookingTypeSelectorProps {
   selectedType: 'daily' | 'monthly' | 'flexible';
@@ -10,6 +10,13 @@ const VenvlBookingTypeSelector = ({
   selectedType,
   onTypeChange,
 }: BookingTypeSelectorProps) => {
+  // Local state for immediate visual feedback
+  const [localSelectedType, setLocalSelectedType] = useState(selectedType);
+
+  // Sync with parent when selectedType changes
+  useEffect(() => {
+    setLocalSelectedType(selectedType);
+  }, [selectedType]);
   // Memoize booking types to prevent recreation on every render
   const bookingTypes = useMemo(() => [
     {
@@ -29,8 +36,11 @@ const VenvlBookingTypeSelector = ({
     },
   ], []);
 
-  // Memoize the click handler to prevent function recreation
+  // Memoize the click handler with immediate visual feedback
   const handleTypeClick = useCallback((type: 'daily' | 'monthly' | 'flexible') => {
+    // Update local state immediately for instant visual feedback
+    setLocalSelectedType(type);
+    // Call parent callback (which may trigger heavy operations)
     onTypeChange(type);
   }, [onTypeChange]);
 
@@ -47,9 +57,9 @@ const VenvlBookingTypeSelector = ({
                 handleTypeClick(type.id as 'daily' | 'monthly' | 'flexible')
               }
               className={`
-                flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-150
+                flex-1 h-9 px-3 text-xs font-medium rounded-md
                 ${
-                  selectedType === type.id
+                  localSelectedType === type.id
                     ? 'bg-black text-white shadow-sm hover:bg-black hover:text-white'
                     : 'text-muted-foreground hover:bg-gray-50 hover:text-muted-foreground'
                 }
@@ -72,9 +82,9 @@ const VenvlBookingTypeSelector = ({
                 handleTypeClick(type.id as 'daily' | 'monthly' | 'flexible')
               }
               className={`
-                flex-1 h-8 px-2 text-xs font-medium rounded-md transition-all duration-150
+                flex-1 h-8 px-2 text-xs font-medium rounded-md
                 ${
-                  selectedType === type.id
+                  localSelectedType === type.id
                     ? 'bg-black text-white shadow-sm hover:bg-black hover:text-white'
                     : 'text-muted-foreground hover:bg-gray-50 hover:text-muted-foreground'
                 }
@@ -93,4 +103,4 @@ const VenvlBookingTypeSelector = ({
   );
 };
 
-export default VenvlBookingTypeSelector;
+export default memo(VenvlBookingTypeSelector);
