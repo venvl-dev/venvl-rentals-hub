@@ -278,6 +278,8 @@ export type Database = {
           id: string
           payment_amount: number | null
           payment_status: string | null
+          price_after_discount: number | null
+          promocode_id: string | null
           property_id: string
           status: Database["public"]["Enums"]["booking_status"] | null
           stripe_session_id: string | null
@@ -303,6 +305,8 @@ export type Database = {
           id?: string
           payment_amount?: number | null
           payment_status?: string | null
+          price_after_discount?: number | null
+          promocode_id?: string | null
           property_id: string
           status?: Database["public"]["Enums"]["booking_status"] | null
           stripe_session_id?: string | null
@@ -328,6 +332,8 @@ export type Database = {
           id?: string
           payment_amount?: number | null
           payment_status?: string | null
+          price_after_discount?: number | null
+          promocode_id?: string | null
           property_id?: string
           status?: Database["public"]["Enums"]["booking_status"] | null
           stripe_session_id?: string | null
@@ -335,6 +341,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "bookings_promocode_id_fkey"
+            columns: ["promocode_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "bookings_property_id_fkey"
             columns: ["property_id"]
@@ -709,6 +722,47 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      promo_codes: {
+        Row: {
+          allow_multi_account: boolean | null
+          code: string
+          created_at: string
+          expiry_date: string | null
+          id: string
+          relative_expiry_months: number | null
+          user_id: string | null
+          value: number
+        }
+        Insert: {
+          allow_multi_account?: boolean | null
+          code: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          relative_expiry_months?: number | null
+          user_id?: string | null
+          value: number
+        }
+        Update: {
+          allow_multi_account?: boolean | null
+          code?: string
+          created_at?: string
+          expiry_date?: string | null
+          id?: string
+          relative_expiry_months?: number | null
+          user_id?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "PromoCodes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promotions: {
         Row: {

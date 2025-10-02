@@ -47,6 +47,7 @@ const GlobalSettings = lazy(() => import('./routes/admin/Settings'));
 const AuditLogsPage = lazy(() => import('./routes/admin/Logs'));
 const RevenueManagement = lazy(() => import('./routes/admin/Revenue'));
 const ContentModeration = lazy(() => import('./routes/admin/Moderation'));
+const Marketing = lazy(() => import('./routes/admin/Marketing'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -206,6 +207,14 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={['super_admin']}>
                         <AuditLogsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path='/admin/marketing'
+                    element={
+                      <ProtectedRoute allowedRoles={['super_admin']}>
+                        <Marketing />
                       </ProtectedRoute>
                     }
                   />
