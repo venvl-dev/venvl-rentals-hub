@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
+import { MobileSlider } from '@/components/ui/mobile-slider';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { AMENITIES_LIST } from '@/lib/amenitiesUtils';
@@ -36,6 +37,11 @@ const NewAdvancedFilters = ({
   onApply,
   initialFilters,
 }: NewAdvancedFiltersProps) => {
+  // Detect mobile device
+  const isMobile = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth <= 768 || 'ontouchstart' in window;
+  }, []);
   // Local state for all filters
   const [bookingType, setBookingType] = useState<string>(
     initialFilters.bookingType || 'flexible',
@@ -360,14 +366,25 @@ const NewAdvancedFilters = ({
                 </div>
                 {!priceLoading && dbPriceRange && (
                   <div className='px-3 py-4' style={{ touchAction: 'manipulation' }}>
-                    <Slider
-                      value={priceRange}
-                      onValueChange={handlePriceChange}
-                      max={dbPriceRange.max}
-                      min={dbPriceRange.min}
-                      step={bookingType === 'monthly' ? 100 : 10}
-                      className='w-full py-3'
-                    />
+                    {isMobile ? (
+                      <MobileSlider
+                        value={priceRange}
+                        onValueChange={handlePriceChange}
+                        max={dbPriceRange.max}
+                        min={dbPriceRange.min}
+                        step={bookingType === 'monthly' ? 100 : 10}
+                        className='w-full'
+                      />
+                    ) : (
+                      <Slider
+                        value={priceRange}
+                        onValueChange={handlePriceChange}
+                        max={dbPriceRange.max}
+                        min={dbPriceRange.min}
+                        step={bookingType === 'monthly' ? 100 : 10}
+                        className='w-full py-3'
+                      />
+                    )}
                     <div className='flex justify-between text-xs text-muted-foreground mt-2'>
                       <span>{formatPrice(dbPriceRange.min)}</span>
                       <span>{formatPrice(dbPriceRange.max)}</span>

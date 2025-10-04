@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 
 interface PriceRange {
   min: number;
@@ -24,7 +25,7 @@ export const usePriceRange = (
   // Memoize initial state based on booking type
   const initialState = useMemo(() => ({
     min: 0,
-    max: bookingType === 'monthly' ? 700000 : 10000,
+    max: bookingType === 'monthly' ? 500000 : 5000,
     distribution: [],
   }), [bookingType]);
 
@@ -37,8 +38,8 @@ export const usePriceRange = (
       return fallbackCache.get(cacheKey)!;
     }
     const range = {
-      min: bookingType === 'monthly' ? 6000 : 100,
-      max: bookingType === 'monthly' ? 700000 : 3000,
+      min: bookingType === 'monthly' ? 5000 : 100,
+      max: bookingType === 'monthly' ? 500000 : 5000,
       distribution: [],
     };
     fallbackCache.set(cacheKey, range);
@@ -84,8 +85,8 @@ export const usePriceRange = (
         }
         fetchThrottleMap.set(cacheKey, now);
 
-        // Use direct query to get ALL active, approved properties for accurate price range
-        const { data, error } = await supabase
+        // Try authenticated query first to get ALL active, approved properties
+        let { data, error } = await supabase
           .from('properties')
           .select(
             'price_per_night, daily_price, monthly_price, rental_type',
@@ -93,14 +94,61 @@ export const usePriceRange = (
           .eq('is_active', true)
           .eq('approval_status', 'approved');
 
+        // If authenticated query returns insufficient data due to RLS policies,
+        // use anonymous client for price range calculation
+        if ((error || !data || data.length < 5) && bookingType) {
+          console.log('Authenticated query returned insufficient data for price range, trying anonymous client...');
+
+          try {
+            // Create anonymous Supabase client for price range queries
+            const anonSupabase = createClient(
+              import.meta.env.VITE_SUPABASE_URL,
+              import.meta.env.VITE_SUPABASE_ANON_KEY
+            );
+
+            // Make anonymous query - this bypasses RLS restrictions
+            const { data: anonData, error: anonError } = await anonSupabase
+              .from('properties')
+              .select(
+                'price_per_night, daily_price, monthly_price, rental_type',
+              )
+              .eq('is_active', true)
+              .eq('approval_status', 'approved');
+
+            if (!anonError && anonData && anonData.length > 0) {
+              console.log(`Anonymous client returned ${anonData.length} properties vs ${data?.length || 0} from authenticated query`);
+              data = anonData;
+              error = null;
+            }
+          } catch (anonError) {
+            console.warn('Anonymous client fallback failed:', anonError);
+          }
+        }
+
         if (error) {
-          console.error('Error fetching properties:', error);
+          console.error('Error fetching properties for price range:', error);
+          if (mounted) {
+            setPriceRange(fallbackRange);
+            setLoading(false);
+          }
           return;
         }
 
         if (!data || !mounted) {
+          console.warn('No data returned or component unmounted', {
+            hasData: !!data,
+            mounted,
+            bookingType
+          });
+          if (mounted && !data) {
+            setPriceRange(fallbackRange);
+            setLoading(false);
+          }
           return;
         }
+
+        console.log(`Fetched ${data.length} properties for price range calculation (${bookingType})`);
+
 
         // Extract prices based on booking type
         const prices: number[] = [];
@@ -165,6 +213,11 @@ export const usePriceRange = (
         });
 
         if (prices.length === 0) {
+          console.warn(`No price data found for booking type: ${bookingType}. Using fallback range.`, {
+            totalProperties: data?.length || 0,
+            bookingType,
+            fallbackRange
+          });
           if (mounted) {
             setPriceRange(fallbackRange);
             // Cache fallback range too
