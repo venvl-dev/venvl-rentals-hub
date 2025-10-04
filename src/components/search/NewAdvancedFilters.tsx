@@ -280,7 +280,7 @@ const NewAdvancedFilters = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className='fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4'
+        className='fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 touch-manipulation'
         onClick={(e) => e.target === e.currentTarget && onClose()}
       >
         <motion.div
@@ -357,14 +357,14 @@ const NewAdvancedFilters = ({
                   </div>
                 </div>
                 {!priceLoading && dbPriceRange && (
-                  <div className='px-3'>
+                  <div className='px-3 py-2'>
                     <Slider
                       value={priceRange}
                       onValueChange={handlePriceChange}
                       max={dbPriceRange.max}
                       min={dbPriceRange.min}
                       step={bookingType === 'monthly' ? 100 : 10}
-                      className='w-full'
+                      className='w-full py-2'
                     />
                     <div className='flex justify-between text-xs text-muted-foreground mt-2'>
                       <span>{formatPrice(dbPriceRange.min)}</span>
