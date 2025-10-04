@@ -1215,12 +1215,12 @@ const EnhancedPropertyForm = ({
                   <CardContent className='space-y-6'>
                     {/* File Upload Area */}
                     <Dropzone
-                      onDrop={(acceptedFiles) =>
-                        handleFileUpload(acceptedFiles)
-                      }
+                      onDrop={(acceptedFiles) => {
+                        handleFileUpload(acceptedFiles);
+                      }}
                       accept={{ 'image/*': ['.jpg', '.jpeg', '.png', '.gif'] }}
                       maxSize={5 * 1024 * 1024}
-                      maxFiles={10}
+                      maxFiles={50}
                       disabled={uploadingImages}
                       className='border-2 border-dashed rounded-xl hover:border-gray-400 transition-colors'
                     >
@@ -1247,7 +1247,7 @@ const EnhancedPropertyForm = ({
                     </Dropzone>
 
                     {/* Alternative Upload Button */}
-                    <div className='flex justify-center'>
+                    {/* <div className='flex justify-center'>
                       <Button
                         type='button'
                         onClick={() =>
@@ -1259,7 +1259,7 @@ const EnhancedPropertyForm = ({
                         <Upload className='h-4 w-4 mr-2' />
                         {uploadingImages ? 'Uploading...' : 'Choose Files'}
                       </Button>
-                    </div>
+                    </div> */}
 
                     {/* Image Preview Grid */}
                     {imageUrls.length > 0 && (

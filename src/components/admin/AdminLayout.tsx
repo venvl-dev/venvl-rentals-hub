@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   FileJson,
+  Tag,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -69,6 +70,11 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
       label: 'Audit Logs',
       href: '/admin/logs',
       icon: FileText,
+    },
+    {
+      label: 'Marketing',
+      href: '/admin/marketing',
+      icon: Tag,
     },
   ];
 
