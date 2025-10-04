@@ -19,16 +19,18 @@ const Slider = React.forwardRef<
         'relative flex w-full select-none items-center',
         className,
       )}
+      style={{ touchAction: 'none' }}
       {...props}
     >
-      <SliderPrimitive.Track className='relative h-3 w-full grow overflow-hidden rounded-full bg-secondary'>
+      <SliderPrimitive.Track className='relative h-4 w-full grow overflow-hidden rounded-full bg-secondary touch-manipulation'>
         <SliderPrimitive.Range className='absolute h-full bg-primary' />
       </SliderPrimitive.Track>
       {thumbs.map((_, i) => (
         <SliderPrimitive.Thumb
           key={i}
           aria-label={i === 0 ? 'Minimum price' : 'Maximum price'}
-          className='block h-6 w-6 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 touch-manipulation'
+          className='block h-7 w-7 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 touch-manipulation cursor-pointer active:scale-110'
+          style={{ touchAction: 'none' }}
         />
       ))}
     </SliderPrimitive.Root>
