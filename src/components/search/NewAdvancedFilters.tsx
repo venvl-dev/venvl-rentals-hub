@@ -89,7 +89,7 @@ const NewAdvancedFilters = ({
       initialBookingType: initialFilters.bookingType
     });
 
-    if (!priceLoading && dbPriceRange && dbPriceRange.min > 0) {
+    if (!priceLoading && dbPriceRange && dbPriceRange.min >= 0 && dbPriceRange.max > 0) {
       // Always use database range when booking type changes, regardless of customization
       const shouldUpdate = !isPriceRangeCustomized || initialFilters.bookingType !== bookingType;
 

@@ -41,7 +41,10 @@ export const usePropertyFiltering = (
 ) => {
   // Get price range for the current booking type (use main booking type selector)
   const mainBookingType = filters.bookingType;
-  const { priceRange: dbPriceRange } = usePriceRange(mainBookingType as 'daily' | 'monthly');
+
+  // Map flexible booking type to daily for price range calculation
+  const priceRangeBookingType = mainBookingType === 'flexible' ? 'daily' : mainBookingType;
+  const { priceRange: dbPriceRange } = usePriceRange(priceRangeBookingType as 'daily' | 'monthly');
 
   // Memoize the filtering logic for better performance
   const filteredProperties = useMemo(() => {
@@ -111,40 +114,107 @@ export const usePropertyFiltering = (
       Array.isArray(advancedFilters.priceRange) &&
       advancedFilters.priceRange.length === 2 &&
       dbPriceRange &&
-      dbPriceRange.min > 0;
+      dbPriceRange.min >= 0 &&
+      dbPriceRange.max > 0;
+
+    console.log('🔍 Price filter validation:', {
+      hasPriceRange: !!advancedFilters.priceRange,
+      isArray: Array.isArray(advancedFilters.priceRange),
+      hasLength: advancedFilters.priceRange?.length === 2,
+      hasDbPriceRange: !!dbPriceRange,
+      dbPriceRangeMin: dbPriceRange?.min,
+      shouldApply: shouldApplyPriceFilter
+    });
+
 
     if (shouldApplyPriceFilter) {
       const [minPrice, maxPrice] = advancedFilters.priceRange;
+      const beforeCount = filtered.length;
+
+      console.log(`🎯 Applying price filter: ${minPrice} - ${maxPrice} for ${activeBookingType} booking type`);
+    console.log('🔍 Filter check details:', {
+      shouldApplyPriceFilter,
+      priceRange: advancedFilters.priceRange,
+      dbPriceRange,
+      mainBookingType,
+      totalProperties: properties?.length || 0,
+      isMobile: typeof window !== 'undefined' && (window.innerWidth <= 768 || 'ontouchstart' in window)
+    });
 
       filtered = filtered.filter((property) => {
-        // Use appropriate price based on booking type
-        let price = property.price_per_night;
+        // For flexible booking type, we need to check if ANY of the property's prices
+        // fall within the selected range (which may include both daily and monthly scales)
+        if (activeBookingType === 'flexible') {
+          const propertyPrices = [];
 
-        if (activeBookingType === 'daily') {
-          price = property.daily_price || property.price_per_night;
-        } else if (activeBookingType === 'monthly') {
+          // Add daily/per-night prices
+          if (property.price_per_night && property.price_per_night > 0) {
+            propertyPrices.push(property.price_per_night);
+          }
+          if (property.daily_price && property.daily_price > 0) {
+            propertyPrices.push(property.daily_price);
+          }
+
+          // Add monthly prices (as-is to match range calculation)
           if (property.monthly_price && property.monthly_price > 0) {
-            price = property.monthly_price;
-          } else if (property.rental_type === 'monthly' || property.rental_type === 'both') {
-            const dailyPrice = property.daily_price || property.price_per_night;
-            if (dailyPrice && dailyPrice > 0) {
-              price = Math.round(dailyPrice * 25); // 25 days per month estimate
+            propertyPrices.push(property.monthly_price);
+          }
+
+          // Add converted monthly to daily equivalent
+          if (property.monthly_price && property.monthly_price > 0) {
+            const dailyEquivalent = Math.round(property.monthly_price / 30);
+            if (dailyEquivalent > 0) {
+              propertyPrices.push(dailyEquivalent);
+            }
+          }
+
+          // Check if ANY of the property's prices fall within the selected range
+          const matches = propertyPrices.some(price =>
+            price >= minPrice && price <= maxPrice
+          );
+
+          if (matches) {
+            console.log(`✅ Property ${property.id} matched with prices:`, propertyPrices.filter(p => p >= minPrice && p <= maxPrice));
+          } else {
+            // Show first few failed matches to understand the issue
+            if (Math.random() < 0.1) { // Only log 10% to avoid spam
+              console.log(`❌ Property ${property.id} failed with prices:`, propertyPrices, 'Range:', [minPrice, maxPrice]);
+            }
+          }
+
+          return matches;
+        } else {
+          // Original logic for daily/monthly specific booking types
+          let price = property.price_per_night;
+
+          if (activeBookingType === 'daily') {
+            price = property.daily_price || property.price_per_night;
+          } else if (activeBookingType === 'monthly') {
+            if (property.monthly_price && property.monthly_price > 0) {
+              price = property.monthly_price;
+            } else if (property.rental_type === 'monthly' || property.rental_type === 'both') {
+              const dailyPrice = property.daily_price || property.price_per_night;
+              if (dailyPrice && dailyPrice > 0) {
+                price = Math.round(dailyPrice * 25); // 25 days per month estimate
+              } else {
+                price = 0;
+              }
             } else {
               price = 0;
             }
-          } else {
-            price = 0;
           }
-        }
 
-        // Type safety: ensure price is a valid number
-        if (!price || typeof price !== 'number' || price <= 0) {
-          return false;
-        }
+          // Type safety: ensure price is a valid number
+          if (!price || typeof price !== 'number' || price <= 0) {
+            return false;
+          }
 
-        // Exact range matching
-        return price >= minPrice && price <= maxPrice;
+          // Exact range matching
+          return price >= minPrice && price <= maxPrice;
+        }
       });
+
+      console.log(`📊 Price filter applied: ${beforeCount} → ${filtered.length} properties`);
     }
 
     // Property types filter
