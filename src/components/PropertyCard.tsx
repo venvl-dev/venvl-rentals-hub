@@ -390,7 +390,7 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
         </Carousel>
 
         {/* Rental Type Badges */}
-        <div className='absolute top-2 left-2 z-20 flex flex-row gap-1 max-w-[calc(100%-4rem)]'>
+        <div className='absolute top-3 left-3 z-20 flex flex-row gap-1 max-w-[calc(100%-6rem)]'>
           {(() => {
             const hasDaily = bookingTypes.includes('daily');
             const hasMonthly = bookingTypes.includes('monthly');
@@ -400,7 +400,7 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
               badges.push(
                 <Badge
                   key="daily"
-                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 sm:gap-1 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm"
+                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm"
                 >
                   <Calendar className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
                   <span className='whitespace-nowrap'>Daily</span>
@@ -412,7 +412,7 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
               badges.push(
                 <Badge
                   key="monthly"
-                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 sm:gap-1 backdrop-blur-sm bg-purple-100 text-purple-800 min-w-fit flex-shrink-0 shadow-sm"
+                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 backdrop-blur-sm bg-purple-100 text-purple-800 min-w-fit flex-shrink-0 shadow-sm"
                 >
                   <Clock className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
                   <span className='whitespace-nowrap'>Monthly</span>
@@ -425,7 +425,7 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
               badges.push(
                 <Badge
                   key="daily-default"
-                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 sm:gap-1 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm"
+                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm"
                 >
                   <Calendar className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
                   <span className='whitespace-nowrap'>Daily</span>

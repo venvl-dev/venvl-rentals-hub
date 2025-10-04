@@ -273,7 +273,12 @@ const RefactoredBookingWidget = ({
       );
       setTotalPrice(nights * dailyPrice);
     } else if (bookingMode === 'monthly' && monthlyPrice) {
-      setTotalPrice(monthlyDuration * monthlyPrice);
+      // For monthly bookings longer than 1 month, only charge first month initially
+      if (monthlyDuration > 1) {
+        setTotalPrice(monthlyPrice); // Only first month's payment
+      } else {
+        setTotalPrice(monthlyDuration * monthlyPrice); // Full amount for single month
+      }
     } else {
       setTotalPrice(0);
     }
@@ -404,11 +409,16 @@ const RefactoredBookingWidget = ({
           checkOut: checkOutDate,
           guests,
           bookingType: bookingMode,
-          totalPrice,
+          totalPrice, // This is now the first month payment for multi-month bookings
           duration: bookingMode === 'monthly' ? monthlyDuration : undefined,
         });
         return;
       }
+
+      // Calculate the full contract value for monthly bookings
+      const fullContractValue = bookingMode === 'monthly' && monthlyDuration > 1
+        ? monthlyDuration * monthlyPrice
+        : totalPrice;
 
       // Otherwise, create the booking directly
       const { data: booking, error: bookingError } = await supabase
@@ -419,9 +429,11 @@ const RefactoredBookingWidget = ({
           check_in: checkInDate.toISOString().split('T')[0],
           check_out: checkOutDate.toISOString().split('T')[0],
           guests,
-          total_price: totalPrice,
+          total_price: totalPrice, // This is the amount being charged now (first month for multi-month)
           status: 'pending',
           booking_type: bookingMode,
+          duration_months: bookingMode === 'monthly' ? monthlyDuration : undefined,
+          // Note: We might want to add a separate field for full_contract_value in the future
         })
         .select()
         .single();

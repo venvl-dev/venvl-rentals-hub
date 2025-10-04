@@ -65,23 +65,11 @@ export const useFilterStore = () => {
 
   // Update search filters
   const updateSearchFilters = useCallback((filters: Partial<SearchFilters>) => {
-    console.log(
-      '🗂️ useFilterStore - updateSearchFilters called with:',
-      filters,
-    );
     setSearchFilters((prev) => {
-      console.log('🗂️ Previous searchFilters:', prev);
       let updated = { ...prev, ...filters };
 
       // Clear incompatible fields when booking type changes
       if (filters.bookingType && filters.bookingType !== prev.bookingType) {
-        console.log(
-          '🎯 BOOKING TYPE CHANGE DETECTED IN STORE:',
-          prev.bookingType,
-          '→',
-          filters.bookingType,
-        );
-
         if (filters.bookingType === 'monthly') {
           // Monthly bookings don't use checkIn/checkOut dates
           updated = {
@@ -90,7 +78,6 @@ export const useFilterStore = () => {
             checkOut: undefined,
             flexibleOption: undefined,
           };
-          console.log('🗂️ Monthly mode: cleared date fields');
         } else if (filters.bookingType === 'daily') {
           // Daily bookings don't use duration
           updated = {
@@ -98,7 +85,6 @@ export const useFilterStore = () => {
             duration: undefined,
             flexibleOption: undefined,
           };
-          console.log('🗂️ Daily mode: cleared duration fields');
         } else if (filters.bookingType === 'flexible') {
           // Flexible bookings might clear specific date constraints
           updated = {
@@ -107,12 +93,9 @@ export const useFilterStore = () => {
             checkOut: undefined,
             duration: undefined,
           };
-          console.log('🗂️ Flexible mode: cleared all date/duration fields');
         }
       }
 
-      console.log('✅ useFilterStore - searchFilters updated from:', prev);
-      console.log('✅ useFilterStore - searchFilters updated to:', updated);
       return updated;
     });
   }, []);
@@ -126,12 +109,6 @@ export const useFilterStore = () => {
         // If booking type changed, reset price range only if it's explicitly set
         if (filters.bookingType && filters.bookingType !== prev.bookingType) {
           // Don't reset price range here - let the effect handle it
-          console.log(
-            'Booking type changed from',
-            prev.bookingType,
-            'to',
-            filters.bookingType,
-          );
         }
 
         return updated;
@@ -156,33 +133,14 @@ export const useFilterStore = () => {
 
     // Initialize on first successful load only, so UI can read/display the range.
     if (!isInitialized) {
-      console.log('Initializing price range (display only):', {
-        dbPriceRange: `${dbPriceRange.min} - ${dbPriceRange.max}`,
-      });
-
       // Don't automatically set priceRange in advancedFilters - keep it null
       // This ensures price filtering only happens when user explicitly applies it
-      console.log('🔄 Initializing filters but NOT setting priceRange in advancedFilters');
       setIsInitialized(true);
     } else if (hasBookingTypeChanged) {
       // When booking type changes, update only the display range if no user override,
       // but do NOT mark this as an active filter (full-range mirrors db range).
-      console.log(
-        'Booking type changed, syncing display range without activating filter:',
-        {
-          from: prevBookingTypeRef.current,
-          to: currentBookingType,
-          dbPriceRange: `${dbPriceRange.min} - ${dbPriceRange.max}`,
-          currentPriceRange: advancedFilters.priceRange,
-        },
-      );
-
       // Don't automatically set priceRange when booking type changes
       // This ensures price filtering only happens when user explicitly applies it via Apply button
-      console.log('🔄 Booking type changed but NOT auto-setting priceRange in advancedFilters');
-      console.log('🔄 Old price range:', advancedFilters.priceRange);
-      console.log('🔄 Available DB range for', currentBookingType + ':', [dbPriceRange.min, dbPriceRange.max]);
-      console.log('🔄 Price range will only be applied when user clicks Apply in advanced filters');
     }
 
     prevBookingTypeRef.current = currentBookingType;
@@ -209,7 +167,6 @@ export const useFilterStore = () => {
 
   // Manual sync for external triggers (deprecated - price range only set via Apply button)
   const syncPriceRange = useCallback(() => {
-    console.log('🔄 syncPriceRange called but doing nothing - price range only applied via Apply button');
   }, []);
 
   // Get combined filters for property filtering - memoized for performance

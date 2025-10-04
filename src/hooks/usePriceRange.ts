@@ -14,6 +14,10 @@ const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes cache for maximum performan
 // Aggressive caching: keep data for booking type switches
 const fallbackCache = new Map<string, PriceRange>();
 
+// Throttling to prevent rapid-fire requests
+const fetchThrottleMap = new Map<string, number>();
+const THROTTLE_DELAY = 1000; // 1 second minimum between fetches for the same booking type
+
 export const usePriceRange = (
   bookingType?: 'daily' | 'monthly',
 ) => {
@@ -51,27 +55,34 @@ export const usePriceRange = (
 
     const fetchPriceData = async () => {
       try {
-        setLoading(true);
-
         // Check cache first
         const cacheKey = bookingType || 'default';
         const cached = priceRangeCache.get(cacheKey);
         const now = Date.now();
 
-        if (cached && (now - cached.timestamp) < CACHE_DURATION) {
+        // Use cached data immediately for smooth switching
+        if (cached) {
           if (mounted) {
             setPriceRange(cached.data);
             setLoading(false);
           }
-          return;
+
+          // Skip fresh fetch if cache is still fresh
+          if ((now - cached.timestamp) < CACHE_DURATION) {
+            return;
+          }
+        } else {
+          // Show loading only if no cached data exists
+          setLoading(true);
         }
 
-        // For instant feedback: use expired cache immediately, fetch in background
-        if (cached && mounted) {
-          setPriceRange(cached.data);
-          setLoading(false);
-          // Continue with fresh fetch in background without showing loading
+        // Throttle requests to prevent rapid-fire database calls
+        const lastFetchTime = fetchThrottleMap.get(cacheKey) || 0;
+        if (now - lastFetchTime < THROTTLE_DELAY) {
+          // Skip this fetch if we're still in throttle period
+          return;
         }
+        fetchThrottleMap.set(cacheKey, now);
 
         // Use direct query to get ALL active, approved properties for accurate price range
         const { data, error } = await supabase
