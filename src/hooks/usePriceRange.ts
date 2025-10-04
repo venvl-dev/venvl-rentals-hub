@@ -108,7 +108,7 @@ export const usePriceRange = (
         data.forEach((property) => {
           try {
             if (bookingType === 'daily') {
-              const supportsDaily = property.rental_type === 'daily';
+              const supportsDaily = property.rental_type === 'daily' || property.rental_type === 'both';
               const dailyPrice = property.daily_price || property.price_per_night;
               if (
                 supportsDaily &&

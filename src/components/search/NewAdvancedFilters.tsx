@@ -183,23 +183,19 @@ const NewAdvancedFilters = ({
 
   // Helper function to check if user has made selections beyond just booking type
   const hasOtherActiveFilters = useCallback(() => {
-    if (!dbPriceRange) return false;
-
     return (
       selectedPropertyTypes.length > 0 ||
       selectedAmenities.length > 0 ||
       bedrooms !== null ||
       bathrooms !== null ||
-      priceRange[0] !== dbPriceRange.min ||
-      priceRange[1] !== dbPriceRange.max
+      isPriceRangeCustomized
     );
   }, [
     selectedPropertyTypes,
     selectedAmenities,
     bedrooms,
     bathrooms,
-    priceRange,
-    dbPriceRange,
+    isPriceRangeCustomized,
   ]);
 
   const handleApply = useCallback(() => {
@@ -207,12 +203,7 @@ const NewAdvancedFilters = ({
       // Only apply booking type if user has made explicit selections beyond just changing the type
       bookingType:
         bookingType !== 'flexible' && hasOtherActiveFilters() ? bookingType : null,
-      priceRange:
-        dbPriceRange &&
-        (priceRange[0] !== dbPriceRange.min ||
-          priceRange[1] !== dbPriceRange.max)
-          ? priceRange
-          : null,
+      priceRange: isPriceRangeCustomized ? priceRange : null,
       propertyTypes:
         selectedPropertyTypes.length > 0 ? selectedPropertyTypes : null,
       amenities: selectedAmenities.length > 0 ? selectedAmenities : null,
@@ -230,7 +221,7 @@ const NewAdvancedFilters = ({
     selectedAmenities,
     bedrooms,
     bathrooms,
-    dbPriceRange,
+    isPriceRangeCustomized,
     onApply,
     onClose,
     hasOtherActiveFilters,
@@ -250,15 +241,12 @@ const NewAdvancedFilters = ({
 
   // Memoized active filters check for better performance
   const hasActiveFilters = useMemo(() => {
-    if (!dbPriceRange) return false;
-
     const hasOtherFilters =
       selectedPropertyTypes.length > 0 ||
       selectedAmenities.length > 0 ||
       bedrooms !== null ||
       bathrooms !== null ||
-      priceRange[0] !== dbPriceRange.min ||
-      priceRange[1] !== dbPriceRange.max;
+      isPriceRangeCustomized;
 
     // Only consider booking type as active if there are other filters too
     return hasOtherFilters || (bookingType !== 'flexible' && hasOtherFilters);
@@ -268,8 +256,7 @@ const NewAdvancedFilters = ({
     selectedAmenities,
     bedrooms,
     bathrooms,
-    priceRange,
-    dbPriceRange,
+    isPriceRangeCustomized,
   ]);
 
   // Memoized price formatter
@@ -383,8 +370,7 @@ const NewAdvancedFilters = ({
                       <span>{formatPrice(dbPriceRange.min)}</span>
                       <span>{formatPrice(dbPriceRange.max)}</span>
                     </div>
-                    {(priceRange[0] !== dbPriceRange.min ||
-                      priceRange[1] !== dbPriceRange.max) && (
+                    {isPriceRangeCustomized && (
                       <div className='text-xs text-primary mt-1 text-center'>
                         Custom range selected
                       </div>
@@ -535,11 +521,7 @@ const NewAdvancedFilters = ({
                     selectedAmenities.length > 0 ? 1 : 0,
                     bedrooms !== null ? 1 : 0,
                     bathrooms !== null ? 1 : 0,
-                    dbPriceRange &&
-                    (priceRange[0] !== dbPriceRange.min ||
-                      priceRange[1] !== dbPriceRange.max)
-                      ? 1
-                      : 0,
+                    isPriceRangeCustomized ? 1 : 0,
                   ].reduce((a, b) => a + b, 0)}{' '}
                   filters active
                 </Badge>

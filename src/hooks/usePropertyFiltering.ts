@@ -105,15 +105,13 @@ export const usePropertyFiltering = (
       }
     }
 
-    // Price range filter - Only apply when explicitly applied via Advanced Filters
+    // Price range filter - Apply when price range is explicitly set in advanced filters
     const shouldApplyPriceFilter =
       advancedFilters.priceRange &&
       Array.isArray(advancedFilters.priceRange) &&
       advancedFilters.priceRange.length === 2 &&
       dbPriceRange &&
-      dbPriceRange.min > 0 &&
-      (advancedFilters.priceRange[0] !== dbPriceRange.min ||
-        advancedFilters.priceRange[1] !== dbPriceRange.max);
+      dbPriceRange.min > 0;
 
     if (shouldApplyPriceFilter) {
       const [minPrice, maxPrice] = advancedFilters.priceRange;
