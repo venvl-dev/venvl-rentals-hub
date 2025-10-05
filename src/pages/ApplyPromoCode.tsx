@@ -183,9 +183,7 @@ const ApplyPromoCode = () => {
                     type='text'
                     placeholder='Enter promo code'
                     value={manualCode}
-                    onChange={(e) =>
-                      setManualCode(e.target.value.toUpperCase())
-                    }
+                    onChange={(e) => setManualCode(e.target.value)}
                     className='font-mono text-lg'
                     required
                   />
