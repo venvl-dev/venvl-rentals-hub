@@ -687,6 +687,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_promo_codes: {
+        Row: {
+          profile_id: string
+          promod_code_id: string
+        }
+        Insert: {
+          profile_id?: string
+          promod_code_id?: string
+        }
+        Update: {
+          profile_id?: string
+          promod_code_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_promo_codes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_promo_codes_promod_code_id_fkey"
+            columns: ["promod_code_id"]
+            isOneToOne: false
+            referencedRelation: "promo_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -1610,6 +1640,10 @@ export type Database = {
       }
     }
     Functions: {
+      apply_promo_code: {
+        Args: { p_promo_code: string; p_user_id: string }
+        Returns: undefined
+      }
       can_cancel_booking: {
         Args: { booking_id: string }
         Returns: boolean
