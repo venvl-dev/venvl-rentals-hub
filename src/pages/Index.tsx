@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import PropertyCard from '@/components/PropertyCard';
 import VenvlSearchPill from '@/components/search/VenvlSearchPill';
+import StandaloneBookingTypeSelector from '@/components/search/StandaloneBookingTypeSelector';
 import NewAdvancedFilters from '@/components/search/NewAdvancedFilters';
 import FilterBadgeDisplay from '@/components/search/FilterBadgeDisplay';
 import { toast } from 'sonner';
@@ -81,15 +82,6 @@ const Index = () => {
     getCombinedFilters(),
   );
 
-  // Debug filtered properties in Index
-  console.log('🏢 INDEX COMPONENT - Filtered Properties Debug:');
-  console.log(`🏢 Total properties loaded: ${properties.length}`);
-  console.log(`🏢 Filtered properties returned: ${filteredProperties.length}`);
-  console.log('🏢 Current filters:', getCombinedFilters());
-  console.log('🏢 Sample filtered properties for display:');
-  filteredProperties.slice(0, 3).forEach((p) => {
-    console.log(`🏠 ${p.id.substring(0, 8)}: ${p.title}`);
-  });
 
   useEffect(() => {
     fetchProperties();
@@ -203,10 +195,7 @@ const Index = () => {
 
   const handleSearch = useCallback(
     (filters: any) => {
-      console.log('🏠 Index.tsx - handleSearch received filters:', filters);
-      console.log('🏠 About to call updateSearchFilters...');
       updateSearchFilters(filters);
-      console.log('🏠 updateSearchFilters called successfully');
     },
     [updateSearchFilters],
   );
@@ -248,12 +237,6 @@ const Index = () => {
   // Enhanced loading state
   const isFullyLoaded = !loading && !authLoading && imagesPreloaded;
 
-  // Debug filter state
-  console.log('🏠 Index.tsx render - searchFilters from store:', searchFilters);
-  console.log(
-    '🏠 Index.tsx render - searchFilters.bookingType:',
-    searchFilters.bookingType,
-  );
 
   return (
     <div className='min-h-screen bg-gray-50 overflow-x-hidden'>
@@ -292,16 +275,36 @@ const Index = () => {
 
             {/* Search Bar Container */}
             <motion.div
-              className='w-full max-w-4xl mx-auto px-2 sm:px-4 space-y-4'
+              className='w-full max-w-4xl mx-auto px-2 sm:px-4 space-y-6'
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <VenvlSearchPill
-                onSearch={handleSearch}
-                initialFilters={searchFilters}
-                key={`search-${searchFilters.bookingType}`}
-              />
+              {/* Standalone Booking Type Selector - Fast and Independent */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <StandaloneBookingTypeSelector
+                  selectedType={searchFilters.bookingType}
+                  onTypeChange={(type) => {
+                    updateSearchFilters({ bookingType: type });
+                  }}
+                />
+              </motion.div>
+
+              {/* Lazy-loaded Search Pill - Only loads heavy components when needed */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+              >
+                <VenvlSearchPill
+                  onSearch={handleSearch}
+                  initialFilters={searchFilters}
+                />
+              </motion.div>
 
               {/* Advanced Filters Button with Active Filter Count */}
               <div className='flex justify-center gap-3'>

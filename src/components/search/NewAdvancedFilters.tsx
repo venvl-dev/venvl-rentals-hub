@@ -89,7 +89,7 @@ const NewAdvancedFilters = ({
       initialBookingType: initialFilters.bookingType
     });
 
-    if (!priceLoading && dbPriceRange && dbPriceRange.min > 0) {
+    if (!priceLoading && dbPriceRange && dbPriceRange.min >= 0 && dbPriceRange.max > 0) {
       // Always use database range when booking type changes, regardless of customization
       const shouldUpdate = !isPriceRangeCustomized || initialFilters.bookingType !== bookingType;
 
@@ -183,23 +183,19 @@ const NewAdvancedFilters = ({
 
   // Helper function to check if user has made selections beyond just booking type
   const hasOtherActiveFilters = useCallback(() => {
-    if (!dbPriceRange) return false;
-
     return (
       selectedPropertyTypes.length > 0 ||
       selectedAmenities.length > 0 ||
       bedrooms !== null ||
       bathrooms !== null ||
-      priceRange[0] !== dbPriceRange.min ||
-      priceRange[1] !== dbPriceRange.max
+      isPriceRangeCustomized
     );
   }, [
     selectedPropertyTypes,
     selectedAmenities,
     bedrooms,
     bathrooms,
-    priceRange,
-    dbPriceRange,
+    isPriceRangeCustomized,
   ]);
 
   const handleApply = useCallback(() => {
@@ -207,12 +203,7 @@ const NewAdvancedFilters = ({
       // Only apply booking type if user has made explicit selections beyond just changing the type
       bookingType:
         bookingType !== 'flexible' && hasOtherActiveFilters() ? bookingType : null,
-      priceRange:
-        dbPriceRange &&
-        (priceRange[0] !== dbPriceRange.min ||
-          priceRange[1] !== dbPriceRange.max)
-          ? priceRange
-          : null,
+      priceRange: isPriceRangeCustomized ? priceRange : null,
       propertyTypes:
         selectedPropertyTypes.length > 0 ? selectedPropertyTypes : null,
       amenities: selectedAmenities.length > 0 ? selectedAmenities : null,
@@ -230,7 +221,7 @@ const NewAdvancedFilters = ({
     selectedAmenities,
     bedrooms,
     bathrooms,
-    dbPriceRange,
+    isPriceRangeCustomized,
     onApply,
     onClose,
     hasOtherActiveFilters,
@@ -250,15 +241,12 @@ const NewAdvancedFilters = ({
 
   // Memoized active filters check for better performance
   const hasActiveFilters = useMemo(() => {
-    if (!dbPriceRange) return false;
-
     const hasOtherFilters =
       selectedPropertyTypes.length > 0 ||
       selectedAmenities.length > 0 ||
       bedrooms !== null ||
       bathrooms !== null ||
-      priceRange[0] !== dbPriceRange.min ||
-      priceRange[1] !== dbPriceRange.max;
+      isPriceRangeCustomized;
 
     // Only consider booking type as active if there are other filters too
     return hasOtherFilters || (bookingType !== 'flexible' && hasOtherFilters);
@@ -268,8 +256,7 @@ const NewAdvancedFilters = ({
     selectedAmenities,
     bedrooms,
     bathrooms,
-    priceRange,
-    dbPriceRange,
+    isPriceRangeCustomized,
   ]);
 
   // Memoized price formatter
@@ -295,6 +282,7 @@ const NewAdvancedFilters = ({
         exit={{ opacity: 0 }}
         className='fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4'
         onClick={(e) => e.target === e.currentTarget && onClose()}
+        style={{ touchAction: 'manipulation' }}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -302,6 +290,7 @@ const NewAdvancedFilters = ({
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', duration: 0.5 }}
           className='bg-background rounded-2xl max-w-4xl w-full max-h-[90vh] shadow-2xl flex flex-col'
+          style={{ touchAction: 'manipulation' }}
         >
           {/* Header */}
           <div className='flex items-center justify-between p-6 border-b bg-muted/50 flex-shrink-0'>
@@ -370,21 +359,20 @@ const NewAdvancedFilters = ({
                   </div>
                 </div>
                 {!priceLoading && dbPriceRange && (
-                  <div className='px-3'>
+                  <div className='px-3 py-4' style={{ touchAction: 'manipulation' }}>
                     <Slider
                       value={priceRange}
                       onValueChange={handlePriceChange}
                       max={dbPriceRange.max}
                       min={dbPriceRange.min}
                       step={bookingType === 'monthly' ? 100 : 10}
-                      className='w-full'
+                      className='w-full py-3'
                     />
                     <div className='flex justify-between text-xs text-muted-foreground mt-2'>
                       <span>{formatPrice(dbPriceRange.min)}</span>
                       <span>{formatPrice(dbPriceRange.max)}</span>
                     </div>
-                    {(priceRange[0] !== dbPriceRange.min ||
-                      priceRange[1] !== dbPriceRange.max) && (
+                    {isPriceRangeCustomized && (
                       <div className='text-xs text-primary mt-1 text-center'>
                         Custom range selected
                       </div>
@@ -535,11 +523,7 @@ const NewAdvancedFilters = ({
                     selectedAmenities.length > 0 ? 1 : 0,
                     bedrooms !== null ? 1 : 0,
                     bathrooms !== null ? 1 : 0,
-                    dbPriceRange &&
-                    (priceRange[0] !== dbPriceRange.min ||
-                      priceRange[1] !== dbPriceRange.max)
-                      ? 1
-                      : 0,
+                    isPriceRangeCustomized ? 1 : 0,
                   ].reduce((a, b) => a + b, 0)}{' '}
                   filters active
                 </Badge>

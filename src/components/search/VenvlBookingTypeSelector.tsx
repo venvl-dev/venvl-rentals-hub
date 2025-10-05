@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { useMemo, useCallback, useState, useEffect, memo } from 'react';
+import { useMemo, useCallback, useState, useEffect, memo, useRef } from 'react';
 
 interface BookingTypeSelectorProps {
   selectedType: 'daily' | 'monthly' | 'flexible';
@@ -13,10 +13,16 @@ const VenvlBookingTypeSelector = ({
   // Local state for immediate visual feedback
   const [localSelectedType, setLocalSelectedType] = useState(selectedType);
 
+  // Debounce expensive operations
+  const debounceRef = useRef<NodeJS.Timeout>();
+  const lastCallRef = useRef(selectedType);
+
   // Sync with parent when selectedType changes
   useEffect(() => {
     setLocalSelectedType(selectedType);
+    lastCallRef.current = selectedType;
   }, [selectedType]);
+
   // Memoize booking types to prevent recreation on every render
   const bookingTypes = useMemo(() => [
     {
@@ -36,13 +42,36 @@ const VenvlBookingTypeSelector = ({
     },
   ], []);
 
-  // Memoize the click handler with immediate visual feedback
+  // Optimized click handler with debouncing for smooth interaction
   const handleTypeClick = useCallback((type: 'daily' | 'monthly' | 'flexible') => {
+    // Skip if already selected to prevent unnecessary operations
+    if (type === lastCallRef.current) {
+      return;
+    }
+
     // Update local state immediately for instant visual feedback
     setLocalSelectedType(type);
-    // Call parent callback (which may trigger heavy operations)
-    onTypeChange(type);
+    lastCallRef.current = type;
+
+    // Clear previous debounce
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+
+    // Debounce the expensive parent callback to prevent rapid-fire updates
+    debounceRef.current = setTimeout(() => {
+      onTypeChange(type);
+    }, 100); // Small delay for smooth UX while preventing excessive operations
   }, [onTypeChange]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   return (
     <div className='w-full max-w-md mx-auto'>
@@ -57,7 +86,7 @@ const VenvlBookingTypeSelector = ({
                 handleTypeClick(type.id as 'daily' | 'monthly' | 'flexible')
               }
               className={`
-                flex-1 h-9 px-3 text-xs font-medium rounded-md
+                flex-1 h-9 px-3 text-xs font-medium rounded-md transition-all duration-75 ease-out
                 ${
                   localSelectedType === type.id
                     ? 'bg-black text-white shadow-sm hover:bg-black hover:text-white'
@@ -82,7 +111,7 @@ const VenvlBookingTypeSelector = ({
                 handleTypeClick(type.id as 'daily' | 'monthly' | 'flexible')
               }
               className={`
-                flex-1 h-8 px-2 text-xs font-medium rounded-md
+                flex-1 h-8 px-2 text-xs font-medium rounded-md transition-all duration-75 ease-out
                 ${
                   localSelectedType === type.id
                     ? 'bg-black text-white shadow-sm hover:bg-black hover:text-white'

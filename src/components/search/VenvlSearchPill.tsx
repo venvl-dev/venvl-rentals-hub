@@ -54,9 +54,12 @@ const VenvlSearchPill = ({
     initialFilters?.guests,
   ]);
 
-  // Trigger search when specific filter properties change (except bookingType for immediate response)
+  // Trigger search when specific filter properties change (exclude bookingType to prevent heavy operations)
   useEffect(() => {
-    onSearch(filters);
+    // Only trigger search for meaningful filter changes, not booking type changes
+    if (filters.location || filters.checkIn || filters.checkOut || filters.guests > 1) {
+      onSearch(filters);
+    }
   }, [
     filters.location,
     filters.guests,
@@ -114,8 +117,10 @@ const VenvlSearchPill = ({
 
     setFilters(updatedFilters);
 
-    // Always trigger search immediately for better UX
-    onSearch(updatedFilters);
+    // Only trigger search for non-booking-type changes to prevent heavy operations
+    if (!newFilters.bookingType) {
+      onSearch(updatedFilters);
+    }
   }, [filters, onSearch]);
 
   const getDateDisplayText = () => {
@@ -154,20 +159,6 @@ const VenvlSearchPill = ({
   if (isMobile) {
     return (
       <div className='w-full px-4'>
-        {/* Mobile Booking Type Selector */}
-        <motion.div
-          className='mb-6'
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <VenvlBookingTypeSelector
-            selectedType={filters.bookingType}
-            onTypeChange={(type) => {
-              updateFilters({ bookingType: type });
-            }}
-          />
-        </motion.div>
 
         {/* Mobile Compact Search Bar */}
         <motion.div
@@ -329,22 +320,6 @@ const VenvlSearchPill = ({
 
   return (
     <div className='w-full max-w-4xl mx-auto relative'>
-      {/* Desktop Booking Type Selector */}
-      <motion.div
-        className='mb-6'
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <VenvlBookingTypeSelector
-          selectedType={filters.bookingType}
-          onTypeChange={(type) => {
-            // Always call updateFilters to ensure proper refresh, even if the type seems the same
-            // This handles cases where the component state might be out of sync
-            updateFilters({ bookingType: type });
-          }}
-        />
-      </motion.div>
 
       {/* Desktop Search Bar */}
       <motion.div
