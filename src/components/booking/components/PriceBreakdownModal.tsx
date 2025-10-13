@@ -25,13 +25,18 @@ interface PriceBreakdownModalProps {
     totalPrice: number;
     duration?: number;
     guests: number;
+    promo_code_id?: string | null;
   };
   currency?: string;
+  promoCodeDiscount?: number;
+  promoCodeValue?: number;
 }
 
 const PriceBreakdownModal = ({
   booking,
   currency = 'EGP',
+  promoCodeDiscount = 0,
+  promoCodeValue = 0,
 }: PriceBreakdownModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -48,7 +53,8 @@ const PriceBreakdownModal = ({
     : booking.totalPrice;
   const serviceFee = Math.round(totalAmount * 0.1); // 10% service fee on total
   const taxes = Math.round(totalAmount * 0.05); // 5% taxes on total
-  const finalTotal = totalAmount + serviceFee + taxes;
+  const subtotal = totalAmount + serviceFee + taxes;
+  const finalTotal = subtotal - promoCodeDiscount;
 
   // But actual payment per month
   const monthlyPayment = isMonthly ? monthlyPrice : booking.totalPrice;
@@ -147,6 +153,29 @@ const PriceBreakdownModal = ({
               </div>
             </div>
 
+            {/* Subtotal before discount */}
+            {promoCodeDiscount > 0 && (
+              <>
+                <Separator />
+                <div className='flex justify-between'>
+                  <div className='text-sm text-gray-600'>Subtotal</div>
+                  <div className='text-sm font-medium'>
+                    {currency} {subtotal.toLocaleString()}
+                  </div>
+                </div>
+
+                {/* Promo Code Discount */}
+                <div className='flex justify-between text-green-600'>
+                  <div className='text-sm font-medium'>
+                    Promo code discount ({promoCodeValue}% OFF)
+                  </div>
+                  <div className='text-sm font-medium'>
+                    -{currency} {promoCodeDiscount.toLocaleString()}
+                  </div>
+                </div>
+              </>
+            )}
+
             <Separator />
 
             {/* Total Amount */}
@@ -154,6 +183,11 @@ const PriceBreakdownModal = ({
               <span>Total Amount</span>
               <span className='text-lg'>
                 {currency} {finalTotal.toLocaleString()}
+                {promoCodeDiscount > 0 && (
+                  <span className='block text-sm text-gray-500 line-through font-normal mt-1'>
+                    {currency} {subtotal.toLocaleString()}
+                  </span>
+                )}
               </span>
             </div>
 

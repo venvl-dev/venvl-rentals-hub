@@ -12,15 +12,20 @@ interface PriceBreakdownProps {
     bookingType: 'daily' | 'monthly';
     totalPrice: number;
     duration?: number;
+    promo_code_id?: string | null;
   };
   currency?: string;
   showDetailed?: boolean;
+  promoCodeDiscount?: number;
+  promoCodeValue?: number;
 }
 
 const PriceBreakdown = ({
   booking,
   currency = 'EGP',
   showDetailed = true,
+  promoCodeDiscount = 0,
+  promoCodeValue = 0,
 }: PriceBreakdownProps) => {
   const nights = differenceInDays(booking.checkOut, booking.checkIn);
 
@@ -39,9 +44,14 @@ const PriceBreakdown = ({
   const taxes = isMonthly
     ? monthlyTaxes
     : Math.round(booking.totalPrice * 0.05);
-  const finalTotal = isMonthly
+
+  // Calculate subtotal before discount
+  const subtotal = isMonthly
     ? monthlyTotal
     : booking.totalPrice + serviceFee + taxes;
+
+  // Apply promo code discount
+  const finalTotal = subtotal - promoCodeDiscount;
 
   const unitPrice =
     booking.bookingType === 'daily'
@@ -100,6 +110,28 @@ const PriceBreakdown = ({
           </span>
         </div>
 
+        {/* Subtotal before discount */}
+        {promoCodeDiscount > 0 && (
+          <div className='flex justify-between'>
+            <span className='text-sm text-gray-600'>Subtotal</span>
+            <span className='font-medium'>
+              {currency} {subtotal.toLocaleString()}
+            </span>
+          </div>
+        )}
+
+        {/* Promo Code Discount */}
+        {promoCodeDiscount > 0 && (
+          <div className='flex justify-between text-green-600'>
+            <span className='text-sm font-medium'>
+              Promo code discount ({promoCodeValue}% OFF)
+            </span>
+            <span className='font-medium'>
+              -{currency} {promoCodeDiscount.toLocaleString()}
+            </span>
+          </div>
+        )}
+
         <Separator className='my-4' />
 
         {/* Total */}
@@ -109,6 +141,11 @@ const PriceBreakdown = ({
           </span>
           <span>
             {currency} {finalTotal.toLocaleString()}
+            {promoCodeDiscount > 0 && (
+              <span className='block text-sm text-gray-500 line-through font-normal mt-1'>
+                {currency} {subtotal.toLocaleString()}
+              </span>
+            )}
           </span>
         </div>
 

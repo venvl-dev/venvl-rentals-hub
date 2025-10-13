@@ -17,6 +17,7 @@ interface BookingData {
   booking_type: string;
   duration_months?: number;
   status: BookingStatus;
+  promo_code_id?: string | null;
 }
 
 interface ConfirmedBooking extends BookingData {
@@ -118,6 +119,7 @@ export const useBookingFlow = ({ user, propertyId }: UseBookingFlowProps) => {
           booking_type: bookingDetails.booking_type || 'daily',
           duration_months: bookingDetails.duration_months,
           status: bookingDetails.status || 'pending',
+          promo_code_id: bookingDetails.promo_code_id,
         };
 
         // Remove undefined values to avoid database issues
