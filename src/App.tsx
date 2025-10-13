@@ -12,6 +12,7 @@ import Index from './pages/Index';
 import Auth from './pages/Auth';
 import PropertyListing from './pages/PropertyListing';
 import NotFound from './pages/NotFound';
+import ApplyPromoCode from './pages/ApplyPromoCode';
 
 // Lazy-loaded components (code splitting)
 const Profile = lazy(() => import('./pages/Profile'));
@@ -117,6 +118,13 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
+                  <Route
+                    path='/apply-promo/:code'
+                    element={<ApplyPromoCode />}
+                  />
+
+                  <Route path='/apply-promo' element={<ApplyPromoCode />} />
 
                   {/* === HOST ROUTES (domain.com/host/*) === */}
                   <Route path='/host/signup' element={<HostSignup />} />

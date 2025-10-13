@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import {
   Card,
@@ -70,6 +70,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     role: role || 'guest',
   });
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Clear errors when user starts typing
   const clearError = (field: keyof FormErrors) => {
@@ -86,6 +87,18 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
   // Centralized role-based redirection
   const redirectByRole = (userRole: AuthRole) => {
     console.log('Redirecting user with role:', userRole);
+
+    // Check for redirect parameter first
+    const redirectTo = searchParams.get('redirect');
+    if (redirectTo) {
+      try {
+        const decodedRedirect = decodeURIComponent(redirectTo);
+        navigate(decodedRedirect);
+        return;
+      } catch (error) {
+        console.error('Invalid redirect URL:', error);
+      }
+    }
 
     // Ensure role is one of the valid enum values
     const validRoles: AuthRole[] = ['guest', 'host', 'super_admin'];
