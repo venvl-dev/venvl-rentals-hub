@@ -23,6 +23,7 @@ import {
   AlertCircle,
   Eye,
   FileText,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -35,6 +36,7 @@ interface DashboardStats {
   pendingApprovals: number;
   activeUsers: number;
   monthlyGrowth: number;
+  pendingBusinessVerifications: number;
 }
 
 interface RecentActivity {
@@ -59,6 +61,7 @@ const SuperAdminPanel = () => {
     pendingApprovals: 0,
     activeUsers: 0,
     monthlyGrowth: 0,
+    pendingBusinessVerifications: 0,
   });
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
 
@@ -77,6 +80,7 @@ const SuperAdminPanel = () => {
         bookingsResult,
         pendingPropertiesResult,
         activeUsersResult,
+        pendingBusinessVerificationsResult,
       ] = await Promise.all([
         supabase.from('profiles').select('*', { count: 'exact', head: true }),
         supabase.from('properties').select('*', { count: 'exact', head: true }),
@@ -89,6 +93,10 @@ const SuperAdminPanel = () => {
           .from('profiles')
           .select('*', { count: 'exact', head: true })
           .eq('is_active', true),
+        supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('business_verification_status', 'pending'),
       ]);
 
       const totalRevenue =
@@ -109,6 +117,7 @@ const SuperAdminPanel = () => {
         pendingApprovals: pendingPropertiesResult.count || 0,
         activeUsers: activeUsersResult.count || 0,
         monthlyGrowth: 12.5, // Mock data
+        pendingBusinessVerifications: pendingBusinessVerificationsResult.count || 0,
       });
 
       // Load recent activity (simplified for now)
@@ -236,7 +245,7 @@ const SuperAdminPanel = () => {
         </div>
 
         {/* Quick Actions */}
-        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8'>
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8'>
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center space-x-2'>
@@ -289,6 +298,36 @@ const SuperAdminPanel = () => {
                     className='w-full justify-center'
                   >
                     {stats.pendingApprovals} pending approvals
+                  </Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className='flex items-center space-x-2'>
+                <Building2 className='h-5 w-5' />
+                <span>Business Verification</span>
+              </CardTitle>
+              <CardDescription>
+                Review host business documents
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className='space-y-2'>
+                <Link to='/admin/business-verification'>
+                  <Button variant='outline' className='w-full justify-start'>
+                    <CheckCircle className='h-4 w-4 mr-2' />
+                    Review Verifications
+                  </Button>
+                </Link>
+                {stats.pendingBusinessVerifications > 0 && (
+                  <Badge
+                    variant='destructive'
+                    className='w-full justify-center'
+                  >
+                    {stats.pendingBusinessVerifications} pending review
                   </Badge>
                 )}
               </div>

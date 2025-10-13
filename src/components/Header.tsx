@@ -244,6 +244,16 @@ const Header = () => {
                     </div>
                     <DropdownMenuSeparator />
 
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to='/profile'
+                        className='flex items-center space-x-2'
+                      >
+                        <UserIcon className='h-4 w-4' />
+                        <span>My Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+
                     {userRole === 'guest' && (
                       <DropdownMenuItem asChild>
                         <Link
@@ -298,7 +308,7 @@ const Header = () => {
                     Sign In
                   </Button>
                 </Link>
-                <Link to='/auth'>
+                <Link to='/auth?mode=signup'>
                   <Button className='bg-black hover:bg-gray-800 text-white font-medium px-6'>
                     Sign Up
                   </Button>

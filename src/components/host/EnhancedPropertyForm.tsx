@@ -25,6 +25,7 @@ import {
   DollarSign,
   Settings,
   ArrowLeft,
+  ArrowRight,
   Plus,
   X,
   Upload,
@@ -47,6 +48,17 @@ import {
   cleanAmenityIds,
   getAmenitiesByCategory,
 } from '@/lib/amenitiesUtils';
+import {
+  useCountries,
+  useCitiesByCountry,
+  useStatesByCountry,
+  findCountryByName,
+  findCityByName,
+  findStateByName,
+  type Country,
+  type City,
+  type State,
+} from '@/hooks/useCountriesAndCities';
 import {
   Dropzone,
   DropzoneEmptyState,
@@ -79,10 +91,10 @@ const createPropertySchema = (rentalType: RentalType) => {
       'Twinhouse',
       'Penthouse',
     ]),
-    address: z.string().min(1, 'Address is required'),
+    address: z.string().min(1, 'Project name or address is required'),
     city: z.string().min(1, 'City is required'),
     state: z.string().optional(),
-    country: z.string().default('US'),
+    country: z.string().min(1, 'Country is required'),
     postal_code: z.string().optional(),
     rental_type: z.enum(['daily', 'monthly', 'both']),
     bedrooms: z.number().min(0),
@@ -160,13 +172,108 @@ const EnhancedPropertyForm = ({
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadingVideos, setUploadingVideos] = useState(false);
   const [activeTab, setActiveTab] = useState('basic');
-  const [currentRentalType, setCurrentRentalType] =
-    useState<RentalType>('daily');
+
+  // Define tab order for navigation
+  const tabOrder = ['basic', 'pricing', 'details', 'media'];
+  const currentTabIndex = tabOrder.indexOf(activeTab);
+  const isFirstTab = currentTabIndex === 0;
+  const isLastTab = currentTabIndex === tabOrder.length - 1;
+
+  // Navigation functions
+  const goToNextTab = () => {
+    if (!isLastTab) {
+      setActiveTab(tabOrder[currentTabIndex + 1]);
+    }
+  };
+
+  const goToPreviousTab = () => {
+    if (!isFirstTab) {
+      setActiveTab(tabOrder[currentTabIndex - 1]);
+    }
+  };
 
   // Get current rental type for existing property or default for new property
   const initialRentalType = editingProperty
     ? getRentalType(editingProperty as PropertyRentalData)
     : 'daily';
+
+  const [currentRentalType, setCurrentRentalType] =
+    useState<RentalType>(initialRentalType);
+
+  // State for country/city/state dropdowns
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [selectedCity, setSelectedCity] = useState<City | null>(null);
+  const [selectedState, setSelectedState] = useState<State | null>(null);
+
+  // Fetch countries, cities, and states from database
+  const { data: countries = [], isLoading: countriesLoading, error: countriesError } = useCountries();
+  const { data: cities = [], isLoading: citiesLoading, error: citiesError } = useCitiesByCountry(
+    selectedCountry?.id || 1, // Default to Egypt (id: 1) for testing
+  );
+  const { data: states = [], isLoading: statesLoading, error: statesError } = useStatesByCountry(
+    selectedCountry?.id || 1, // Default to Egypt (id: 1) for testing
+  );
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🌍 Countries:', countries);
+    console.log('🌍 Countries loading:', countriesLoading);
+    console.log('🌍 Countries error:', countriesError);
+    console.log('🏙️ Cities:', cities);
+    console.log('🏙️ Cities loading:', citiesLoading);
+    console.log('🏙️ Cities error:', citiesError);
+    console.log('🏛️ States:', states);
+    console.log('🏛️ States loading:', statesLoading);
+    console.log('🏛️ States error:', statesError);
+    console.log('🌍 Selected country:', selectedCountry);
+    console.log('🏙️ Selected city:', selectedCity);
+    console.log('🏛️ Selected state:', selectedState);
+  }
+
+  // Keyboard navigation support
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        if (event.key === 'ArrowRight' && !isLastTab) {
+          event.preventDefault();
+          goToNextTab();
+        } else if (event.key === 'ArrowLeft' && !isFirstTab) {
+          event.preventDefault();
+          goToPreviousTab();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isFirstTab, isLastTab, goToNextTab, goToPreviousTab]);
+
+  // Initialize country and city selections when editing existing property
+  useEffect(() => {
+    if (editingProperty && countries.length > 0) {
+      const country = findCountryByName(countries, editingProperty.country || '');
+      if (country) {
+        setSelectedCountry(country);
+      }
+    }
+  }, [editingProperty, countries]);
+
+  useEffect(() => {
+    if (editingProperty && cities.length > 0 && selectedCountry) {
+      const city = findCityByName(cities, editingProperty.city || '');
+      if (city) {
+        setSelectedCity(city);
+      }
+    }
+  }, [editingProperty, cities, selectedCountry]);
+
+  useEffect(() => {
+    if (editingProperty && states.length > 0 && selectedCountry) {
+      const state = findStateByName(states, editingProperty.state || '');
+      if (state) {
+        setSelectedState(state);
+      }
+    }
+  }, [editingProperty, states, selectedCountry]);
   if (process.env.NODE_ENV !== 'production') {
     // Set initial rental type
   }
@@ -195,7 +302,7 @@ const EnhancedPropertyForm = ({
       address: editingProperty?.address || '',
       city: editingProperty?.city || '',
       state: editingProperty?.state || '',
-      country: editingProperty?.country || 'US',
+      country: editingProperty?.country || '',
       postal_code: editingProperty?.postal_code || '',
       rental_type: initialRentalType as RentalType,
       bedrooms: editingProperty?.bedrooms || 1,
@@ -225,7 +332,8 @@ const EnhancedPropertyForm = ({
   const watchedAmenities = form.watch('amenities') || [];
 
   if (process.env.NODE_ENV !== 'production') {
-    // Watch amenities changes
+    console.log('🎯 EnhancedPropertyForm: watchedRentalType:', watchedRentalType);
+    console.log('🎯 EnhancedPropertyForm: currentRentalType:', currentRentalType);
   }
 
   // Update schema when rental type changes
@@ -244,6 +352,21 @@ const EnhancedPropertyForm = ({
       } else if (watchedRentalType === 'monthly') {
         currentValues.price_per_night = undefined;
         currentValues.min_nights = undefined;
+      } else if (watchedRentalType === 'both') {
+        // For 'both' type, ensure both pricing fields are available
+        // Don't clear any pricing fields - user needs to set both
+        if (!currentValues.price_per_night) {
+          currentValues.price_per_night = undefined;
+        }
+        if (!currentValues.monthly_price) {
+          currentValues.monthly_price = undefined;
+        }
+        if (!currentValues.min_nights) {
+          currentValues.min_nights = 1;
+        }
+        if (!currentValues.min_months) {
+          currentValues.min_months = 1;
+        }
       }
 
       form.reset(currentValues);
@@ -285,7 +408,7 @@ const EnhancedPropertyForm = ({
         address: property.address || '',
         city: property.city || '',
         state: property.state || '',
-        country: property.country || 'US',
+        country: property.country || '',
         postal_code: property.postal_code || '',
         rental_type: getRentalType(
           property as PropertyRentalData,
@@ -513,7 +636,7 @@ const EnhancedPropertyForm = ({
         address: data.address,
         city: data.city,
         state: data.state,
-        country: data.country || 'US',
+        country: data.country,
         postal_code: data.postal_code,
         rental_type: data.rental_type,
         bedrooms: data.bedrooms,
@@ -602,7 +725,9 @@ const EnhancedPropertyForm = ({
 
   // Get rental type badge for current selection
   const getRentalTypeBadgeForForm = (type: RentalType) => {
-    return getRentalTypeBadge(type);
+    // Convert rental type to booking types array for the badge function
+    const bookingTypes = type === 'both' ? ['daily', 'monthly'] : [type];
+    return getRentalTypeBadge(bookingTypes);
   };
 
   return (
@@ -779,11 +904,11 @@ const EnhancedPropertyForm = ({
 
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
                       <div className='space-y-2'>
-                        <Label htmlFor='address'>Address *</Label>
+                        <Label htmlFor='address'>Project Name or Address *</Label>
                         <Input
                           id='address'
                           {...form.register('address')}
-                          placeholder='123 Main Street'
+                          placeholder='e.g., Palm Hills Compound or 123 Main Street'
                           className='rounded-xl border-gray-200 focus:border-black'
                         />
                         {form.formState.errors.address && (
@@ -794,12 +919,26 @@ const EnhancedPropertyForm = ({
                       </div>
                       <div className='space-y-2'>
                         <Label htmlFor='city'>City *</Label>
-                        <Input
-                          id='city'
-                          {...form.register('city')}
-                          placeholder='New York'
-                          className='rounded-xl border-gray-200 focus:border-black'
-                        />
+                        <Select
+                          value={selectedCity?.name || ''}
+                          onValueChange={(value) => {
+                            const city = cities.find(c => c.name === value);
+                            setSelectedCity(city || null);
+                            form.setValue('city', value);
+                          }}
+                          disabled={citiesLoading}
+                        >
+                          <SelectTrigger className='rounded-xl border-gray-200 focus:border-black'>
+                            <SelectValue placeholder="Select a city" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {cities.map((city) => (
+                              <SelectItem key={city.id} value={city.name}>
+                                {city.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         {form.formState.errors.city && (
                           <p className='text-red-500 text-sm'>
                             {form.formState.errors.city.message}
@@ -810,22 +949,56 @@ const EnhancedPropertyForm = ({
 
                     <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
                       <div className='space-y-2'>
-                        <Label htmlFor='state'>State</Label>
-                        <Input
-                          id='state'
-                          {...form.register('state')}
-                          placeholder='NY'
-                          className='rounded-xl border-gray-200 focus:border-black'
-                        />
+                        <Label htmlFor='state'>State/Province</Label>
+                        <Select
+                          value={selectedState?.name || ''}
+                          onValueChange={(value) => {
+                            const state = states.find(s => s.name === value);
+                            setSelectedState(state || null);
+                            form.setValue('state', value);
+                          }}
+                          disabled={statesLoading}
+                        >
+                          <SelectTrigger className='rounded-xl border-gray-200 focus:border-black'>
+                            <SelectValue placeholder="Select a state" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {states.map((state) => (
+                              <SelectItem key={state.id} value={state.name}>
+                                {state.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className='space-y-2'>
-                        <Label htmlFor='country'>Country</Label>
-                        <Input
-                          id='country'
-                          {...form.register('country')}
-                          placeholder='US'
-                          className='rounded-xl border-gray-200 focus:border-black'
-                        />
+                        <Label htmlFor='country'>Country *</Label>
+                        <Select
+                          value={selectedCountry?.name || ''}
+                          onValueChange={(value) => {
+                            const country = countries.find(c => c.name === value);
+                            setSelectedCountry(country || null);
+                            setSelectedCity(null); // Reset city when country changes
+                            setSelectedState(null); // Reset state when country changes
+                            form.setValue('country', country?.name || '');
+                            form.setValue('city', ''); // Clear city field
+                            form.setValue('state', ''); // Clear state field
+                          }}
+                          disabled={countriesLoading}
+                        >
+                          <SelectTrigger className='rounded-xl border-gray-200 focus:border-black'>
+                            <SelectValue placeholder={
+                              countriesLoading ? 'Loading countries...' : 'Select a country'
+                            } />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {countries.map((country) => (
+                              <SelectItem key={country.id} value={country.name}>
+                                {country.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className='space-y-2'>
                         <Label htmlFor='postal_code'>Postal Code</Label>
@@ -1064,11 +1237,11 @@ const EnhancedPropertyForm = ({
                     <div className='space-y-4'>
                       <Label>Amenities</Label>
                       <div className='space-y-6'>
-                        {/* الأساسيات */}
+                        {/* Essentials */}
                         <div className='space-y-3'>
                           <div className='flex items-center gap-2'>
                             <h4 className='font-medium text-sm text-gray-700'>
-                              الأساسيات
+                              Essentials
                             </h4>
                             <div className='flex-1 h-px bg-gray-200'></div>
                           </div>
@@ -1106,11 +1279,11 @@ const EnhancedPropertyForm = ({
                           </div>
                         </div>
 
-                        {/* الراحة */}
+                        {/* Comfort */}
                         <div className='space-y-3'>
                           <div className='flex items-center gap-2'>
                             <h4 className='font-medium text-sm text-gray-700'>
-                              الراحة
+                              Comfort
                             </h4>
                             <div className='flex-1 h-px bg-gray-200'></div>
                           </div>
@@ -1148,11 +1321,11 @@ const EnhancedPropertyForm = ({
                           </div>
                         </div>
 
-                        {/* الترفيه */}
+                        {/* Entertainment */}
                         <div className='space-y-3'>
                           <div className='flex items-center gap-2'>
                             <h4 className='font-medium text-sm text-gray-700'>
-                              الترفيه
+                              Entertainment
                             </h4>
                             <div className='flex-1 h-px bg-gray-200'></div>
                           </div>
@@ -1479,25 +1652,57 @@ const EnhancedPropertyForm = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <Button
-                type='button'
-                variant='outline'
-                onClick={onCancel}
-                className='rounded-xl px-8'
-              >
-                Cancel
-              </Button>
-              <Button
-                type='submit'
-                disabled={isSubmitting}
-                className='rounded-xl px-8 bg-black text-white hover:bg-gray-800'
-              >
-                {isSubmitting
-                  ? 'Saving...'
-                  : editingProperty
-                    ? 'Update Property'
-                    : 'Create Property'}
-              </Button>
+              <div className='flex gap-3'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={onCancel}
+                  className='rounded-xl px-8'
+                >
+                  Cancel
+                </Button>
+                {!isFirstTab && (
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={goToPreviousTab}
+                    className='rounded-xl px-8'
+                  >
+                    <ArrowLeft className='h-4 w-4 mr-2' />
+                    Previous
+                  </Button>
+                )}
+              </div>
+
+              <div className='flex items-center gap-3'>
+                {/* Progress indicator */}
+                <span className='text-sm text-gray-500'>
+                  Step {currentTabIndex + 1} of {tabOrder.length}
+                </span>
+
+                {isLastTab ? (
+                  <Button
+                    type='submit'
+                    disabled={isSubmitting}
+                    className='rounded-xl px-8 bg-black text-white hover:bg-gray-800'
+                  >
+                    {isSubmitting
+                      ? 'Saving...'
+                      : editingProperty
+                        ? 'Update Property'
+                        : 'Create Property'}
+                  </Button>
+                ) : (
+                  <Button
+                    type='button'
+                    onClick={goToNextTab}
+                    className='rounded-xl px-8 bg-black text-white hover:bg-gray-800'
+                  >
+                    Next
+                    <ArrowRight className='h-4 w-4 ml-2' />
+                  </Button>
+                )}
+              </div>
             </motion.div>
           </Tabs>
         </form>

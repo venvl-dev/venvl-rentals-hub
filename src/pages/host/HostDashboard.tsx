@@ -4,7 +4,7 @@ import BookingsList from '@/components/host/BookingsList';
 import CalendarTab from '@/components/host/CalendarTab';
 import EnhancedPropertyForm from '@/components/host/EnhancedPropertyForm';
 import PropertiesTab from '@/components/host/PropertiesTab';
-import SettingsTab from '@/components/host/SettingsTab';
+import HostProfileForm from '@/components/host/HostProfileForm';
 import { Button } from '@/components/ui/button';
 import DeleteConfirmationModal from '@/components/ui/delete-confirmation-modal';
 import PauseConfirmationModal from '@/components/ui/pause-confirmation-modal';
@@ -15,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { calculatePropertyStats, PropertySaturation } from '@/lib/propertUtils';
 import { Property } from '@/types/property';
 import { format, isBefore, subYears } from 'date-fns';
-import { BarChart3, Calendar, Home, Plus, Settings, Users } from 'lucide-react';
+import { BarChart3, Calendar, Home, Plus, User, Users } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -97,7 +97,6 @@ const HostDashboard = () => {
   }, [properties, user.id]);
 
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [isFixingAmenities, setIsFixingAmenities] = useState(false);
   const [loadingStates, setLoadingStates] = useState<{
     [key: string]: { action: string; loading: boolean };
   }>({});
@@ -559,11 +558,11 @@ const HostDashboard = () => {
               Analytics
             </TabsTrigger>
             <TabsTrigger
-              value='settings'
+              value='profile'
               className='flex items-center gap-2 rounded-xl'
             >
-              <Settings className='h-4 w-4' />
-              Settings
+              <User className='h-4 w-4' />
+              Profile
             </TabsTrigger>
           </TabsList>
 
@@ -598,12 +597,8 @@ const HostDashboard = () => {
             <AnalyticsTab />
           </TabsContent>
 
-          <TabsContent value='settings'>
-            <SettingsTab
-              isFixingAmenities={isFixingAmenities}
-              setIsFixingAmenities={setIsFixingAmenities}
-              refetchProperties={refetchProperties}
-            />
+          <TabsContent value='profile'>
+            <HostProfileForm />
           </TabsContent>
         </Tabs>
       </div>

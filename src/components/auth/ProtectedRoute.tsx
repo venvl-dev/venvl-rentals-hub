@@ -222,6 +222,7 @@ const ProtectedRoute = ({
       setLoading(false);
     }
   };
+  
 
   if (authLoading || loading) {
     return (

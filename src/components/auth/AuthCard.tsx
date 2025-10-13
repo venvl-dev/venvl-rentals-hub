@@ -43,6 +43,7 @@ interface FormData {
   password: string;
   firstName: string;
   lastName: string;
+  companyName: string;
   role: AuthRole;
 }
 
@@ -51,6 +52,7 @@ interface FormErrors {
   password?: string;
   firstName?: string;
   lastName?: string;
+  companyName?: string;
   role?: string;
   general?: string;
 }
@@ -64,6 +66,7 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
     password: '',
     firstName: '',
     lastName: '',
+    companyName: '',
     role: role || 'guest',
   });
   const navigate = useNavigate();
@@ -147,11 +150,22 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
           } else {
             validateInput(formData.lastName, 50);
           }
+
+          // Company name validation for hosts
+          if (formData.role === 'host') {
+            if (!formData.companyName.trim()) {
+              newErrors.companyName = 'Company name is required for hosts';
+            } else {
+              validateInput(formData.companyName, 100);
+            }
+          }
         } catch (inputError: any) {
           if (inputError.message.includes('First name')) {
             newErrors.firstName = inputError.message;
           } else if (inputError.message.includes('Last name')) {
             newErrors.lastName = inputError.message;
+          } else if (inputError.message.includes('Company name')) {
+            newErrors.companyName = inputError.message;
           } else {
             newErrors.general =
               'Invalid input detected. Please check your entries.';
@@ -278,13 +292,20 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
 
   const createUserProfile = async (userId: string): Promise<boolean> => {
     try {
-      const { error } = await supabase.from('profiles').upsert({
+      const profileData: any = {
         id: userId,
         first_name: formData.firstName.trim(),
         last_name: formData.lastName.trim(),
         email: formData.email.trim().toLowerCase(),
         role: formData.role,
-      });
+      };
+
+      // Add company name for hosts if provided
+      if (formData.role === 'host' && formData.companyName.trim()) {
+        profileData.company_name = formData.companyName.trim();
+      }
+
+      const { error } = await supabase.from('profiles').upsert(profileData);
 
       if (error) {
         console.error('Error creating profile:', error);
@@ -322,15 +343,22 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
 
       console.log('Creating account with role:', formData.role);
 
+      const userData: any = {
+        first_name: formData.firstName.trim(),
+        last_name: formData.lastName.trim(),
+        role: formData.role,
+      };
+
+      // Add company name for hosts
+      if (formData.role === 'host' && formData.companyName.trim()) {
+        userData.company_name = formData.companyName.trim();
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
         options: {
-          data: {
-            first_name: formData.firstName.trim(),
-            last_name: formData.lastName.trim(),
-            role: formData.role,
-          },
+          data: userData,
         },
       });
 
@@ -584,6 +612,42 @@ const AuthCard = ({ mode, onToggleMode, role }: AuthCardProps) => {
                     </p>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Company Name Field for Host Signup */}
+            {mode === 'signup' && formData.role === 'host' && (
+              <div>
+                <Label
+                  htmlFor='companyName'
+                  className='text-sm font-medium text-gray-700'
+                >
+                  Company Name <span className='text-red-500'>*</span>
+                </Label>
+                <div className='mt-1 relative'>
+                  <Building2 className='absolute left-3 top-3 h-4 w-4 text-gray-400' />
+                  <Input
+                    id='companyName'
+                    type='text'
+                    value={formData.companyName}
+                    onChange={(e) =>
+                      handleInputChange('companyName', e.target.value)
+                    }
+                    placeholder='e.g., ABC Property Management LLC'
+                    className={`pl-10 block w-full border-gray-300 rounded-md shadow-sm focus:ring-black focus:border-black ${
+                      errors.companyName ? 'border-red-500' : ''
+                    }`}
+                    disabled={loading}
+                  />
+                </div>
+                {errors.companyName && (
+                  <p className='mt-1 text-sm text-red-600'>
+                    {errors.companyName}
+                  </p>
+                )}
+                <p className='mt-1 text-xs text-gray-500'>
+                  Enter your business or company name for verification purposes
+                </p>
               </div>
             )}
 

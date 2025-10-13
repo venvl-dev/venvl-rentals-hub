@@ -171,10 +171,16 @@ export const useFilterStore = () => {
 
   // Get combined filters for property filtering - memoized for performance
   const getCombinedFilters = useCallback((): CombinedFilters => {
-    return {
+    const combined = {
       ...searchFilters,
       advancedFilters,
     };
+    console.log('📋 getCombinedFilters called:', {
+      advancedFilters,
+      priceRange: advancedFilters.priceRange,
+      combined
+    });
+    return combined;
   }, [searchFilters, advancedFilters]);
 
   // Check if any filters are active - memoized for performance

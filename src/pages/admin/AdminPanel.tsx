@@ -28,6 +28,8 @@ import {
   DollarSign,
   Shield,
   Settings,
+  FileCheck,
+  Building2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -68,6 +70,21 @@ interface BookingData {
   };
 }
 
+interface BusinessVerification {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  company_name: string | null;
+  commercial_register: string | null;
+  tax_card: string | null;
+  business_verification_status: string;
+  commercial_register_document: string | null;
+  tax_card_document: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 const AdminPanel = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -83,6 +100,7 @@ const AdminPanel = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const [bookings, setBookings] = useState<BookingData[]>([]);
+  const [businessVerifications, setBusinessVerifications] = useState<BusinessVerification[]>([]);
 
   useEffect(() => {
     checkAdminAccess();
@@ -161,7 +179,7 @@ const AdminPanel = () => {
       });
 
       // Load detailed data
-      const [usersData, propertiesData, bookingsDetailData] = await Promise.all(
+      const [usersData, propertiesData, bookingsDetailData, businessVerificationData] = await Promise.all(
         [
           supabase
             .from('profiles')
@@ -183,12 +201,18 @@ const AdminPanel = () => {
             )
             .order('created_at', { ascending: false })
             .limit(10),
+          supabase
+            .from('profiles')
+            .select('*')
+            .neq('business_verification_status', 'not_submitted')
+            .order('updated_at', { ascending: false }),
         ],
       );
 
       if (usersData.data) setUsers(usersData.data);
       if (propertiesData.data) setProperties(propertiesData.data);
       if (bookingsDetailData.data) setBookings(bookingsDetailData.data);
+      if (businessVerificationData.data) setBusinessVerifications(businessVerificationData.data);
     } catch (error) {
       console.error('Error loading admin data:', error);
       toast({
@@ -219,6 +243,34 @@ const AdminPanel = () => {
       toast({
         title: t('common.error'),
         description: 'Failed to update property status',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const updateBusinessVerificationStatus = async (userId: string, status: 'verified' | 'rejected') => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          business_verification_status: status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      toast({
+        title: t('common.success'),
+        description: `Business verification ${status} successfully`,
+      });
+
+      loadAdminData();
+    } catch (error) {
+      console.error('Error updating business verification status:', error);
+      toast({
+        title: t('common.error'),
+        description: 'Failed to update business verification status',
         variant: 'destructive',
       });
     }
@@ -310,6 +362,10 @@ const AdminPanel = () => {
               {t('admin.properties')}
             </TabsTrigger>
             <TabsTrigger value='bookings'>{t('admin.bookings')}</TabsTrigger>
+            <TabsTrigger value='business-verification'>
+              <Building2 className='h-4 w-4 mr-2' />
+              Business Verification
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value='users'>
@@ -508,6 +564,206 @@ const AdminPanel = () => {
                     ))}
                   </TableBody>
                 </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value='business-verification'>
+            <Card>
+              <CardHeader>
+                <CardTitle>Business Verification Management</CardTitle>
+                <CardDescription>
+                  Review and approve host business verification documents
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Host Name</TableHead>
+                      <TableHead>Company</TableHead>
+                      <TableHead>Commercial Register</TableHead>
+                      <TableHead>Tax Card</TableHead>
+                      <TableHead>Documents</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {businessVerifications.map((verification) => (
+                      <TableRow key={verification.id}>
+                        <TableCell className='font-medium'>
+                          <div>
+                            <div>
+                              {verification.first_name || verification.last_name
+                                ? `${verification.first_name || ''} ${verification.last_name || ''}`.trim()
+                                : 'No name'}
+                            </div>
+                            <div className="text-sm text-gray-500">{verification.email}</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {verification.company_name || 'Not provided'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {verification.commercial_register || 'Not provided'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {verification.tax_card || 'Not provided'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            {verification.commercial_register_document && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (verification.commercial_register_document!.startsWith('data:')) {
+                                    // Handle base64 data
+                                    const link = document.createElement('a');
+                                    link.href = verification.commercial_register_document!;
+                                    link.download = `commercial_register_${verification.first_name}_${verification.last_name}.pdf`;
+                                    link.click();
+                                  } else {
+                                    // Handle URL
+                                    window.open(verification.commercial_register_document!, '_blank');
+                                  }
+                                }}
+                                className="text-xs h-7"
+                              >
+                                <FileCheck className="h-3 w-3 mr-1" />
+                                Commercial PDF
+                              </Button>
+                            )}
+                            {verification.tax_card_document && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  if (verification.tax_card_document!.startsWith('data:')) {
+                                    // Handle base64 data
+                                    const link = document.createElement('a');
+                                    link.href = verification.tax_card_document!;
+                                    link.download = `tax_card_${verification.first_name}_${verification.last_name}.pdf`;
+                                    link.click();
+                                  } else {
+                                    // Handle URL
+                                    window.open(verification.tax_card_document!, '_blank');
+                                  }
+                                }}
+                                className="text-xs h-7"
+                              >
+                                <FileCheck className="h-3 w-3 mr-1" />
+                                Tax Card PDF
+                              </Button>
+                            )}
+                            {!verification.commercial_register_document && !verification.tax_card_document && (
+                              <span className="text-xs text-gray-500">No documents</span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              verification.business_verification_status === 'verified'
+                                ? 'default'
+                                : verification.business_verification_status === 'rejected'
+                                  ? 'destructive'
+                                  : verification.business_verification_status === 'pending'
+                                    ? 'secondary'
+                                    : 'outline'
+                            }
+                            className={
+                              verification.business_verification_status === 'verified'
+                                ? 'bg-green-500 hover:bg-green-600'
+                                : verification.business_verification_status === 'pending'
+                                  ? 'bg-yellow-500 hover:bg-yellow-600'
+                                  : ''
+                            }
+                          >
+                            {verification.business_verification_status === 'verified' && '✓ Verified'}
+                            {verification.business_verification_status === 'pending' && '⏳ Pending'}
+                            {verification.business_verification_status === 'rejected' && '✗ Rejected'}
+                            {verification.business_verification_status === 'not_submitted' && '📋 Not Submitted'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className='flex flex-col gap-2'>
+                            {verification.business_verification_status === 'pending' && (
+                              verification.commercial_register_document || verification.tax_card_document
+                            ) && (
+                              <>
+                                <Button
+                                  size='sm'
+                                  onClick={() =>
+                                    updateBusinessVerificationStatus(
+                                      verification.id,
+                                      'verified'
+                                    )
+                                  }
+                                  className="bg-green-600 hover:bg-green-700 text-white h-7"
+                                >
+                                  ✓ Approve
+                                </Button>
+                                <Button
+                                  variant='outline'
+                                  size='sm'
+                                  onClick={() =>
+                                    updateBusinessVerificationStatus(
+                                      verification.id,
+                                      'rejected'
+                                    )
+                                  }
+                                  className="text-red-600 hover:text-red-700 h-7"
+                                >
+                                  ✗ Reject
+                                </Button>
+                              </>
+                            )}
+                            {verification.business_verification_status === 'verified' && (
+                              <Button
+                                variant='outline'
+                                size='sm'
+                                onClick={() =>
+                                  updateBusinessVerificationStatus(
+                                    verification.id,
+                                    'rejected'
+                                  )
+                                }
+                                className="text-red-600 hover:text-red-700 h-7"
+                              >
+                                Revoke
+                              </Button>
+                            )}
+                            {verification.business_verification_status === 'rejected' && (
+                              <Button
+                                size='sm'
+                                onClick={() =>
+                                  updateBusinessVerificationStatus(
+                                    verification.id,
+                                    'verified'
+                                  )
+                                }
+                                className="bg-green-600 hover:bg-green-700 text-white h-7"
+                              >
+                                Re-approve
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                {businessVerifications.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    No business verification requests found
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

@@ -14,6 +14,8 @@ import PropertyListing from './pages/PropertyListing';
 import NotFound from './pages/NotFound';
 
 // Lazy-loaded components (code splitting)
+const Profile = lazy(() => import('./pages/Profile'));
+const EditProfile = lazy(() => import('./pages/EditProfile'));
 const GuestSignup = lazy(() => import('./pages/guest/GuestSignup'));
 const GuestBookings = lazy(() => import('./pages/guest/GuestBookings'));
 
@@ -48,6 +50,7 @@ const AuditLogsPage = lazy(() => import('./routes/admin/Logs'));
 const RevenueManagement = lazy(() => import('./routes/admin/Revenue'));
 const ContentModeration = lazy(() => import('./routes/admin/Moderation'));
 const Marketing = lazy(() => import('./routes/admin/Marketing'));
+const BusinessVerification = lazy(() => import('./routes/admin/BusinessVerification'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,6 +84,28 @@ function App() {
                   <Route path='/' element={<Index />} />
                   <Route path='/auth' element={<Auth />} />
                   <Route path='/property/:id' element={<PropertyListing />} />
+
+                  {/* === PROFILE ROUTES === */}
+                  <Route
+                    path='/profile'
+                    element={
+                      <ProtectedRoute allowedRoles={['guest', 'host', 'super_admin']}>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path='/profile/edit'
+                    element={
+                      <ProtectedRoute allowedRoles={['guest', 'host', 'super_admin']}>
+                        <EditProfile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path='/profile/:userId'
+                    element={<Profile />}
+                  />
 
                   {/* === GUEST ROUTES (domain.com/guest/*) === */}
                   <Route path='/guest/signup' element={<GuestSignup />} />
@@ -215,6 +240,14 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={['super_admin']}>
                         <Marketing />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path='/admin/business-verification'
+                    element={
+                      <ProtectedRoute allowedRoles={['super_admin']}>
+                        <BusinessVerification />
                       </ProtectedRoute>
                     }
                   />
