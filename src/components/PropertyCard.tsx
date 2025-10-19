@@ -284,13 +284,7 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
                     quality={85}
                     width={400}
                     height={300}
-                    // preloadSources={sourcesToPreload}
-                    style={{
-                      transform:
-                        touchEnd && touchStart
-                          ? `translateX(${(touchEnd - touchStart) * 0.1}px)`
-                          : 'translateX(0)',
-                    }}
+                    preloadSources={sourcesToPreload}
                   />
                 </CarouselItem>
               ))}

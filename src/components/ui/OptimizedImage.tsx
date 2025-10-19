@@ -179,7 +179,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
   const showLoadingOverlay = !isLoaded;
 
   return (
-    <div className={cn('relative overflow-hidden ', className)}>
+    <div className={cn('relative   ')}>
       {showLoadingOverlay && (
         <span className=' flex items-center justify-center absolute w-full h-full bg-black/50 top-0 left-0 z-20 '>
           <Loader />
