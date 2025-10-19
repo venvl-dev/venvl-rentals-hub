@@ -10,6 +10,7 @@ export interface Booking {
   check_out: string;
   guests: number;
   total_price: number;
+  final_price?: number | null;
   status: BookingStatus;
   cancellation_reason: string | null;
   cancelled_at: string | null;

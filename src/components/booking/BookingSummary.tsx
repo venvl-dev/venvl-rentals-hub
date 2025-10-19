@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,11 @@ import {
   MapPin,
   Clock,
   Check,
+  Ticket,
 } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
 import PriceBreakdownModal from './components/PriceBreakdownModal';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BookingSummaryProps {
   booking: {
@@ -34,8 +35,9 @@ interface BookingSummaryProps {
     bookingType: 'daily' | 'monthly';
     totalPrice: number;
     duration?: number;
+    promo_code_id?: string | null;
   };
-  onConfirmPayment: () => void;
+  onConfirmPayment: (promoCodeId?: string | null) => void;
   onCancel: () => void;
   isProcessing?: boolean;
 }
@@ -47,8 +49,36 @@ const BookingSummary = ({
   isProcessing = false,
 }: BookingSummaryProps) => {
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
+  const [promoCodeDetails, setPromoCodeDetails] = useState<{
+    code: string;
+    value: number;
+  } | null>(null);
 
   const nights = differenceInDays(booking.checkOut, booking.checkIn);
+
+  // Fetch promo code details if available
+  useEffect(() => {
+    const fetchPromoCode = async () => {
+      if (booking.promo_code_id) {
+        try {
+          const { data, error } = await supabase
+            .from('promo_codes')
+            .select('code, value')
+            .eq('id', booking.promo_code_id)
+            .single();
+
+          if (error) throw error;
+          if (data) {
+            setPromoCodeDetails(data);
+          }
+        } catch (error) {
+          console.error('Error fetching promo code:', error);
+        }
+      }
+    };
+
+    fetchPromoCode();
+  }, [booking.promo_code_id]);
 
   // For monthly bookings, use monthly price instead of total
   const basePrice =
@@ -58,7 +88,14 @@ const BookingSummary = ({
 
   const serviceFee = Math.round(basePrice * 0.1); // 10% service fee
   const taxes = Math.round(basePrice * 0.05); // 5% taxes
-  const finalTotal = basePrice + serviceFee + taxes;
+  const subtotal = basePrice + serviceFee + taxes;
+
+  // Calculate promo code discount
+  const promoDiscount = promoCodeDetails
+    ? Math.round((subtotal * promoCodeDetails.value) / 100)
+    : 0;
+
+  const finalTotal = subtotal - promoDiscount;
 
   const handlePayment = async () => {
     try {
@@ -108,7 +145,9 @@ const BookingSummary = ({
       >
         {/* Header */}
         <div className='text-center space-y-2'>
-          <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900'>Confirm and pay</h1>
+          <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900'>
+            Confirm and pay
+          </h1>
           <p className='text-sm sm:text-base text-gray-600'>
             Review your booking details before payment
           </p>
@@ -160,7 +199,9 @@ const BookingSummary = ({
                 <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0'>
                   <div className='flex items-center gap-2'>
                     <CalendarIcon className='h-4 w-4 text-gray-600' />
-                    <span className='font-medium text-sm sm:text-base'>Dates</span>
+                    <span className='font-medium text-sm sm:text-base'>
+                      Dates
+                    </span>
                   </div>
                   <div className='text-left sm:text-right'>
                     <div className='font-medium text-sm sm:text-base'>
@@ -206,7 +247,9 @@ const BookingSummary = ({
                 <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0'>
                   <div className='flex items-center gap-2'>
                     <Users className='h-4 w-4 text-gray-600' />
-                    <span className='font-medium text-sm sm:text-base'>Guests</span>
+                    <span className='font-medium text-sm sm:text-base'>
+                      Guests
+                    </span>
                   </div>
                   <span className='font-medium text-sm sm:text-base'>
                     {booking.guests} {booking.guests === 1 ? 'guest' : 'guests'}
@@ -245,7 +288,9 @@ const BookingSummary = ({
                   >
                     <div className='text-center'>
                       <CreditCard className='h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-gray-700' />
-                      <div className='font-semibold text-xs sm:text-sm'>Card</div>
+                      <div className='font-semibold text-xs sm:text-sm'>
+                        Card
+                      </div>
                     </div>
                   </motion.button>
 
@@ -261,7 +306,9 @@ const BookingSummary = ({
                   >
                     <div className='text-center'>
                       <Clock className='h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-gray-700' />
-                      <div className='font-semibold text-xs sm:text-sm'>Cash</div>
+                      <div className='font-semibold text-xs sm:text-sm'>
+                        Cash
+                      </div>
                     </div>
                   </motion.button>
                 </div>
@@ -269,9 +316,37 @@ const BookingSummary = ({
 
               <Separator />
 
+              {/* Promo Code Display */}
+              {promoCodeDetails && (
+                <>
+                  <div className='bg-green-50 border border-green-200 rounded-xl p-3 sm:p-4'>
+                    <div className='flex items-center gap-2 mb-2'>
+                      <Ticket className='h-4 w-4 text-green-600' />
+                      <span className='text-sm font-medium text-green-900'>
+                        Promo Code Applied
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <code className='text-sm font-bold font-mono bg-green-100 px-2 py-1 rounded text-green-800'>
+                          {promoCodeDetails.code}
+                        </code>
+                        <p className='text-xs text-green-700 mt-1'>
+                          {promoCodeDetails.value}% discount applied
+                        </p>
+                      </div>
+                      <Check className='h-5 w-5 text-green-600' />
+                    </div>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
               {/* Price Breakdown */}
               <div className='space-y-3 sm:space-y-4'>
-                <h4 className='font-semibold text-sm sm:text-base'>Payment summary</h4>
+                <h4 className='font-semibold text-sm sm:text-base'>
+                  Payment summary
+                </h4>
                 <PriceBreakdownModal
                   booking={{
                     ...booking,
@@ -279,6 +354,8 @@ const BookingSummary = ({
                     guests: booking.guests,
                   }}
                   currency='EGP'
+                  promoCodeDiscount={promoDiscount}
+                  promoCodeValue={promoCodeDetails?.value || 0}
                 />
               </div>
 
@@ -294,13 +371,17 @@ const BookingSummary = ({
                   {isProcessing ? (
                     <div className='flex items-center justify-center gap-2'>
                       <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
-                      <span className='text-sm sm:text-base'>Processing...</span>
+                      <span className='text-sm sm:text-base'>
+                        Processing...
+                      </span>
                     </div>
                   ) : (
                     <div className='flex items-center justify-center gap-2'>
                       <Check className='h-4 w-4 sm:h-5 sm:w-5' />
                       <span className='text-sm sm:text-base'>
-                        {paymentMethod === 'card' ? 'Pay now' : 'Confirm booking'}
+                        {paymentMethod === 'card'
+                          ? 'Pay now'
+                          : 'Confirm booking'}
                       </span>
                     </div>
                   )}

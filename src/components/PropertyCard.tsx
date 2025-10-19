@@ -107,6 +107,7 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
   const nextImage = useCallback(
     (e?: React.MouseEvent) => {
       if (e) e.stopPropagation();
+      e.preventDefault();
       api?.scrollNext();
     },
     [api],
@@ -115,6 +116,7 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
   const prevImage = useCallback(
     (e?: React.MouseEvent) => {
       if (e) e.stopPropagation();
+      e.preventDefault();
       api?.scrollPrev();
     },
     [api],
@@ -254,46 +256,41 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
     }
   }
   return (
-    <Card
-      className='   overflow-hidden rounded-3xl border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white h-full flex flex-col '
-      // onClick={handleClick}
-    >
-      {/* Image Carousel Container */}
-      <div
-        className={`${isGrabbing ? 'cursor-grabbing' : 'cursor-grab'} aspect-[4/3] relative overflow-hidden flex-shrink-0 group select-none `}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        onMouseDown={() => setIsGrabbing(true)}
-        onMouseUp={() => setIsGrabbing(false)}
-        onMouseLeave={() => setIsGrabbing(false)}
+    <Link to={`/property/${property.id}`} className='h-full cursor-pointer'>
+      <Card
+        className='   overflow-hidden rounded-3xl border-0 shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white h-full flex flex-col '
+        // onClick={handleClick}
       >
-        <Carousel className='h-full ' setApi={setApi}>
-          <CarouselContent className='h-full'>
-            {images.map((src, idx) => (
-              <CarouselItem key={src}>
-                <OptimizedImage
-                  src={src}
-                  alt={property.title}
-                  className='w-full h-full object-cover'
-                  fallbackSrc='https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
-                  lazy={true}
-                  quality={85}
-                  width={400}
-                  height={300}
-                  // preloadSources={sourcesToPreload}
-                  style={{
-                    transform:
-                      touchEnd && touchStart
-                        ? `translateX(${(touchEnd - touchStart) * 0.1}px)`
-                        : 'translateX(0)',
-                  }}
-                />
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          {/* Optimized Image with Lazy Loading */}
-          {/* <OptimizedImage
+        {/* Image Carousel Container */}
+        <div
+          className={`${isGrabbing ? 'cursor-grabbing' : 'cursor-pointer'} aspect-[4/3] relative overflow-hidden flex-shrink-0 group select-none `}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={() => setIsGrabbing(true)}
+          onMouseUp={() => setIsGrabbing(false)}
+          onMouseLeave={() => setIsGrabbing(false)}
+        >
+          <Carousel className='h-full ' setApi={setApi}>
+            <CarouselContent className='h-full'>
+              {images.map((src, idx) => (
+                <CarouselItem key={src}>
+                  <OptimizedImage
+                    src={src}
+                    alt={property.title}
+                    className='w-full h-full object-cover'
+                    fallbackSrc='https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
+                    lazy={true}
+                    quality={85}
+                    width={400}
+                    height={300}
+                    preloadSources={sourcesToPreload}
+                  />
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            {/* Optimized Image with Lazy Loading */}
+            {/* <OptimizedImage
             src={images[currentImageIndex]}
             alt={property.title}
             className='w-full h-full object-cover'
@@ -310,151 +307,165 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
                   : 'translateX(0)',
             }}
           /> */}
-          {/* Image Navigation */}
-          {images.length > 1 && (
-            <>
-              {currentImageIndex > 0 && (
-                <button
-                  onClick={prevImage}
-                  className='absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
-                  aria-label='Previous image'
+            {/* Image Navigation */}
+            {images.length > 1 && (
+              <>
+                <div
+                  className={` cursor-default px-4 py-8 absolute left-0 top-1/2 transform -translate-y-1/2`}
+                  //  stop routing
+                  onClick={(e) => e.preventDefault()}
                 >
-                  <ChevronLeft className='h-4 w-4 text-gray-900' />
-                </button>
-              )}
-
-              {currentImageIndex < images.length - 1 && (
-                <button
-                  onClick={nextImage}
-                  className='absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
-                  aria-label='Next image'
-                >
-                  <ChevronRight className='h-4 w-4 text-gray-900' />
-                </button>
-              )}
-
-              {/* Enhanced Image Indicators */}
-              <div className='absolute bottom-3 left-1/2 transform -translate-x-1/2 flex items-center space-x-1 z-10'>
-                {images.map((_, index) => {
-                  const distanceFromActive = Math.abs(index - currentImageIndex);
-                  const isActive = index === currentImageIndex;
-
-                  // Progressive sizing based on distance from active dot
-                  let size = 'w-1.5 h-1.5'; // smallest (furthest)
-                  let opacity = 'opacity-20'; // most transparent
-
-                  if (isActive) {
-                    size = 'w-3 h-3'; // largest (active)
-                    opacity = 'opacity-100'; // fully opaque
-                  } else if (distanceFromActive === 1) {
-                    size = 'w-2.5 h-2.5'; // medium-large
-                    opacity = 'opacity-80';
-                  } else if (distanceFromActive === 2) {
-                    size = 'w-2 h-2'; // medium
-                    opacity = 'opacity-60';
-                  } else if (distanceFromActive === 3) {
-                    size = 'w-1.5 h-1.5'; // small
-                    opacity = 'opacity-40';
-                  } else {
-                    // Hide dots that are too far (distance > 3)
-                    size = 'w-0 h-0';
-                    opacity = 'opacity-0';
-                  }
-
-                  return (
+                  {currentImageIndex > 0 && (
                     <button
-                      key={index}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        api?.scrollTo(index);
-                      }}
-                      className={`
+                      onClick={prevImage}
+                      className=' bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
+                      aria-label='Previous image'
+                    >
+                      <ChevronLeft className='h-4 w-4 text-gray-900' />
+                    </button>
+                  )}
+                </div>
+
+                <div
+                  className={`  cursor-default px-4 py-8 absolute right-0 top-1/2 transform -translate-y-1/2`}
+                  onClick={(e) => e.preventDefault()}
+                >
+                  {currentImageIndex < images.length - 1 && (
+                    <button
+                      onClick={nextImage}
+                      className=' bg-white/90 hover:bg-white rounded-full p-2 shadow-lg opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity duration-300 z-10 touch-manipulation'
+                      aria-label='Next image'
+                    >
+                      <ChevronRight className='h-4 w-4 text-gray-900' />
+                    </button>
+                  )}
+                </div>
+
+                {/* Enhanced Image Indicators */}
+                <div className='absolute bottom-3 left-1/2 transform -translate-x-1/2 flex items-center space-x-1 z-10'>
+                  {images.map((_, index) => {
+                    const distanceFromActive = Math.abs(
+                      index - currentImageIndex,
+                    );
+                    const isActive = index === currentImageIndex;
+
+                    // Progressive sizing based on distance from active dot
+                    let size = 'w-1.5 h-1.5'; // smallest (furthest)
+                    let opacity = 'opacity-20'; // most transparent
+
+                    if (isActive) {
+                      size = 'w-3 h-3'; // largest (active)
+                      opacity = 'opacity-100'; // fully opaque
+                    } else if (distanceFromActive === 1) {
+                      size = 'w-2.5 h-2.5'; // medium-large
+                      opacity = 'opacity-80';
+                    } else if (distanceFromActive === 2) {
+                      size = 'w-2 h-2'; // medium
+                      opacity = 'opacity-60';
+                    } else if (distanceFromActive === 3) {
+                      size = 'w-1.5 h-1.5'; // small
+                      opacity = 'opacity-40';
+                    } else {
+                      // Hide dots that are too far (distance > 3)
+                      size = 'w-0 h-0';
+                      opacity = 'opacity-0';
+                    }
+
+                    return (
+                      <button
+                        key={index}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          api?.scrollTo(index);
+                        }}
+                        className={`
                         ${size} rounded-full transition-all duration-500 ease-out transform
                         ${opacity}
-                        ${isActive
-                          ? 'bg-white shadow-lg scale-110 ring-2 ring-white/30'
-                          : 'bg-white/70 hover:bg-white/90 hover:scale-105'
+                        ${
+                          isActive
+                            ? 'bg-white shadow-lg scale-110 ring-2 ring-white/30'
+                            : 'bg-white/70 hover:bg-white/90 hover:scale-105'
                         }
                         ${distanceFromActive > 3 ? 'invisible' : 'visible'}
                       `}
-                      style={{
-                        transitionProperty: 'all',
-                        transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)',
-                      }}
-                    />
-                  );
-                })}
-              </div>
-            </>
-          )}
-        </Carousel>
+                        style={{
+                          transitionProperty: 'all',
+                          transitionTimingFunction:
+                            'cubic-bezier(0.4, 0, 0.2, 1)',
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </Carousel>
 
-        {/* Rental Type Badges */}
-        <div className='absolute top-3 left-3 z-20 flex flex-row gap-1 max-w-[calc(100%-6rem)]'>
-          {(() => {
-            const hasDaily = bookingTypes.includes('daily');
-            const hasMonthly = bookingTypes.includes('monthly');
-            const badges = [];
+          {/* Rental Type Badges */}
+          <div className='absolute top-3 left-3 z-20 flex flex-row gap-1 max-w-[calc(100%-6rem)]'>
+            {(() => {
+              const hasDaily = bookingTypes.includes('daily');
+              const hasMonthly = bookingTypes.includes('monthly');
+              const badges = [];
 
-            if (hasDaily) {
-              badges.push(
-                <Badge
-                  key="daily"
-                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm"
-                >
-                  <Calendar className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
-                  <span className='whitespace-nowrap'>Daily</span>
-                </Badge>
-              );
-            }
+              if (hasDaily) {
+                badges.push(
+                  <Badge
+                    key='daily'
+                    className='text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm'
+                  >
+                    <Calendar className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
+                    <span className='whitespace-nowrap'>Daily</span>
+                  </Badge>,
+                );
+              }
 
-            if (hasMonthly) {
-              badges.push(
-                <Badge
-                  key="monthly"
-                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 backdrop-blur-sm bg-purple-100 text-purple-800 min-w-fit flex-shrink-0 shadow-sm"
-                >
-                  <Clock className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
-                  <span className='whitespace-nowrap'>Monthly</span>
-                </Badge>
-              );
-            }
+              if (hasMonthly) {
+                badges.push(
+                  <Badge
+                    key='monthly'
+                    className='text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 backdrop-blur-sm bg-purple-100 text-purple-800 min-w-fit flex-shrink-0 shadow-sm'
+                  >
+                    <Clock className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
+                    <span className='whitespace-nowrap'>Monthly</span>
+                  </Badge>,
+                );
+              }
 
-            // Fallback to daily if no booking types specified
-            if (badges.length === 0) {
-              badges.push(
-                <Badge
-                  key="daily-default"
-                  className="text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm"
-                >
-                  <Calendar className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
-                  <span className='whitespace-nowrap'>Daily</span>
-                </Badge>
-              );
-            }
+              // Fallback to daily if no booking types specified
+              if (badges.length === 0) {
+                badges.push(
+                  <Badge
+                    key='daily-default'
+                    className='text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium flex items-center gap-0.5 backdrop-blur-sm bg-green-100 text-green-800 min-w-fit flex-shrink-0 shadow-sm'
+                  >
+                    <Calendar className='h-2.5 w-2.5 sm:h-3 sm:w-3 flex-shrink-0' />
+                    <span className='whitespace-nowrap'>Daily</span>
+                  </Badge>,
+                );
+              }
 
-            return badges;
-          })()}
+              return badges;
+            })()}
+          </div>
+
+          {/* Rating Badge */}
+          <div className='absolute top-3 right-3 z-10'>
+            <Badge className='bg-white/95 text-gray-900 border-0 shadow-lg backdrop-blur-sm text-xs px-2 py-1'>
+              <Star className='h-3 w-3 fill-yellow-400 text-yellow-400 mr-1' />
+              4.9
+            </Badge>
+          </div>
+
+          {/* VENVL Brand Badge */}
+          <div className='absolute bottom-3 right-3 z-10'>
+            <Badge className='bg-black text-white border-0 shadow-lg font-semibold tracking-wide text-xs px-2 py-1'>
+              VENVL
+            </Badge>
+          </div>
         </div>
 
-        {/* Rating Badge */}
-        <div className='absolute top-3 right-3 z-10'>
-          <Badge className='bg-white/95 text-gray-900 border-0 shadow-lg backdrop-blur-sm text-xs px-2 py-1'>
-            <Star className='h-3 w-3 fill-yellow-400 text-yellow-400 mr-1' />
-            4.9
-          </Badge>
-        </div>
-
-        {/* VENVL Brand Badge */}
-        <div className='absolute bottom-3 right-3 z-10'>
-          <Badge className='bg-black text-white border-0 shadow-lg font-semibold tracking-wide text-xs px-2 py-1'>
-            VENVL
-          </Badge>
-        </div>
-      </div>
-
-      {/* Content Area */}
-      <Link to={`/property/${property.id}`} className='h-full cursor-pointer'>
+        {/* Content Area */}
         <CardContent className='p-4 sm:p-4 lg:p-6 flex-1 flex flex-col group hover:scale-[1.01] transition-transform duration-200'>
           <div className='space-y-2 sm:space-y-3 flex-1'>
             {/* Location */}
@@ -561,8 +572,8 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
             Book Now
           </button>
         </CardContent>
-      </Link>
-    </Card>
+      </Card>
+    </Link>
   );
 };
 

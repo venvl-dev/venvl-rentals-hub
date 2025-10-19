@@ -260,6 +260,7 @@ export type Database = {
       }
       bookings: {
         Row: {
+          booking_range: unknown | null
           booking_reference: string | null
           booking_type: string | null
           cancellation_reason: string | null
@@ -271,6 +272,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           duration_months: number | null
+          final_price: number | null
           flexible_option: string | null
           guest_id: string
           guests: number
@@ -278,8 +280,7 @@ export type Database = {
           id: string
           payment_amount: number | null
           payment_status: string | null
-          price_after_discount: number | null
-          promocode_id: string | null
+          promo_code_id: string | null
           property_id: string
           status: Database["public"]["Enums"]["booking_status"] | null
           stripe_session_id: string | null
@@ -287,6 +288,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          booking_range?: unknown | null
           booking_reference?: string | null
           booking_type?: string | null
           cancellation_reason?: string | null
@@ -298,6 +300,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           duration_months?: number | null
+          final_price?: number | null
           flexible_option?: string | null
           guest_id: string
           guests?: number
@@ -305,8 +308,7 @@ export type Database = {
           id?: string
           payment_amount?: number | null
           payment_status?: string | null
-          price_after_discount?: number | null
-          promocode_id?: string | null
+          promo_code_id?: string | null
           property_id: string
           status?: Database["public"]["Enums"]["booking_status"] | null
           stripe_session_id?: string | null
@@ -314,6 +316,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          booking_range?: unknown | null
           booking_reference?: string | null
           booking_type?: string | null
           cancellation_reason?: string | null
@@ -325,6 +328,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           duration_months?: number | null
+          final_price?: number | null
           flexible_option?: string | null
           guest_id?: string
           guests?: number
@@ -332,8 +336,7 @@ export type Database = {
           id?: string
           payment_amount?: number | null
           payment_status?: string | null
-          price_after_discount?: number | null
-          promocode_id?: string | null
+          promo_code_id?: string | null
           property_id?: string
           status?: Database["public"]["Enums"]["booking_status"] | null
           stripe_session_id?: string | null
@@ -342,8 +345,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "bookings_promocode_id_fkey"
-            columns: ["promocode_id"]
+            foreignKeyName: "bookings_promo_code_id_fkey"
+            columns: ["promo_code_id"]
             isOneToOne: false
             referencedRelation: "promo_codes"
             referencedColumns: ["id"]
@@ -689,16 +692,19 @@ export type Database = {
       }
       profile_promo_codes: {
         Row: {
+          expiry_date: string
           profile_id: string
-          promod_code_id: string
+          promo_code_id: string
         }
         Insert: {
+          expiry_date: string
           profile_id?: string
-          promod_code_id?: string
+          promo_code_id?: string
         }
         Update: {
+          expiry_date?: string
           profile_id?: string
-          promod_code_id?: string
+          promo_code_id?: string
         }
         Relationships: [
           {
@@ -709,8 +715,8 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "profile_promo_codes_promod_code_id_fkey"
-            columns: ["promod_code_id"]
+            foreignKeyName: "profile_promo_codes_promo_code_id_fkey"
+            columns: ["promo_code_id"]
             isOneToOne: false
             referencedRelation: "promo_codes"
             referencedColumns: ["id"]
