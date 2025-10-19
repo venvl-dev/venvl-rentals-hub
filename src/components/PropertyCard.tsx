@@ -106,8 +106,10 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
 
   const nextImage = useCallback(
     (e?: React.MouseEvent) => {
-      if (e) e.stopPropagation();
-      e.preventDefault();
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
       api?.scrollNext();
     },
     [api],
@@ -115,8 +117,10 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
 
   const prevImage = useCallback(
     (e?: React.MouseEvent) => {
-      if (e) e.stopPropagation();
-      e.preventDefault();
+      if (e) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
       api?.scrollPrev();
     },
     [api],
@@ -237,14 +241,16 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
     return Calendar; // Default for Daily
   };
 
-  const sourcesToPreload = [];
+  const sourcesToPreload: string[] = [];
   //  pre-loading images of previous and next images in the carousel
   if (currentImageIndex == 0) sourcesToPreload.push(images[1]);
   else if (currentImageIndex == images.length - 1)
-    sourcesToPreload.push(currentImageIndex - 1);
-  else {
     sourcesToPreload.push(images[currentImageIndex - 1]);
-    sourcesToPreload.push(images[currentImageIndex + 1]);
+  else {
+    if (images[currentImageIndex - 1])
+      sourcesToPreload.push(images[currentImageIndex - 1]);
+    if (images[currentImageIndex + 1])
+      sourcesToPreload.push(images[currentImageIndex + 1]);
   }
   //  pre loading images of next 6 properties in the list
   if (properties.length > index + 6)

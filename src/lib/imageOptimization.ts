@@ -7,6 +7,7 @@ class ImageCache {
 
   // Load and cache an image
   async loadImage(src: string): Promise<HTMLImageElement> {
+    if (!src) return;
     // Check if image is already cached
     if (this.cache.has(src)) {
       return this.cache.get(src)!;
