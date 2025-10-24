@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -32,6 +32,8 @@ import {
   Image,
   Video,
   Play,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
 import { Property } from '@/types/property';
 import {
@@ -179,10 +181,128 @@ const EnhancedPropertyForm = ({
   const isFirstTab = currentTabIndex === 0;
   const isLastTab = currentTabIndex === tabOrder.length - 1;
 
+  // Validation functions for each tab
+  const validateBasicTab = () => {
+    const values = form.getValues();
+    return !!(
+      values.title?.trim() &&
+      values.description?.trim() &&
+      values.description?.trim().length >= 10 &&
+      values.property_type &&
+      values.address?.trim() &&
+      values.city?.trim() &&
+      values.country?.trim() &&
+      values.rental_type
+    );
+  };
+
+  const validatePricingTab = () => {
+    const values = form.getValues();
+    const rentalType = values.rental_type as RentalType;
+
+    if (rentalType === 'daily') {
+      return !!(values.price_per_night && values.price_per_night > 0 && values.min_nights && values.min_nights >= 1);
+    } else if (rentalType === 'monthly') {
+      return !!(values.monthly_price && values.monthly_price > 0 && values.min_months && values.min_months >= 1);
+    } else if (rentalType === 'both') {
+      return !!(
+        values.price_per_night && values.price_per_night > 0 &&
+        values.monthly_price && values.monthly_price > 0 &&
+        values.min_nights && values.min_nights >= 1 &&
+        values.min_months && values.min_months >= 1
+      );
+    }
+    return false;
+  };
+
+  const validateDetailsTab = () => {
+    const values = form.getValues();
+    return !!(values.max_guests && values.max_guests >= 1);
+  };
+
+  const validateMediaTab = () => {
+    // Media tab has no required fields, always valid
+    return true;
+  };
+
+  const isCurrentTabValid = () => {
+    switch (activeTab) {
+      case 'basic':
+        return validateBasicTab();
+      case 'pricing':
+        return validatePricingTab();
+      case 'details':
+        return validateDetailsTab();
+      case 'media':
+        return validateMediaTab();
+      default:
+        return false;
+    }
+  };
+
+  const getTabValidationStatus = (tabName: string) => {
+    switch (tabName) {
+      case 'basic':
+        return validateBasicTab();
+      case 'pricing':
+        return validatePricingTab();
+      case 'details':
+        return validateDetailsTab();
+      case 'media':
+        return validateMediaTab();
+      default:
+        return false;
+    }
+  };
+
+  const getTabIcon = (tabName: string, defaultIcon: any) => {
+    const isValid = getTabValidationStatus(tabName);
+    const isPastTab = tabOrder.indexOf(tabName) < currentTabIndex;
+
+    if (isPastTab && isValid) {
+      return <Check className='h-4 w-4 mr-2' />;
+    }
+
+    if (tabName === activeTab && !isValid) {
+      return <AlertCircle className='h-4 w-4 mr-2' />;
+    }
+
+    return React.createElement(defaultIcon, { className: 'h-4 w-4 mr-2' });
+  };
+
   // Navigation functions
-  const goToNextTab = () => {
-    if (!isLastTab) {
+  const goToNextTab = async () => {
+    if (!isLastTab && isCurrentTabValid()) {
       setActiveTab(tabOrder[currentTabIndex + 1]);
+    } else if (!isCurrentTabValid()) {
+      // Trigger form validation to show errors for current tab
+      const tabFields = getTabFields(activeTab);
+      await form.trigger(tabFields);
+      toast.error('Please fill in all required fields before proceeding to the next step.');
+    }
+  };
+
+  // Get form fields for each tab to trigger validation
+  const getTabFields = (tabName: string): (keyof PropertyFormData)[] => {
+    switch (tabName) {
+      case 'basic':
+        return ['title', 'description', 'property_type', 'address', 'city', 'country', 'rental_type'];
+      case 'pricing':
+        const rentalType = form.getValues('rental_type') as RentalType;
+        if (rentalType === 'daily') {
+          return ['price_per_night', 'min_nights'];
+        } else if (rentalType === 'monthly') {
+          return ['monthly_price', 'min_months'];
+        } else if (rentalType === 'both') {
+          return ['price_per_night', 'min_nights', 'monthly_price', 'min_months'];
+        }
+        return [];
+      case 'details':
+        return ['max_guests'];
+      case 'media':
+        return [];
+      default:
+        return [];
     }
   };
 
@@ -330,6 +450,7 @@ const EnhancedPropertyForm = ({
 
   const watchedRentalType = form.watch('rental_type') as RentalType;
   const watchedAmenities = form.watch('amenities') || [];
+  const watchedValues = form.watch(); // Watch all form values for real-time validation
 
   if (process.env.NODE_ENV !== 'production') {
     console.log('🎯 EnhancedPropertyForm: watchedRentalType:', watchedRentalType);
@@ -768,22 +889,22 @@ const EnhancedPropertyForm = ({
             onValueChange={setActiveTab}
             className='w-full'
           >
-            <TabsList className='grid w-full grid-cols-4 rounded-2xl p-1 bg-gray-100'>
-              <TabsTrigger value='basic' className='rounded-xl'>
-                <Home className='h-4 w-4 mr-2' />
-                Basic Info
+            <TabsList className='grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl p-1 bg-gray-100 gap-1'>
+              <TabsTrigger value='basic' className='rounded-xl min-h-[44px] touch-target flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3'>
+                {getTabIcon('basic', Home)}
+                <span className='text-xs sm:text-sm'>Basic</span>
               </TabsTrigger>
-              <TabsTrigger value='pricing' className='rounded-xl'>
-                <DollarSign className='h-4 w-4 mr-2' />
-                Pricing
+              <TabsTrigger value='pricing' className='rounded-xl min-h-[44px] touch-target flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3'>
+                {getTabIcon('pricing', DollarSign)}
+                <span className='text-xs sm:text-sm'>Pricing</span>
               </TabsTrigger>
-              <TabsTrigger value='details' className='rounded-xl'>
-                <Settings className='h-4 w-4 mr-2' />
-                Details
+              <TabsTrigger value='details' className='rounded-xl min-h-[44px] touch-target flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3'>
+                {getTabIcon('details', Settings)}
+                <span className='text-xs sm:text-sm'>Details</span>
               </TabsTrigger>
-              <TabsTrigger value='media' className='rounded-xl'>
-                <Calendar className='h-4 w-4 mr-2' />
-                Media
+              <TabsTrigger value='media' className='rounded-xl min-h-[44px] touch-target flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 px-2 sm:px-3'>
+                {getTabIcon('media', Image)}
+                <span className='text-xs sm:text-sm'>Media</span>
               </TabsTrigger>
             </TabsList>
 
@@ -1675,10 +1796,24 @@ const EnhancedPropertyForm = ({
               </div>
 
               <div className='flex items-center gap-3'>
-                {/* Progress indicator */}
-                <span className='text-sm text-gray-500'>
-                  Step {currentTabIndex + 1} of {tabOrder.length}
-                </span>
+                {/* Progress indicator with validation status */}
+                <div className='flex items-center gap-2'>
+                  <span className='text-sm text-gray-500'>
+                    Step {currentTabIndex + 1} of {tabOrder.length}
+                  </span>
+                  {!isCurrentTabValid() && (
+                    <div className='flex items-center gap-1 px-2 py-1 bg-red-100 text-red-600 rounded-lg text-xs'>
+                      <AlertCircle className='h-3 w-3' />
+                      Required fields missing
+                    </div>
+                  )}
+                  {isCurrentTabValid() && currentTabIndex > 0 && (
+                    <div className='flex items-center gap-1 px-2 py-1 bg-green-100 text-green-600 rounded-lg text-xs'>
+                      <Check className='h-3 w-3' />
+                      Complete
+                    </div>
+                  )}
+                </div>
 
                 {isLastTab ? (
                   <Button
@@ -1696,7 +1831,8 @@ const EnhancedPropertyForm = ({
                   <Button
                     type='button'
                     onClick={goToNextTab}
-                    className='rounded-xl px-8 bg-black text-white hover:bg-gray-800'
+                    disabled={!isCurrentTabValid()}
+                    className='rounded-xl px-8 bg-black text-white hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed'
                   >
                     Next
                     <ArrowRight className='h-4 w-4 ml-2' />

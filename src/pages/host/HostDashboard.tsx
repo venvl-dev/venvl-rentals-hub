@@ -503,23 +503,23 @@ const HostDashboard = () => {
   return (
     <div>
       <Header />
-      <div className='container mx-auto px-4 py-8'>
-        <div className='flex items-center justify-between mb-8'>
-          <div>
-            <h1 className='text-3xl font-bold flex items-center gap-2'>
-              <Home className='h-8 w-8' />
+      <div className='container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8'>
+        <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8'>
+          <div className='flex-1'>
+            <h1 className='text-2xl sm:text-3xl lg:text-4xl font-bold flex items-center gap-2 sm:gap-3'>
+              <Home className='h-6 w-6 sm:h-8 sm:w-8 lg:h-10 lg:w-10' />
               Host Dashboard
             </h1>
-            <p className='text-gray-600 mt-2'>
+            <p className='text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base lg:text-lg'>
               Manage your properties and bookings
             </p>
           </div>
           <Button
             onClick={handleAddProperty}
-            className='flex items-center gap-2 bg-black text-white hover:bg-gray-800 rounded-2xl px-6 py-3'
+            className='flex items-center justify-center gap-2 bg-black text-white hover:bg-gray-800 rounded-2xl px-4 sm:px-6 py-3 sm:py-3 w-full sm:w-auto min-h-[44px] touch-target'
           >
-            <Plus className='h-4 w-4' />
-            Add New Property
+            <Plus className='h-4 w-4 sm:h-5 sm:w-5' />
+            <span className='whitespace-nowrap text-sm sm:text-base'>Add New Property</span>
           </Button>
         </div>
 
@@ -528,41 +528,46 @@ const HostDashboard = () => {
           onValueChange={handleTabChange}
           className='space-y-6'
         >
-          <TabsList className='grid w-full grid-cols-[repeat(auto-fit,minmax(120px,1fr))] rounded-2xl bg-gray-100 p-2'>
+          <TabsList className='grid w-full grid-cols-5 rounded-2xl bg-gray-100 p-1 sm:p-2 gap-0.5 sm:gap-1'>
             <TabsTrigger
               value='properties'
-              className='flex items-center gap-2 rounded-xl'
+              className='flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 rounded-xl text-xs sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2.5 min-h-[40px] touch-target'
             >
-              <Home className='h-4 w-4' />
-              Properties
+              <Home className='h-3 w-3 sm:h-4 sm:w-4' />
+              <span className='hidden lg:inline'>Properties</span>
+              <span className='lg:hidden'>Props</span>
             </TabsTrigger>
             <TabsTrigger
               value='bookings'
-              className='flex items-center gap-2 rounded-xl'
+              className='flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 rounded-xl text-xs sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2.5 min-h-[40px] touch-target'
             >
-              <Users className='h-4 w-4' />
-              Bookings
+              <Users className='h-3 w-3 sm:h-4 sm:w-4' />
+              <span className='hidden lg:inline'>Bookings</span>
+              <span className='lg:hidden'>Book</span>
             </TabsTrigger>
             <TabsTrigger
               value='calendar'
-              className='flex items-center gap-2 rounded-xl'
+              className='flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 rounded-xl text-xs sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2.5 min-h-[40px] touch-target'
             >
-              <Calendar className='h-4 w-4' />
-              Calendar
+              <Calendar className='h-3 w-3 sm:h-4 sm:w-4' />
+              <span className='hidden lg:inline'>Calendar</span>
+              <span className='lg:hidden'>Cal</span>
             </TabsTrigger>
             <TabsTrigger
               value='analytics'
-              className='flex items-center gap-2 rounded-xl'
+              className='flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 rounded-xl text-xs sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2.5 min-h-[40px] touch-target'
             >
-              <BarChart3 className='h-4 w-4' />
-              Analytics
+              <BarChart3 className='h-3 w-3 sm:h-4 sm:w-4' />
+              <span className='hidden lg:inline'>Analytics</span>
+              <span className='lg:hidden'>Stats</span>
             </TabsTrigger>
             <TabsTrigger
               value='profile'
-              className='flex items-center gap-2 rounded-xl'
+              className='flex flex-col sm:flex-row items-center gap-0.5 sm:gap-2 rounded-xl text-xs sm:text-sm px-1 sm:px-3 py-1.5 sm:py-2.5 min-h-[40px] touch-target'
             >
-              <User className='h-4 w-4' />
-              Profile
+              <User className='h-3 w-3 sm:h-4 sm:w-4' />
+              <span className='hidden lg:inline'>Profile</span>
+              <span className='lg:hidden'>User</span>
             </TabsTrigger>
           </TabsList>
 

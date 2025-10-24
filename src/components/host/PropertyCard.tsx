@@ -282,16 +282,16 @@ const PropertyCard = ({
           </div>
         </div>
 
-        <div className='px-6 pb-6 mt-auto'>
-          <div className='flex gap-2'>
+        <div className='px-4 sm:px-6 pb-4 sm:pb-6 mt-auto'>
+          <div className='flex gap-1.5 sm:gap-2'>
             <Button
               variant='outline'
-              size='sm'
               onClick={() => navigate(`/property/${property.id}`)}
-              className='flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700'
+              className='flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700 min-h-[40px] sm:min-h-[36px] touch-target text-xs sm:text-sm py-2 px-3'
             >
-              <Eye className='h-4 w-4 mr-1' />
-              View
+              <Eye className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
+              <span className='hidden sm:inline'>View</span>
+              <span className='sm:hidden'>View</span>
             </Button>
 
             {/* Show different actions based on property status */}
@@ -299,25 +299,25 @@ const PropertyCard = ({
               // Archived property actions
               <Button
                 variant='outline'
-                size='sm'
                 onClick={() => onRestore(property)}
                 disabled={
                   loadingStates[property.id]?.loading &&
                   loadingStates[property.id]?.action === 'restoring'
                 }
-                className='flex-1 rounded-lg border-green-300 hover:bg-green-50 text-green-700'
+                className='flex-1 rounded-lg border-green-300 hover:bg-green-50 text-green-700 min-h-[40px] sm:min-h-[36px] touch-target text-xs sm:text-sm py-2 px-3'
                 title={`Restore "${property.title}"`}
               >
                 {loadingStates[property.id]?.loading &&
                 loadingStates[property.id]?.action === 'restoring' ? (
                   <>
-                    <Loader2 className='h-4 w-4 mr-1 animate-spin' />
-                    Restoring...
+                    <Loader2 className='h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin' />
+                    <span className='hidden sm:inline'>Restoring...</span>
+                    <span className='sm:hidden'>...</span>
                   </>
                 ) : (
                   <>
-                    <RotateCcw className='h-4 w-4 mr-1' />
-                    Restore
+                    <RotateCcw className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
+                    <span>Restore</span>
                   </>
                 )}
               </Button>
@@ -326,52 +326,52 @@ const PropertyCard = ({
               <>
                 <Button
                   variant='outline'
-                  size='sm'
                   onClick={() => onEdit(property)}
-                  className='flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700'
+                  className='flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700 min-h-[40px] sm:min-h-[36px] touch-target text-xs sm:text-sm py-2 px-3'
                 >
-                  <Edit className='h-4 w-4 mr-1' />
-                  Edit
+                  <Edit className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
+                  <span className='hidden sm:inline'>Edit</span>
+                  <span className='sm:hidden'>Edit</span>
                 </Button>
                 <Button
                   variant='outline'
-                  size='sm'
                   onClick={() =>
                     property.is_active
                       ? onPause(property)
                       : onActivate(property.id, property.title)
                   }
                   disabled={buttonState.isLoading}
-                  className='flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700'
+                  className='flex-1 rounded-lg border-gray-300 hover:bg-gray-50 text-gray-700 min-h-[40px] sm:min-h-[36px] touch-target text-xs sm:text-sm py-2 px-3'
                 >
                   {buttonState.isLoading ? (
                     <>
-                      <Loader2 className='h-4 w-4 mr-1 animate-spin' />
-                      {buttonState.loadingText}
+                      <Loader2 className='h-3 w-3 sm:h-4 sm:w-4 mr-1 animate-spin' />
+                      <span className='hidden sm:inline'>{buttonState.loadingText}</span>
+                      <span className='sm:hidden'>...</span>
                     </>
                   ) : (
                     <>
-                      <IconComponent className='h-4 w-4 mr-1' />
-                      {buttonState.buttonText}
+                      <IconComponent className='h-3 w-3 sm:h-4 sm:w-4 mr-1' />
+                      <span className='hidden sm:inline'>{buttonState.buttonText}</span>
+                      <span className='sm:hidden'>{property.is_active ? 'Pause' : 'Start'}</span>
                     </>
                   )}
                 </Button>
                 <Button
                   variant='outline'
-                  size='sm'
                   onClick={() => onDelete(property)}
                   disabled={
                     loadingStates[property.id]?.loading &&
                     loadingStates[property.id]?.action === 'deleting'
                   }
-                  className='w-10 rounded-lg border-red-300 hover:bg-red-50 text-red-600 p-0 flex items-center justify-center'
+                  className='min-w-[40px] sm:w-10 rounded-lg border-red-300 hover:bg-red-50 text-red-600 min-h-[40px] sm:min-h-[36px] touch-target flex items-center justify-center px-2 sm:px-0'
                   title={`Archive "${property.title}"`}
                 >
                   {loadingStates[property.id]?.loading &&
                   loadingStates[property.id]?.action === 'deleting' ? (
-                    <Loader2 className='h-4 w-4 animate-spin' />
+                    <Loader2 className='h-3 w-3 sm:h-4 sm:w-4 animate-spin' />
                   ) : (
-                    <Archive className='h-4 w-4' />
+                    <Archive className='h-3 w-3 sm:h-4 sm:w-4' />
                   )}
                 </Button>
               </>
