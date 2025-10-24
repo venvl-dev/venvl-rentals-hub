@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Calendar, MapPin, Users, Star, AlertCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Star, AlertCircle, Tag } from 'lucide-react';
 import { Booking } from '@/types/booking';
 import { Review } from '@/types/review';
 import BookingCancellation from '@/components/booking/BookingCancellation';
@@ -139,6 +139,18 @@ const GuestBookings = () => {
       booking.status === 'completed' &&
       !reviews.some((r) => r.booking_id === booking.id)
     );
+  };
+
+  const hasDiscount = (booking: Booking) => {
+    return (
+      booking.final_price != null &&
+      booking.final_price !== booking.total_price &&
+      booking.final_price < booking.total_price
+    );
+  };
+
+  const getDisplayPrice = (booking: Booking) => {
+    return hasDiscount(booking) ? booking.final_price : booking.total_price;
   };
 
   if (loading) {
@@ -284,9 +296,25 @@ const GuestBookings = () => {
                               >
                                 {booking.status}
                               </Badge>
-                              <span className='font-medium text-lg'>
-                                ${booking.total_price}
-                              </span>
+                              <div className='flex items-center gap-2'>
+                                {hasDiscount(booking) ? (
+                                  <>
+                                    <div className='flex items-center gap-1.5'>
+                                      <Tag className='h-4 w-4 text-green-600' />
+                                      <span className='font-semibold text-lg text-green-600'>
+                                        ${getDisplayPrice(booking)}
+                                      </span>
+                                    </div>
+                                    <span className='text-sm text-gray-500 line-through'>
+                                      ${booking.total_price}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className='font-medium text-lg'>
+                                    ${booking.total_price}
+                                  </span>
+                                )}
+                              </div>
                             </div>
 
                             {booking.cancellation_reason && (

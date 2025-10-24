@@ -29,7 +29,7 @@ interface PromoCode {
   id: string;
   code: string;
   value: number;
-  expiry_date: string | null;
+  expiry_date: string | Date | null;
   relative_expiry_months: number | null;
   created_at: string;
   allow_multi_account: boolean | null;
@@ -38,6 +38,8 @@ interface PromoCode {
 const ApplyPromoCode = () => {
   const { code: promoCode } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl');
   const { user, loading: authLoading } = useAuth();
   const [applying, setApplying] = useState(false);
   const [manualCode, setManualCode] = useState('');
@@ -74,11 +76,22 @@ const ApplyPromoCode = () => {
 
     setLoadingCodes(true);
     try {
-      const { data, error } = await supabase.from('promo_codes').select('*');
+      const { data, error } = await supabase.from('profile_promo_codes')
+        .select(`
+    *,
+    promo_codes (*)
+  `);
       console.log(data);
       if (error) throw error;
 
-      setUserPromoCodes(data);
+      const promoCodes = data.map((code) => {
+        return {
+          ...code.promo_codes,
+          expiry_date: code.expiry_date,
+        };
+      });
+
+      setUserPromoCodes(promoCodes);
     } catch (error) {
       console.error('Error fetching promo codes:', error);
       toast.error('Failed to load your promo codes');
@@ -143,7 +156,10 @@ const ApplyPromoCode = () => {
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (manualCode.trim()) {
-      navigate(`/apply-promo/${manualCode.trim()}`);
+      const url = returnUrl
+        ? `/apply-promo/${manualCode.trim()}?returnUrl=${encodeURIComponent(returnUrl)}`
+        : `/apply-promo/${manualCode.trim()}`;
+      navigate(url);
     }
   };
 
@@ -329,13 +345,23 @@ const ApplyPromoCode = () => {
                     {result.message}
                   </p>
                   <div className='space-y-2 max-w-sm mx-auto'>
-                    <Button
-                      onClick={() => navigate('/')}
-                      className='w-full'
-                      size='lg'
-                    >
-                      Return to Home
-                    </Button>
+                    {returnUrl && result.success ? (
+                      <Button
+                        onClick={() => navigate(returnUrl)}
+                        className='w-full'
+                        size='lg'
+                      >
+                        Return to Property
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => navigate('/')}
+                        className='w-full'
+                        size='lg'
+                      >
+                        Return to Home
+                      </Button>
+                    )}
                     {!result.success && (
                       <>
                         <Button

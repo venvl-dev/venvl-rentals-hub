@@ -11,6 +11,8 @@ interface BookingPricingSummaryProps {
   pricePerNight: number;
   monthlyPrice?: number;
   totalPrice: number;
+  promoCodeDiscount?: number;
+  promoCodeValue?: number;
 }
 
 const BookingPricingSummary = ({
@@ -21,10 +23,13 @@ const BookingPricingSummary = ({
   pricePerNight,
   monthlyPrice,
   totalPrice,
+  promoCodeDiscount = 0,
+  promoCodeValue = 0,
 }: BookingPricingSummaryProps) => {
   if (totalPrice === 0) return null;
 
   const nights = checkIn && checkOut ? differenceInDays(checkOut, checkIn) : 0;
+  const finalPrice = totalPrice - promoCodeDiscount;
 
   return (
     <AnimatePresence>
@@ -60,6 +65,18 @@ const BookingPricingSummary = ({
             </span>
           </div>
 
+          {/* Promo Code Discount */}
+          {promoCodeDiscount > 0 && (
+            <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3 sm:mb-4'>
+              <div className='text-xs sm:text-sm text-green-700 order-1 sm:order-1'>
+                Promo code discount ({promoCodeValue}% OFF)
+              </div>
+              <span className='font-semibold text-green-600 text-sm sm:text-base order-2 sm:order-2'>
+                -EGP {promoCodeDiscount}
+              </span>
+            </div>
+          )}
+
           {/* Additional info for monthly - Responsive */}
           {bookingMode === 'monthly' && monthlyDuration > 1 && (
             <div className='bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3 sm:mb-4'>
@@ -71,6 +88,11 @@ const BookingPricingSummary = ({
               </div>
               <div className='text-xs text-blue-600 mt-1'>
                 Total contract value: EGP {(monthlyPrice || 0) * monthlyDuration}
+                {promoCodeDiscount > 0 && (
+                  <span className='block mt-1'>
+                    After discount: EGP {((monthlyPrice || 0) * monthlyDuration) - (promoCodeDiscount * monthlyDuration)}
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -82,7 +104,12 @@ const BookingPricingSummary = ({
               {bookingMode === 'monthly' && monthlyDuration > 1 ? 'First month payment' : 'Total'}
             </span>
             <span className='text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 order-2 sm:order-2'>
-              EGP {totalPrice}
+              EGP {finalPrice}
+              {promoCodeDiscount > 0 && (
+                <span className='block text-sm text-gray-500 line-through font-normal mt-1'>
+                  EGP {totalPrice}
+                </span>
+              )}
             </span>
           </div>
         </div>

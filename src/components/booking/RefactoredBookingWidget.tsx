@@ -13,6 +13,7 @@ import BookingTypeSelector from './BookingTypeSelector';
 import BookingDateSelector from './components/BookingDateSelector';
 import BookingGuestSelector from './components/BookingGuestSelector';
 import BookingPricingSummary from './components/BookingPricingSummary';
+import PromoCodeSelector from './PromoCodeSelector';
 import { useBookingValidation } from '@/hooks/useBookingValidation';
 import {
   getRentalType,
@@ -47,6 +48,7 @@ interface BookingData {
   bookingType: 'daily' | 'monthly';
   totalPrice: number;
   duration?: number;
+  promoCodeId?: string | null;
 }
 
 interface DateChangeData {
@@ -77,6 +79,11 @@ const RefactoredBookingWidget = ({
   const [totalPrice, setTotalPrice] = useState(0);
   const [unavailableDates, setUnavailableDates] = useState<Date[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedPromoCodeId, setSelectedPromoCodeId] = useState<string | null>(
+    null,
+  );
+  const [promoCodeDiscount, setPromoCodeDiscount] = useState(0);
+  const [promoCodeValue, setPromoCodeValue] = useState(0);
 
   // Use unified rental type utilities
   const rentalType = getRentalType(property);
@@ -235,6 +242,43 @@ const RefactoredBookingWidget = ({
     },
     [property.id],
   );
+
+  // Fetch promo code details when selected
+  useEffect(() => {
+    const fetchPromoCode = async () => {
+      if (!selectedPromoCodeId) {
+        setPromoCodeValue(0);
+        setPromoCodeDiscount(0);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('promo_codes')
+          .select('value')
+          .eq('id', selectedPromoCodeId)
+          .single();
+
+        if (error) throw error;
+
+        if (data) {
+          setPromoCodeValue(data.value);
+          // Calculate discount based on current total price
+          if (totalPrice > 0) {
+            const discount = Math.round((totalPrice * data.value) / 100);
+            setPromoCodeDiscount(discount);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching promo code:', error);
+        toast.error('Failed to load promo code details');
+        setPromoCodeValue(0);
+        setPromoCodeDiscount(0);
+      }
+    };
+
+    fetchPromoCode();
+  }, [selectedPromoCodeId, totalPrice]);
 
   // Set initial booking mode based on supported types
   useEffect(() => {
@@ -402,6 +446,9 @@ const RefactoredBookingWidget = ({
         return;
       }
 
+      // Calculate final price after discount
+      const finalPrice = totalPrice - promoCodeDiscount;
+
       // Call the parent callback if provided
       if (onBookingInitiated) {
         onBookingInitiated({
@@ -409,30 +456,48 @@ const RefactoredBookingWidget = ({
           checkOut: checkOutDate,
           guests,
           bookingType: bookingMode,
-          totalPrice, // This is now the first month payment for multi-month bookings
+          totalPrice: finalPrice, // Final price after discount
           duration: bookingMode === 'monthly' ? monthlyDuration : undefined,
+          promoCodeId: selectedPromoCodeId,
         });
         return;
       }
 
       // Calculate the full contract value for monthly bookings
-      const fullContractValue = bookingMode === 'monthly' && monthlyDuration > 1
-        ? monthlyDuration * monthlyPrice
-        : totalPrice;
+      const fullContractValue =
+        bookingMode === 'monthly' && monthlyDuration > 1
+          ? monthlyDuration * monthlyPrice
+          : finalPrice;
+
+      // Get property host_id for the booking
+      const { data: propertyInfo, error: propertyError } = await supabase
+        .from('properties')
+        .select('host_id')
+        .eq('id', property.id)
+        .single();
+
+      if (propertyError || !propertyInfo) {
+        console.error('❌ Property not found:', propertyError);
+        toast.error('Property not found. Please refresh and try again.');
+        return;
+      }
 
       // Otherwise, create the booking directly
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
           guest_id: user.id,
+          host_id: propertyInfo.host_id,
           property_id: property.id,
           check_in: checkInDate.toISOString().split('T')[0],
           check_out: checkOutDate.toISOString().split('T')[0],
           guests,
-          total_price: totalPrice, // This is the amount being charged now (first month for multi-month)
+          total_price: finalPrice, // Final price after discount
           status: 'pending',
           booking_type: bookingMode,
-          duration_months: bookingMode === 'monthly' ? monthlyDuration : undefined,
+          duration_months:
+            bookingMode === 'monthly' ? monthlyDuration : undefined,
+          promo_code_id: selectedPromoCodeId,
           // Note: We might want to add a separate field for full_contract_value in the future
         })
         .select()
@@ -448,6 +513,9 @@ const RefactoredBookingWidget = ({
       setMonthlyStartDate(undefined);
       setMonthlyDuration(1);
       setGuests(1);
+      setSelectedPromoCodeId(null);
+      setPromoCodeDiscount(0);
+      setPromoCodeValue(0);
 
       // Refresh unavailable dates
       fetchUnavailableDates();
@@ -557,6 +625,30 @@ const RefactoredBookingWidget = ({
           onGuestsChange={setGuests}
         />
 
+        {/* Promo Code Selector */}
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <PromoCodeSelector
+              userId={user.id}
+              onSelect={setSelectedPromoCodeId}
+              selectedPromoCodeId={selectedPromoCodeId}
+              totalPrice={totalPrice}
+              checkIn={bookingMode === 'daily' ? checkIn : monthlyStartDate}
+              checkOut={
+                bookingMode === 'daily'
+                  ? checkOut
+                  : monthlyStartDate
+                    ? addMonths(monthlyStartDate, monthlyDuration)
+                    : undefined
+              }
+            />
+          </motion.div>
+        )}
+
         {/* Pricing Summary */}
         <BookingPricingSummary
           bookingMode={bookingMode}
@@ -566,6 +658,8 @@ const RefactoredBookingWidget = ({
           pricePerNight={dailyPrice}
           monthlyPrice={monthlyPrice}
           totalPrice={totalPrice}
+          promoCodeDiscount={promoCodeDiscount}
+          promoCodeValue={promoCodeValue}
         />
 
         {/* Validation Errors Display */}

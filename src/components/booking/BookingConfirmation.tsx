@@ -14,9 +14,11 @@ import {
   MessageCircle,
   CreditCard,
   X,
+  Ticket,
 } from 'lucide-react';
 import { format, differenceInDays, differenceInMonths } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BookingConfirmationProps {
   booking: {
@@ -38,6 +40,7 @@ interface BookingConfirmationProps {
     status: string;
     created_at: string;
     duration_months?: number;
+    promo_code_id?: string | null;
   };
 }
 
@@ -46,19 +49,28 @@ const BookingConfirmation = ({ booking }: BookingConfirmationProps) => {
   const [showDetails, setShowDetails] = useState(false);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const [showReceiptPopup, setShowReceiptPopup] = useState(false);
+  const [promoCodeDetails, setPromoCodeDetails] = useState<{
+    code: string;
+    value: number;
+  } | null>(null);
 
   const checkIn = new Date(booking.check_in);
   const checkOut = new Date(booking.check_out);
   const nights = differenceInDays(checkOut, checkIn);
 
   // Calculate months for monthly bookings
-  const totalMonths = booking.booking_type === 'monthly'
-    ? (booking.duration_months || Math.ceil(differenceInMonths(checkOut, checkIn)))
-    : 0;
+  const totalMonths =
+    booking.booking_type === 'monthly'
+      ? booking.duration_months ||
+        Math.ceil(differenceInMonths(checkOut, checkIn))
+      : 0;
 
   // Determine payment structure
-  const isMonthlyMultipleMonths = booking.booking_type === 'monthly' && totalMonths > 1;
-  const monthlyPaymentAmount = isMonthlyMultipleMonths ? Math.round(booking.total_price / totalMonths) : booking.total_price;
+  const isMonthlyMultipleMonths =
+    booking.booking_type === 'monthly' && totalMonths > 1;
+  const monthlyPaymentAmount = isMonthlyMultipleMonths
+    ? Math.round(booking.total_price / totalMonths)
+    : booking.total_price;
 
   useEffect(() => {
     // Auto-show details after animation
@@ -66,8 +78,36 @@ const BookingConfirmation = ({ booking }: BookingConfirmationProps) => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Fetch promo code details if available
+  useEffect(() => {
+    const fetchPromoCode = async () => {
+      if (booking.promo_code_id) {
+        try {
+          const { data, error } = await supabase
+            .from('promo_codes')
+            .select('code, value')
+            .eq('id', booking.promo_code_id)
+            .single();
+
+          if (error) throw error;
+          if (data) {
+            setPromoCodeDetails(data);
+          }
+        } catch (error) {
+          console.error('Error fetching promo code:', error);
+        }
+      }
+    };
+
+    fetchPromoCode();
+  }, [booking.promo_code_id]);
+
   const handleDownloadReceipt = () => {
     // Simulate receipt download
+    const promoText = promoCodeDetails
+      ? `Promo Code: ${promoCodeDetails.code} (${promoCodeDetails.value}% discount)\n`
+      : '';
+
     const receiptData = `
 VENVL Booking Confirmation
 Reference: ${booking.booking_reference}
@@ -75,7 +115,7 @@ Property: ${booking.property.title}
 Check-in: ${format(checkIn, 'MMM dd, yyyy')}
 Check-out: ${format(checkOut, 'MMM dd, yyyy')}
 Guests: ${booking.guests}
-Total: EGP ${booking.total_price}
+${promoText}Total: EGP ${booking.total_price}
 Status: ${booking.status}
     `;
 
@@ -242,6 +282,33 @@ Status: ${booking.status}
 
               <Separator />
 
+              {/* Promo Code Display */}
+              {promoCodeDetails && (
+                <>
+                  <div className='bg-green-50 border border-green-200 rounded-2xl p-4'>
+                    <div className='flex items-center gap-2 mb-2'>
+                      <Ticket className='h-5 w-5 text-green-600' />
+                      <span className='text-sm font-medium text-green-900'>
+                        Promo Code Applied
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <div>
+                        <code className='text-base font-bold font-mono bg-green-100 px-3 py-1 rounded text-green-800'>
+                          {promoCodeDetails.code}
+                        </code>
+                        <p className='text-sm text-green-700 mt-2'>
+                          {promoCodeDetails.value}% discount applied to your
+                          booking
+                        </p>
+                      </div>
+                      <Check className='h-6 w-6 text-green-600' />
+                    </div>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
               {/* Payment Summary */}
               <div className='bg-gray-50 rounded-2xl p-4 space-y-3'>
                 <h4 className='font-semibold text-gray-900'>Payment summary</h4>
@@ -251,10 +318,13 @@ Status: ${booking.status}
                     <div className='bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3'>
                       <div className='flex items-center gap-2 mb-2'>
                         <CreditCard className='h-4 w-4 text-blue-600' />
-                        <span className='text-sm font-medium text-blue-900'>Monthly Payment Plan</span>
+                        <span className='text-sm font-medium text-blue-900'>
+                          Monthly Payment Plan
+                        </span>
                       </div>
                       <div className='text-xs text-blue-700'>
-                        You will be charged monthly for this {totalMonths}-month booking
+                        You will be charged monthly for this {totalMonths}-month
+                        booking
                       </div>
                     </div>
 
@@ -277,7 +347,9 @@ Status: ${booking.status}
                       </span>
                     </div>
                     <div className='flex justify-between items-center'>
-                      <span className='text-gray-600'>First payment status</span>
+                      <span className='text-gray-600'>
+                        First payment status
+                      </span>
                       <Badge className='bg-green-100 text-green-800 border-green-200'>
                         {booking.status}
                       </Badge>
@@ -422,7 +494,9 @@ Status: ${booking.status}
                 {/* Amount Charged */}
                 <div className='bg-gray-50 rounded-2xl p-4'>
                   <h4 className='font-semibold text-gray-900 mb-3'>
-                    {isMonthlyMultipleMonths ? 'Monthly Payment Breakdown' : 'Amount Charged'}
+                    {isMonthlyMultipleMonths
+                      ? 'Monthly Payment Breakdown'
+                      : 'Amount Charged'}
                   </h4>
                   {isMonthlyMultipleMonths ? (
                     <div className='space-y-2'>
@@ -431,20 +505,33 @@ Status: ${booking.status}
                           Payment Schedule
                         </div>
                         <div className='text-xs text-blue-700'>
-                          EGP {monthlyPaymentAmount} charged monthly for {totalMonths} months
+                          EGP {monthlyPaymentAmount} charged monthly for{' '}
+                          {totalMonths} months
                         </div>
                       </div>
                       <div className='flex justify-between'>
-                        <span className='text-gray-600'>Monthly base amount</span>
-                        <span className='text-gray-900'>EGP {Math.round(monthlyPaymentAmount * 0.87)}</span>
+                        <span className='text-gray-600'>
+                          Monthly base amount
+                        </span>
+                        <span className='text-gray-900'>
+                          EGP {Math.round(monthlyPaymentAmount * 0.87)}
+                        </span>
                       </div>
                       <div className='flex justify-between'>
-                        <span className='text-gray-600'>Service fee (monthly)</span>
-                        <span className='text-gray-900'>EGP {Math.round(monthlyPaymentAmount * 0.08)}</span>
+                        <span className='text-gray-600'>
+                          Service fee (monthly)
+                        </span>
+                        <span className='text-gray-900'>
+                          EGP {Math.round(monthlyPaymentAmount * 0.08)}
+                        </span>
                       </div>
                       <div className='flex justify-between'>
-                        <span className='text-gray-600'>Taxes & fees (monthly)</span>
-                        <span className='text-gray-900'>EGP {Math.round(monthlyPaymentAmount * 0.05)}</span>
+                        <span className='text-gray-600'>
+                          Taxes & fees (monthly)
+                        </span>
+                        <span className='text-gray-900'>
+                          EGP {Math.round(monthlyPaymentAmount * 0.05)}
+                        </span>
                       </div>
                       <Separator className='my-2' />
                       <div className='flex justify-between font-semibold text-lg'>
@@ -460,15 +547,21 @@ Status: ${booking.status}
                     <div className='space-y-2'>
                       <div className='flex justify-between'>
                         <span className='text-gray-600'>Base amount</span>
-                        <span className='text-gray-900'>EGP {Math.round(booking.total_price * 0.87)}</span>
+                        <span className='text-gray-900'>
+                          EGP {Math.round(booking.total_price * 0.87)}
+                        </span>
                       </div>
                       <div className='flex justify-between'>
                         <span className='text-gray-600'>Service fee</span>
-                        <span className='text-gray-900'>EGP {Math.round(booking.total_price * 0.08)}</span>
+                        <span className='text-gray-900'>
+                          EGP {Math.round(booking.total_price * 0.08)}
+                        </span>
                       </div>
                       <div className='flex justify-between'>
                         <span className='text-gray-600'>Taxes & fees</span>
-                        <span className='text-gray-900'>EGP {Math.round(booking.total_price * 0.05)}</span>
+                        <span className='text-gray-900'>
+                          EGP {Math.round(booking.total_price * 0.05)}
+                        </span>
                       </div>
                       <Separator className='my-2' />
                       <div className='flex justify-between font-semibold text-lg'>
@@ -482,7 +575,9 @@ Status: ${booking.status}
                 {/* Payment Timeline */}
                 <div className='bg-gray-50 rounded-2xl p-4'>
                   <h4 className='font-semibold text-gray-900 mb-3'>
-                    {isMonthlyMultipleMonths ? 'Payment Schedule' : 'Payment Timeline'}
+                    {isMonthlyMultipleMonths
+                      ? 'Payment Schedule'
+                      : 'Payment Timeline'}
                   </h4>
                   {isMonthlyMultipleMonths ? (
                     <div className='space-y-3'>
@@ -491,7 +586,8 @@ Status: ${booking.status}
                           First Payment (Month 1)
                         </div>
                         <div className='text-sm text-gray-600'>
-                          {format(checkIn, 'MMM dd, yyyy')} - EGP {monthlyPaymentAmount}
+                          {format(checkIn, 'MMM dd, yyyy')} - EGP{' '}
+                          {monthlyPaymentAmount}
                         </div>
                         <Badge className='bg-green-100 text-green-800 text-xs mt-1'>
                           {booking.status}
@@ -500,7 +596,9 @@ Status: ${booking.status}
                       {Array.from({ length: totalMonths - 1 }, (_, i) => {
                         const monthNum = i + 2;
                         const paymentDate = new Date(checkIn);
-                        paymentDate.setMonth(paymentDate.getMonth() + monthNum - 1);
+                        paymentDate.setMonth(
+                          paymentDate.getMonth() + monthNum - 1,
+                        );
 
                         return (
                           <div key={monthNum}>
@@ -508,7 +606,8 @@ Status: ${booking.status}
                               Payment {monthNum} (Month {monthNum})
                             </div>
                             <div className='text-sm text-gray-600'>
-                              {format(paymentDate, 'MMM dd, yyyy')} - EGP {monthlyPaymentAmount}
+                              {format(paymentDate, 'MMM dd, yyyy')} - EGP{' '}
+                              {monthlyPaymentAmount}
                             </div>
                             <Badge className='bg-yellow-100 text-yellow-800 text-xs mt-1'>
                               Upcoming
@@ -520,7 +619,9 @@ Status: ${booking.status}
                         <div className='font-medium text-gray-900'>
                           Check-in Date
                         </div>
-                        <div className='text-sm text-gray-600'>{format(checkIn, 'MMM dd, yyyy')}</div>
+                        <div className='text-sm text-gray-600'>
+                          {format(checkIn, 'MMM dd, yyyy')}
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -530,14 +631,19 @@ Status: ${booking.status}
                           Payment Processed
                         </div>
                         <div className='text-sm text-gray-600'>
-                          {format(new Date(booking.created_at), 'MMM dd, yyyy - h:mm a')}
+                          {format(
+                            new Date(booking.created_at),
+                            'MMM dd, yyyy - h:mm a',
+                          )}
                         </div>
                       </div>
                       <div>
                         <div className='font-medium text-gray-900'>
                           Check-in Date
                         </div>
-                        <div className='text-sm text-gray-600'>{format(checkIn, 'MMM dd, yyyy')}</div>
+                        <div className='text-sm text-gray-600'>
+                          {format(checkIn, 'MMM dd, yyyy')}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -632,8 +738,7 @@ Status: ${booking.status}
                     <Check className='h-4 w-4 text-green-600' />
                     {isMonthlyMultipleMonths
                       ? `Monthly payment: EGP ${monthlyPaymentAmount} (${totalMonths} months)`
-                      : `Total amount paid: EGP ${booking.total_price}`
-                    }
+                      : `Total amount paid: EGP ${booking.total_price}`}
                   </li>
                   <li className='flex items-center gap-2'>
                     <Check className='h-4 w-4 text-green-600' />

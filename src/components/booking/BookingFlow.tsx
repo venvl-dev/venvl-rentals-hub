@@ -83,12 +83,14 @@ const BookingFlow = ({
       booking_type: bookingData.bookingType,
       duration_months: bookingData.duration || null,
       status: 'pending' as const,
+      promo_code_id: (bookingData as any).promoCodeId || null,
     };
 
     proceedToSummary(booking);
   }, [user, bookingData, property.id, navigate, proceedToSummary]);
 
-  const handleConfirmBooking = async () => {
+  const handleConfirmBooking = async (promoCodeId?: string | null) => {
+    // The promo code is already in the booking data from the widget
     await confirmBooking();
   };
 
@@ -143,6 +145,7 @@ const BookingFlow = ({
                   | 'monthly',
                 totalPrice: Number(flowBookingData.total_price),
                 duration: flowBookingData.duration_months || undefined,
+                promo_code_id: flowBookingData.promo_code_id || null,
               }}
               onConfirmPayment={handleConfirmBooking}
               onCancel={handleCancel}
