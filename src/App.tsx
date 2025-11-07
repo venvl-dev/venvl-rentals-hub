@@ -14,6 +14,10 @@ import PropertyListing from './pages/PropertyListing';
 import NotFound from './pages/NotFound';
 import ApplyPromoCode from './pages/ApplyPromoCode';
 
+// Payment pages
+import PaymentCallback from './pages/PaymentCallback';
+import PaymentFailed from './pages/PaymentFailed';
+
 // Lazy-loaded components (code splitting)
 const Profile = lazy(() => import('./pages/Profile'));
 const EditProfile = lazy(() => import('./pages/EditProfile'));
@@ -85,6 +89,10 @@ function App() {
                   <Route path='/' element={<Index />} />
                   <Route path='/auth' element={<Auth />} />
                   <Route path='/property/:id' element={<PropertyListing />} />
+
+                  {/* === PAYMENT ROUTES === */}
+                  <Route path='/payment-callback' element={<PaymentCallback />} />
+                  <Route path='/payment-failed' element={<PaymentFailed />} />
 
                   {/* === PROFILE ROUTES === */}
                   <Route
