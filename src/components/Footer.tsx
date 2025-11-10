@@ -54,7 +54,7 @@ const Footer = () => {
             <ul className="space-y-2">
               <li>
                 <Link
-                  to="/legal/privacy-policy"
+                  to="/privacy-policy"
                   className="text-sm hover:text-white transition-colors"
                 >
                   Privacy Policy
@@ -62,7 +62,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/legal/terms-and-conditions"
+                  to="/terms-and-conditions"
                   className="text-sm hover:text-white transition-colors"
                 >
                   Terms & Conditions
@@ -70,7 +70,7 @@ const Footer = () => {
               </li>
               <li>
                 <Link
-                  to="/legal/cancellation-refund-policy"
+                  to="/cancellation-refund-policy"
                   className="text-sm hover:text-white transition-colors"
                 >
                   Cancellation & Refund Policy

@@ -1,11 +1,12 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const TermsAndConditions = () => {
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-4xl">
         <Link to="/">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -13,32 +14,62 @@ const TermsAndConditions = () => {
           </Button>
         </Link>
 
-        <div className="prose prose-slate dark:prose-invert max-w-none">
-          <h1 className="text-4xl font-bold mb-2">VENVL – Terms & Conditions</h1>
-          <p className="text-muted-foreground mb-8">
-            <strong>Effective Date:</strong> 1 January 2025
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-3">Terms & Conditions</h1>
+          <p className="text-muted-foreground text-lg">
+            Effective Date: 1 January 2025
           </p>
+        </div>
 
-          <div className="bg-muted/50 p-6 rounded-lg mb-8">
-            <p className="mb-2"><strong>Brand:</strong> VENVL</p>
-            <p className="mb-2"><strong>Powered By:</strong> Dlleni Real Estate Consultancy</p>
-            <p className="mb-2"><strong>Registered Address:</strong> Building 238, Second Sector, Fifth Settlement, New Cairo</p>
-            <p className="mb-0">
-              <strong>Contact:</strong>{" "}
-              <a href="mailto:support@venvl.com" className="text-primary hover:underline">
-                support@venvl.com
-              </a>
-              {" | "}
-              <a href="tel:+201005400050" className="text-primary hover:underline">
-                +201005400050
-              </a>
-            </p>
+        {/* Company Info Card */}
+        <Card className="p-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Brand</p>
+              <p className="font-semibold">VENVL</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Powered By</p>
+              <p className="font-semibold">Dlleni Real Estate Consultancy</p>
+            </div>
+            <div className="md:col-span-2">
+              <p className="text-sm text-muted-foreground mb-1">Registered Address</p>
+              <p className="font-semibold">Building 238, Second Sector, Fifth Settlement, New Cairo</p>
+            </div>
           </div>
 
+          {/* Contact Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <Button variant="default" asChild>
+              <a href="mailto:support@venvl.com">
+                <Mail className="mr-2 h-4 w-4" />
+                Email Us
+              </a>
+            </Button>
+            <Button variant="outline" asChild>
+              <a href="tel:+201005400050">
+                <Phone className="mr-2 h-4 w-4" />
+                Call Us
+              </a>
+            </Button>
+          </div>
+        </Card>
+
+        {/* Content */}
+        <div className="prose prose-slate dark:prose-invert max-w-none">
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">OVERVIEW</h2>
             <p className="mb-4">
-              This website and mobile app (the "Platform") are operated by Dlleni Real Estate Consultancy under the VENVL brand ("VENVL", "we", "us", "our"). By accessing or using the Platform and/or booking any unit or service, you agree to be bound by these Terms & Conditions ("Terms"), our Privacy Policy, Cookie Policy, and our Cancellation & Refund Policy (together, the "Policies"). If you do not agree, do not use the Platform.
+              This website and mobile app (the "Platform") are operated by Dlleni Real Estate Consultancy under the VENVL brand ("VENVL", "we", "us", "our"). By accessing or using the Platform and/or booking any unit or service, you agree to be bound by these Terms & Conditions ("Terms"), our{" "}
+              <Link to="/privacy-policy" className="text-primary hover:underline">
+                Privacy Policy
+              </Link>
+              , Cookie Policy, and our{" "}
+              <Link to="/cancellation-refund-policy" className="text-primary hover:underline">
+                Cancellation & Refund Policy
+              </Link>{" "}
+              (together, the "Policies"). If you do not agree, do not use the Platform.
             </p>
             <p>
               We may update these Terms at any time by posting a revised version on the Platform. Your continued use after posting constitutes acceptance.
@@ -82,7 +113,7 @@ const TermsAndConditions = () => {
             <h2 className="text-2xl font-semibold mb-4">4) CANCELLATIONS, MODIFICATIONS & REFUNDS</h2>
             <p className="mb-2">
               4.1 Cancellations, no-shows, early departures, and modifications are governed by the{" "}
-              <Link to="/legal/cancellation-refund-policy" className="text-primary hover:underline">
+              <Link to="/cancellation-refund-policy" className="text-primary hover:underline">
                 VENVL — Cancellation & Refund Policy
               </Link>{" "}
               (latest version on the Platform).
@@ -168,7 +199,7 @@ const TermsAndConditions = () => {
             <h2 className="text-2xl font-semibold mb-4">12) USER CONTENT, REVIEWS & LICENSE</h2>
             <p className="mb-2">
               12.1 By submitting reviews, photos, or comments ("User Content"), you grant VENVL a worldwide, royalty-free, non-exclusive, sublicensable license to use, reproduce, modify, publish, translate, and display such content for Platform operation and marketing, subject to our{" "}
-              <Link to="/legal/privacy-policy" className="text-primary hover:underline">
+              <Link to="/privacy-policy" className="text-primary hover:underline">
                 Privacy Policy
               </Link>
               .
@@ -192,7 +223,7 @@ const TermsAndConditions = () => {
             <h2 className="text-2xl font-semibold mb-4">14) PRIVACY & COOKIES</h2>
             <p>
               Your submission of personal information via the Platform is governed by our{" "}
-              <Link to="/legal/privacy-policy" className="text-primary hover:underline">
+              <Link to="/privacy-policy" className="text-primary hover:underline">
                 Privacy Policy
               </Link>{" "}
               and Cookie Policy available on the Platform.
@@ -274,21 +305,24 @@ const TermsAndConditions = () => {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">25) CONTACT</h2>
-            <ul className="list-disc pl-6 space-y-2">
-              <li>
-                <strong>Email:</strong>{" "}
-                <a href="mailto:support@venvl.com" className="text-primary hover:underline">
+            <div className="flex flex-wrap gap-3">
+              <Button variant="default" asChild>
+                <a href="mailto:support@venvl.com">
+                  <Mail className="mr-2 h-4 w-4" />
                   support@venvl.com
                 </a>
-              </li>
-              <li>
-                <strong>Phone/WhatsApp:</strong>{" "}
-                <a href="tel:+201005400050" className="text-primary hover:underline">
-                  +201005400050
+              </Button>
+              <Button variant="outline" asChild>
+                <a href="tel:+201005400050">
+                  <Phone className="mr-2 h-4 w-4" />
+                  +20 100 540 0050
                 </a>
-              </li>
-              <li><strong>Address:</strong> Building 238, Second Sector, Fifth Settlement, New Cairo</li>
-            </ul>
+              </Button>
+              <Button variant="outline" className="cursor-default">
+                <MapPin className="mr-2 h-4 w-4" />
+                Building 238, New Cairo
+              </Button>
+            </div>
           </section>
         </div>
       </div>

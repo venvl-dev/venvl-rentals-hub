@@ -103,15 +103,15 @@ function App() {
 
                   {/* === LEGAL ROUTES === */}
                   <Route
-                    path='/legal/privacy-policy'
+                    path='/privacy-policy'
                     element={<PrivacyPolicy />}
                   />
                   <Route
-                    path='/legal/terms-and-conditions'
+                    path='/terms-and-conditions'
                     element={<TermsAndConditions />}
                   />
                   <Route
-                    path='/legal/cancellation-refund-policy'
+                    path='/cancellation-refund-policy'
                     element={<CancellationRefundPolicy />}
                   />
 
