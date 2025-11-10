@@ -17,6 +17,8 @@ import {
 import { format, differenceInDays } from 'date-fns';
 import PriceBreakdownModal from './components/PriceBreakdownModal';
 import { supabase } from '@/integrations/supabase/client';
+import { payTabsService } from '@/services/paytabs.service';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface BookingSummaryProps {
   booking: {
@@ -48,11 +50,13 @@ const BookingSummary = ({
   onCancel,
   isProcessing = false,
 }: BookingSummaryProps) => {
+  const { user } = useAuth();
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
   const [promoCodeDetails, setPromoCodeDetails] = useState<{
     code: string;
     value: number;
   } | null>(null);
+  const [isInitiatingPayment, setIsInitiatingPayment] = useState(false);
 
   const nights = differenceInDays(booking.checkOut, booking.checkIn);
 
@@ -100,42 +104,82 @@ const BookingSummary = ({
   const handlePayment = async () => {
     try {
       if (paymentMethod === 'card') {
-        // Simulate Stripe payment flow
-        toast.success('Payment processed successfully!');
-        onConfirmPayment();
+        // Check if user is authenticated
+        if (!user) {
+          toast.error('Please log in to complete payment');
+          return;
+        }
+
+        // Check if PayTabs is configured
+        if (!payTabsService.isConfigured()) {
+          toast.error('Payment system is not configured. Please contact support.');
+          console.error('PayTabs credentials missing in environment variables');
+          return;
+        }
+
+        setIsInitiatingPayment(true);
+
+        // Prepare payment request
+        const paymentRequest = {
+          amount: finalTotal,
+          currency: 'EGP',
+          bookingDetails: {
+            propertyId: booking.property.id,
+            propertyTitle: booking.property.title,
+            checkIn: format(booking.checkIn, 'yyyy-MM-dd'),
+            checkOut: format(booking.checkOut, 'yyyy-MM-dd'),
+            guests: booking.guests,
+            bookingType: booking.bookingType,
+            durationMonths: booking.duration,
+          },
+          customerInfo: {
+            name: user.user_metadata?.full_name || user.email || 'Guest',
+            email: user.email || '',
+            phone: user.user_metadata?.phone || '',
+          },
+          promoCodeId: booking.promo_code_id,
+          metadata: {
+            userId: user.id,
+            nights: booking.bookingType === 'daily' ? nights : undefined,
+            serviceFee,
+            taxes,
+            promoDiscount,
+          },
+        };
+
+        // Initiate PayTabs payment
+        const response = await payTabsService.initiatePayment(paymentRequest);
+
+        if (response.success && response.redirectUrl) {
+          // Store booking data in sessionStorage for retrieval after redirect
+          sessionStorage.setItem(
+            'pendingBooking',
+            JSON.stringify({
+              ...booking,
+              finalTotal,
+              transactionRef: response.transactionRef,
+              paymentMethod: 'card',
+            })
+          );
+
+          // Redirect to PayTabs payment page
+          toast.success('Redirecting to payment page...');
+          window.location.href = response.redirectUrl;
+        } else {
+          throw new Error(response.error || 'Failed to initiate payment');
+        }
       } else {
         // Cash payment - just confirm booking
-        onConfirmPayment();
+        onConfirmPayment(booking.promo_code_id);
       }
     } catch (error) {
       console.error('Payment error:', error);
-      toast.error('Payment failed. Please try again.');
+      toast.error(
+        error instanceof Error ? error.message : 'Payment failed. Please try again.'
+      );
+      setIsInitiatingPayment(false);
     }
   };
-
-  //   const handlePayment = async () => {
-  //   try {
-  //     if (paymentMethod === 'card') {
-  //       // 🎯 STRIPE INTEGRATION GOES HERE
-  //       const { sessionId } = await createStripeCheckoutSession({
-  //         amount: finalTotal,
-  //         bookingData: booking,
-  //         customerId: user.id
-  //       });
-
-  //       // Redirect to Stripe Checkout
-  //       const stripe = await stripePromise;
-  //       await stripe.redirectToCheckout({ sessionId });
-
-  //     } else {
-  //       // Cash payment - create booking with 'pending' payment status
-  //       onConfirmPayment();
-  //     }
-  //   } catch (error) {
-  //     console.error('Payment error:', error);
-  //     toast.error('Payment failed. Please try again.');
-  //   }
-  // };
   return (
     <div className='max-w-4xl mx-auto p-3 sm:p-4 lg:p-6'>
       <motion.div
@@ -365,14 +409,14 @@ const BookingSummary = ({
               <div className='space-y-2 sm:space-y-3'>
                 <Button
                   onClick={handlePayment}
-                  disabled={isProcessing}
+                  disabled={isProcessing || isInitiatingPayment}
                   className='w-full bg-gradient-to-r from-gray-900 to-black hover:from-black hover:to-gray-800 text-white font-semibold py-3 sm:py-4 text-sm sm:text-base rounded-2xl shadow-lg transition-all duration-300'
                 >
-                  {isProcessing ? (
+                  {isProcessing || isInitiatingPayment ? (
                     <div className='flex items-center justify-center gap-2'>
                       <div className='animate-spin rounded-full h-4 w-4 border-b-2 border-white'></div>
                       <span className='text-sm sm:text-base'>
-                        Processing...
+                        {isInitiatingPayment ? 'Initiating payment...' : 'Processing...'}
                       </span>
                     </div>
                   ) : (

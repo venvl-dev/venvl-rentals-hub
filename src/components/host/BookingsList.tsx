@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { Calendar, User, Home, DollarSign, BarChart3 } from 'lucide-react';
+import { Calendar, User, Users, Home, DollarSign, BarChart3 } from 'lucide-react';
 import { Booking, BookingStatus } from '@/types/booking';
 import BookingSaturationDashboard from './BookingSaturationDashboard';
 
@@ -163,19 +163,19 @@ const BookingsList = () => {
 
   return (
     <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
-        <h2 className='text-2xl font-bold'>Bookings Management</h2>
-        <div className='flex gap-3'>
+      <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-4'>
+        <h2 className='text-xl sm:text-2xl font-bold'>Bookings Management</h2>
+        <div className='flex flex-col sm:flex-row gap-3'>
           <Button
             variant='outline'
             onClick={() => setShowDashboard(!showDashboard)}
-            className='flex items-center gap-2 rounded-xl'
+            className='flex items-center justify-center gap-2 rounded-xl min-h-[44px] touch-target'
           >
             <BarChart3 className='h-4 w-4' />
-            {showDashboard ? 'Hide Dashboard' : 'Show Dashboard'}
+            <span className='whitespace-nowrap'>{showDashboard ? 'Hide Dashboard' : 'Show Dashboard'}</span>
           </Button>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className='w-48'>
+            <SelectTrigger className='w-full sm:w-48 min-h-[44px] touch-target'>
               <SelectValue placeholder='Filter by status' />
             </SelectTrigger>
             <SelectContent>
@@ -213,81 +213,221 @@ const BookingsList = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Property</TableHead>
-                  <TableHead>Dates</TableHead>
-                  <TableHead>Guests</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredBookings.map((booking) => (
-                  <TableRow key={booking.id}>
-                    <TableCell>
-                      <div className='flex items-center gap-2'>
-                        <User className='h-4 w-4 text-gray-400' />
-                        <div>
-                          <div className='font-medium'>
+            {/* Desktop Table View */}
+            <div className='hidden lg:block'>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Guest</TableHead>
+                    <TableHead>Property</TableHead>
+                    <TableHead>Dates</TableHead>
+                    <TableHead>Guests</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredBookings.map((booking) => (
+                    <TableRow key={booking.id}>
+                      <TableCell>
+                        <div className='flex items-center gap-2'>
+                          <User className='h-4 w-4 text-gray-400' />
+                          <div>
+                            <div className='font-medium'>
+                              {booking.profiles?.first_name &&
+                              booking.profiles?.last_name
+                                ? `${booking.profiles.first_name} ${booking.profiles.last_name}`
+                                : 'Unknown Guest'}
+                            </div>
+                            <div className='text-sm text-gray-600'>
+                              Booked{' '}
+                              {format(
+                                new Date(booking.created_at!),
+                                'MMM dd, yyyy',
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-2'>
+                          <Home className='h-4 w-4 text-gray-400' />
+                          <div>
+                            <div className='font-medium'>
+                              {booking.properties.title}
+                            </div>
+                            <div className='text-sm text-gray-600'>
+                              {booking.properties.city},{' '}
+                              {booking.properties.state}
+                            </div>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className='text-sm'>
+                          <div>
+                            {format(new Date(booking.check_in), 'MMM dd')} -{' '}
+                            {format(new Date(booking.check_out), 'MMM dd, yyyy')}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{booking.guests}</TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-1'>
+                          <DollarSign className='h-4 w-4 text-gray-400' />
+                          <span className='font-medium'>
+                            {booking.total_price}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          className={`${getStatusColor(booking.status)} border-0`}
+                        >
+                          {booking.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex gap-2'>
+                          {booking.status === 'pending' && (
+                            <>
+                              <Button
+                                size='sm'
+                                onClick={() =>
+                                  updateBookingStatus(booking.id, 'confirmed')
+                                }
+                                className='bg-green-600 hover:bg-green-700'
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                onClick={() =>
+                                  updateBookingStatus(booking.id, 'cancelled')
+                                }
+                                className='text-red-600 border-red-300 hover:bg-red-50'
+                              >
+                                Decline
+                              </Button>
+                            </>
+                          )}
+                          {booking.status === 'confirmed' && (
+                            <>
+                              <Button
+                                size='sm'
+                                onClick={() =>
+                                  updateBookingStatus(booking.id, 'checked_in')
+                                }
+                                className='bg-purple-600 hover:bg-purple-700'
+                              >
+                                Check In
+                              </Button>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                onClick={() =>
+                                  updateBookingStatus(booking.id, 'completed')
+                                }
+                              >
+                                Mark Complete
+                              </Button>
+                            </>
+                          )}
+                          {booking.status === 'checked_in' && (
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              onClick={() =>
+                                updateBookingStatus(booking.id, 'completed')
+                              }
+                              className='bg-blue-600 hover:bg-blue-700 text-white'
+                            >
+                              Check Out
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className='lg:hidden space-y-4'>
+              {filteredBookings.map((booking) => (
+                <Card key={booking.id} className='border border-gray-200'>
+                  <CardContent className='p-4'>
+                    <div className='flex flex-col space-y-3'>
+                      {/* Header Row */}
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-center gap-2'>
+                          <User className='h-4 w-4 text-gray-400' />
+                          <span className='font-medium text-sm'>
                             {booking.profiles?.first_name &&
                             booking.profiles?.last_name
                               ? `${booking.profiles.first_name} ${booking.profiles.last_name}`
                               : 'Unknown Guest'}
-                          </div>
-                          <div className='text-sm text-gray-600'>
-                            Booked{' '}
-                            {format(
-                              new Date(booking.created_at!),
-                              'MMM dd, yyyy',
-                            )}
-                          </div>
+                          </span>
                         </div>
+                        <Badge
+                          className={`${getStatusColor(booking.status)} border-0 text-xs`}
+                        >
+                          {booking.status}
+                        </Badge>
                       </div>
-                    </TableCell>
-                    <TableCell>
+
+                      {/* Property Info */}
                       <div className='flex items-center gap-2'>
                         <Home className='h-4 w-4 text-gray-400' />
-                        <div>
-                          <div className='font-medium'>
+                        <div className='flex-1'>
+                          <div className='font-medium text-sm'>
                             {booking.properties.title}
                           </div>
-                          <div className='text-sm text-gray-600'>
-                            {booking.properties.city},{' '}
-                            {booking.properties.state}
+                          <div className='text-xs text-gray-600'>
+                            {booking.properties.city}, {booking.properties.state}
                           </div>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='text-sm'>
-                        <div>
-                          {format(new Date(booking.check_in), 'MMM dd')} -{' '}
-                          {format(new Date(booking.check_out), 'MMM dd, yyyy')}
+
+                      {/* Booking Details */}
+                      <div className='grid grid-cols-2 gap-4 text-sm'>
+                        <div className='flex items-center gap-2'>
+                          <Calendar className='h-4 w-4 text-gray-400' />
+                          <div>
+                            <div className='text-xs text-gray-600'>Check-in/out</div>
+                            <div className='text-xs'>
+                              {format(new Date(booking.check_in), 'MMM dd')} -{' '}
+                              {format(new Date(booking.check_out), 'MMM dd')}
+                            </div>
+                          </div>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <Users className='h-4 w-4 text-gray-400' />
+                          <div>
+                            <div className='text-xs text-gray-600'>Guests</div>
+                            <div className='text-xs'>{booking.guests}</div>
+                          </div>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>{booking.guests}</TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-1'>
-                        <DollarSign className='h-4 w-4 text-gray-400' />
-                        <span className='font-medium'>
-                          {booking.total_price}
-                        </span>
+
+                      {/* Price and Date */}
+                      <div className='flex items-center justify-between'>
+                        <div className='flex items-center gap-1'>
+                          <DollarSign className='h-4 w-4 text-gray-400' />
+                          <span className='font-medium text-sm'>
+                            {booking.total_price}
+                          </span>
+                        </div>
+                        <div className='text-xs text-gray-600'>
+                          Booked {format(new Date(booking.created_at!), 'MMM dd, yyyy')}
+                        </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={`${getStatusColor(booking.status)} border-0`}
-                      >
-                        {booking.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex gap-2'>
+
+                      {/* Actions */}
+                      <div className='flex gap-2 pt-2'>
                         {booking.status === 'pending' && (
                           <>
                             <Button
@@ -295,7 +435,7 @@ const BookingsList = () => {
                               onClick={() =>
                                 updateBookingStatus(booking.id, 'confirmed')
                               }
-                              className='bg-green-600 hover:bg-green-700'
+                              className='bg-green-600 hover:bg-green-700 flex-1 text-xs min-h-[40px] touch-target'
                             >
                               Approve
                             </Button>
@@ -305,7 +445,7 @@ const BookingsList = () => {
                               onClick={() =>
                                 updateBookingStatus(booking.id, 'cancelled')
                               }
-                              className='text-red-600 border-red-300 hover:bg-red-50'
+                              className='text-red-600 border-red-300 hover:bg-red-50 flex-1 text-xs min-h-[40px] touch-target'
                             >
                               Decline
                             </Button>
@@ -318,7 +458,7 @@ const BookingsList = () => {
                               onClick={() =>
                                 updateBookingStatus(booking.id, 'checked_in')
                               }
-                              className='bg-purple-600 hover:bg-purple-700'
+                              className='bg-purple-600 hover:bg-purple-700 flex-1 text-xs min-h-[40px] touch-target'
                             >
                               Check In
                             </Button>
@@ -328,6 +468,7 @@ const BookingsList = () => {
                               onClick={() =>
                                 updateBookingStatus(booking.id, 'completed')
                               }
+                              className='flex-1 text-xs min-h-[40px] touch-target'
                             >
                               Mark Complete
                             </Button>
@@ -336,21 +477,20 @@ const BookingsList = () => {
                         {booking.status === 'checked_in' && (
                           <Button
                             size='sm'
-                            variant='outline'
                             onClick={() =>
                               updateBookingStatus(booking.id, 'completed')
                             }
-                            className='bg-blue-600 hover:bg-blue-700 text-white'
+                            className='bg-blue-600 hover:bg-blue-700 text-white w-full text-xs min-h-[40px] touch-target'
                           >
                             Check Out
                           </Button>
                         )}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

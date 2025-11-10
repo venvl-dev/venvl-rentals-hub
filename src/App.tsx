@@ -14,6 +14,10 @@ import PropertyListing from './pages/PropertyListing';
 import NotFound from './pages/NotFound';
 import ApplyPromoCode from './pages/ApplyPromoCode';
 
+// Payment pages
+import PaymentCallback from './pages/PaymentCallback';
+import PaymentFailed from './pages/PaymentFailed';
+
 // Lazy-loaded components (code splitting)
 const Profile = lazy(() => import('./pages/Profile'));
 const EditProfile = lazy(() => import('./pages/EditProfile'));
@@ -51,12 +55,18 @@ const AuditLogsPage = lazy(() => import('./routes/admin/Logs'));
 const RevenueManagement = lazy(() => import('./routes/admin/Revenue'));
 const ContentModeration = lazy(() => import('./routes/admin/Moderation'));
 const Marketing = lazy(() => import('./routes/admin/Marketing'));
-const BusinessVerification = lazy(() => import('./routes/admin/BusinessVerification'));
+const BusinessVerification = lazy(
+  () => import('./routes/admin/BusinessVerification'),
+);
 
 // Legal Pages
 const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
-const TermsAndConditions = lazy(() => import('./pages/legal/TermsAndConditions'));
-const CancellationRefundPolicy = lazy(() => import('./pages/legal/CancellationRefundPolicy'));
+const TermsAndConditions = lazy(
+  () => import('./pages/legal/TermsAndConditions'),
+);
+const CancellationRefundPolicy = lazy(
+  () => import('./pages/legal/CancellationRefundPolicy'),
+);
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,15 +102,33 @@ function App() {
                   <Route path='/property/:id' element={<PropertyListing />} />
 
                   {/* === LEGAL ROUTES === */}
-                  <Route path='/legal/privacy-policy' element={<PrivacyPolicy />} />
-                  <Route path='/legal/terms-and-conditions' element={<TermsAndConditions />} />
-                  <Route path='/legal/cancellation-refund-policy' element={<CancellationRefundPolicy />} />
+                  <Route
+                    path='/legal/privacy-policy'
+                    element={<PrivacyPolicy />}
+                  />
+                  <Route
+                    path='/legal/terms-and-conditions'
+                    element={<TermsAndConditions />}
+                  />
+                  <Route
+                    path='/legal/cancellation-refund-policy'
+                    element={<CancellationRefundPolicy />}
+                  />
+
+                  {/* === PAYMENT ROUTES === */}
+                  <Route
+                    path='/payment-callback'
+                    element={<PaymentCallback />}
+                  />
+                  <Route path='/payment-failed' element={<PaymentFailed />} />
 
                   {/* === PROFILE ROUTES === */}
                   <Route
                     path='/profile'
                     element={
-                      <ProtectedRoute allowedRoles={['guest', 'host', 'super_admin']}>
+                      <ProtectedRoute
+                        allowedRoles={['guest', 'host', 'super_admin']}
+                      >
                         <Profile />
                       </ProtectedRoute>
                     }
@@ -108,15 +136,14 @@ function App() {
                   <Route
                     path='/profile/edit'
                     element={
-                      <ProtectedRoute allowedRoles={['guest', 'host', 'super_admin']}>
+                      <ProtectedRoute
+                        allowedRoles={['guest', 'host', 'super_admin']}
+                      >
                         <EditProfile />
                       </ProtectedRoute>
                     }
                   />
-                  <Route
-                    path='/profile/:userId'
-                    element={<Profile />}
-                  />
+                  <Route path='/profile/:userId' element={<Profile />} />
 
                   {/* === GUEST ROUTES (domain.com/guest/*) === */}
                   <Route path='/guest/signup' element={<GuestSignup />} />

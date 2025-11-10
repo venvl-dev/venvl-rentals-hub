@@ -106,11 +106,11 @@ const PauseConfirmationModal: React.FC<PauseConfirmationModalProps> = ({
           </div>
         </AlertDialogDescription>
 
-        <AlertDialogFooter className='gap-3 pt-2'>
+        <AlertDialogFooter className='gap-2 sm:gap-3 pt-2 flex-col sm:flex-row'>
           <AlertDialogCancel
             onClick={onClose}
             disabled={isLoading}
-            className='flex items-center gap-2 rounded-2xl border-gray-200 hover:bg-gray-50 text-gray-700 font-medium px-6 py-3'
+            className='flex items-center justify-center gap-2 rounded-2xl border-gray-200 hover:bg-gray-50 text-gray-700 font-medium px-4 sm:px-6 py-3 min-h-[44px] touch-target text-sm sm:text-base w-full sm:w-auto order-2 sm:order-1'
           >
             <X className='w-4 h-4' />
             Cancel
@@ -118,17 +118,19 @@ const PauseConfirmationModal: React.FC<PauseConfirmationModalProps> = ({
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isLoading}
-            className='bg-black hover:bg-gray-800 text-white flex items-center gap-2 rounded-2xl font-medium px-6 py-3 transition-colors'
+            className='bg-black hover:bg-gray-800 text-white flex items-center justify-center gap-2 rounded-2xl font-medium px-4 sm:px-6 py-3 min-h-[44px] touch-target text-sm sm:text-base transition-colors w-full sm:w-auto order-1 sm:order-2'
           >
             {isLoading ? (
               <>
                 <div className='w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent'></div>
-                Pausing...
+                <span className='hidden sm:inline'>Pausing...</span>
+                <span className='sm:hidden'>...</span>
               </>
             ) : (
               <>
                 <Pause className='w-4 h-4' />
-                Pause Property
+                <span className='hidden sm:inline'>Pause Property</span>
+                <span className='sm:hidden'>Pause</span>
               </>
             )}
           </AlertDialogAction>
