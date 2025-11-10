@@ -53,6 +53,11 @@ const ContentModeration = lazy(() => import('./routes/admin/Moderation'));
 const Marketing = lazy(() => import('./routes/admin/Marketing'));
 const BusinessVerification = lazy(() => import('./routes/admin/BusinessVerification'));
 
+// Legal Pages
+const PrivacyPolicy = lazy(() => import('./pages/legal/PrivacyPolicy'));
+const TermsAndConditions = lazy(() => import('./pages/legal/TermsAndConditions'));
+const CancellationRefundPolicy = lazy(() => import('./pages/legal/CancellationRefundPolicy'));
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -85,6 +90,11 @@ function App() {
                   <Route path='/' element={<Index />} />
                   <Route path='/auth' element={<Auth />} />
                   <Route path='/property/:id' element={<PropertyListing />} />
+
+                  {/* === LEGAL ROUTES === */}
+                  <Route path='/legal/privacy-policy' element={<PrivacyPolicy />} />
+                  <Route path='/legal/terms-and-conditions' element={<TermsAndConditions />} />
+                  <Route path='/legal/cancellation-refund-policy' element={<CancellationRefundPolicy />} />
 
                   {/* === PROFILE ROUTES === */}
                   <Route

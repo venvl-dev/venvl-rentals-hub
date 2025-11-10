@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import PropertyCard from '@/components/PropertyCard';
 import VenvlSearchPill from '@/components/search/VenvlSearchPill';
 import StandaloneBookingTypeSelector from '@/components/search/StandaloneBookingTypeSelector';
@@ -454,6 +455,9 @@ const Index = () => {
           initialFilters={advancedFilters}
         />
       </main>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 };
