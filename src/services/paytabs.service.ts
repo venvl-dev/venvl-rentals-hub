@@ -1,7 +1,3 @@
-/**
- * PayTabs Payment Service
- * Handles all payment-related API calls to Supabase Edge Functions
- */
 
 import { supabase } from '@/integrations/supabase/client';
 import type {
@@ -128,25 +124,46 @@ class PayTabsService {
     this.validateConfig();
 
     try {
-      const { data, error } = await supabase.functions.invoke('paytabs-verify', {
-        body: {
-          transactionRef: request.transactionRef,
-          config: {
-            profileId: this.config.profileId,
-            region: this.config.region,
-          },
+      console.log('Verifying payment with transaction ref:', request.transactionRef);
+
+      const requestBody = {
+        transactionRef: request.transactionRef,
+        config: {
+          profileId: this.config.profileId,
+          region: this.config.region,
         },
+      };
+
+      console.log('Calling paytabs-verify with body:', requestBody);
+
+      const response = await supabase.functions.invoke('paytabs-verify', {
+        body: requestBody,
       });
+
+      const { data, error } = response;
+
+      console.log('PayTabs verify full response:', response);
+      console.log('PayTabs verify response:', { data, error });
 
       if (error) {
         console.error('PayTabs verification error:', error);
+        console.error('Error details:', JSON.stringify(error, null, 2));
+
+        // Try to get more error details from the response
+        let errorMessage = error.message || 'Failed to verify payment';
+        if (data && typeof data === 'object') {
+          console.error('Error data from function:', data);
+          if ('error' in data) errorMessage = data.error as string;
+          if ('message' in data) errorMessage = data.message as string;
+        }
+
         return {
           success: false,
           transactionRef: request.transactionRef,
           paymentStatus: 'failed' as any,
           amount: 0,
           currency: this.config.currency,
-          error: error.message || 'Failed to verify payment',
+          error: errorMessage,
         };
       }
 

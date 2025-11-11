@@ -7,13 +7,11 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    // Get PayTabs credentials from environment
     const profileId = Deno.env.get('PAYTABS_PROFILE_ID');
     const serverKey = Deno.env.get('PAYTABS_SERVER_KEY');
     const region = Deno.env.get('PAYTABS_REGION') || 'EGY';
@@ -102,7 +100,6 @@ serve(async (req) => {
         cancelUrl: requestBody.cancelUrl || `${req.headers.get('origin')}/payment-failed`,
       };
     } else {
-      // New: Full payment data provided directly
       paymentData = requestBody;
     }
 
@@ -203,13 +200,11 @@ serve(async (req) => {
     const paytabsData = await paytabsResponse.json();
     console.log('PayTabs response:', JSON.stringify(paytabsData, null, 2));
 
-    // Check if PayTabs returned an error
     if (!paytabsData.redirect_url) {
       console.error('PayTabs response missing redirect_url:', paytabsData);
       throw new Error(paytabsData.message || 'Failed to create payment session');
     }
 
-    // Return success response with redirect URL
     return new Response(
       JSON.stringify({
         success: true,

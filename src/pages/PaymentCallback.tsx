@@ -1,9 +1,6 @@
-/**
- * PaymentCallback Component
- * Handles the redirect back from PayTabs after payment attempt
- */
 
-import { useEffect, useState } from 'react';
+
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2, CheckCircle2, XCircle } from 'lucide-react';
@@ -16,26 +13,34 @@ export default function PaymentCallback() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<'verifying' | 'success' | 'failed'>('verifying');
   const [message, setMessage] = useState('Verifying your payment...');
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
     const verifyPayment = async () => {
+      // Prevent duplicate execution in React Strict Mode
+      if (hasProcessed.current) return;
+      hasProcessed.current = true;
+
       try {
-        // Get transaction reference from URL parameters
-        const tranRef = searchParams.get('tranRef');
-        const respStatus = searchParams.get('respStatus');
-        const respMessage = searchParams.get('respMessage');
-
-        if (!tranRef) {
-          throw new Error('No transaction reference found');
-        }
-
-        // Get pending booking from session storage
+        // Get pending booking data from sessionStorage
         const pendingBookingStr = sessionStorage.getItem('pendingBooking');
         if (!pendingBookingStr) {
           throw new Error('No pending booking found');
         }
 
         const pendingBooking = JSON.parse(pendingBookingStr);
+
+        // Get transaction reference from URL parameters OR sessionStorage
+        const tranRef = searchParams.get('tranRef') ||
+                       searchParams.get('tran_ref') ||
+                       pendingBooking.transactionRef;
+
+        console.log('Payment callback params:', Object.fromEntries(searchParams.entries()));
+        console.log('Transaction reference:', tranRef);
+
+        if (!tranRef) {
+          throw new Error('No transaction reference found in URL or session storage');
+        }
 
         // Verify payment with backend
         setMessage('Confirming payment status...');
@@ -47,20 +52,35 @@ export default function PaymentCallback() {
           // Payment successful - create booking
           setMessage('Creating your booking...');
 
+          // Get the property details to get host_id
+          const { data: property, error: propertyError } = await supabase
+            .from('properties')
+            .select('host_id')
+            .eq('id', pendingBooking.property.id)
+            .single();
+
+          if (propertyError || !property) {
+            console.error('Property fetch error:', propertyError);
+            throw new Error('Failed to fetch property details');
+          }
+
           const { data: booking, error: bookingError } = await supabase
             .from('bookings')
             .insert({
               property_id: pendingBooking.property.id,
+              host_id: property.host_id,
               guest_id: (await supabase.auth.getUser()).data.user?.id,
               check_in: pendingBooking.checkIn,
               check_out: pendingBooking.checkOut,
               guests: pendingBooking.guests,
+              adults: pendingBooking.adults || pendingBooking.guests,
+              children: pendingBooking.children || 0,
               total_price: pendingBooking.finalTotal,
               status: 'confirmed',
               payment_status: 'paid',
               payment_amount: pendingBooking.finalTotal,
               currency: 'EGP',
-              payment_method: 'card',
+              payment_method: 'cash',
               booking_type: pendingBooking.bookingType,
               duration_months: pendingBooking.duration,
               promo_code_id: pendingBooking.promo_code_id,
@@ -79,20 +99,20 @@ export default function PaymentCallback() {
 
           // Show success
           setStatus('success');
-          setMessage('Payment successful! Redirecting to confirmation...');
+          setMessage('Payment successful! Redirecting to ID upload...');
           toast.success('Booking confirmed!');
 
-          // Redirect to booking confirmation
+          // Redirect to ID upload page
           setTimeout(() => {
-            navigate(`/booking-confirmation/${booking.id}`);
+            navigate(`/upload-guest-ids/${booking.id}`);
           }, 2000);
         } else {
           // Payment failed
-          throw new Error(
-            verificationResult.message ||
-              respMessage ||
-              'Payment verification failed'
-          );
+          const errorMessage = verificationResult.message ||
+                              verificationResult.error ||
+                              'Payment verification failed';
+          console.error('Payment verification failed:', verificationResult);
+          throw new Error(errorMessage);
         }
       } catch (error) {
         console.error('Payment verification error:', error);
