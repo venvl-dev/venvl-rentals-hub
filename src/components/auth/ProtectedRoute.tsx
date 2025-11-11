@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { useSecureQuery } from '@/hooks/useSecureApi';
 import { supabase } from '@/integrations/supabase/client';
 // import { handleError, CustomError, ErrorCodes } from '@/lib/errorHandling';
@@ -226,24 +227,25 @@ const ProtectedRoute = ({
 
   if (authLoading || loading) {
     return (
-      <div>
+      <div className='min-h-screen flex flex-col'>
         <Header />
-        <div className='min-h-screen flex items-center justify-center'>
+        <div className='flex-1 flex items-center justify-center'>
           <div className='text-center'>
             <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4'></div>
             <div className='text-gray-600'>Verifying access...</div>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (!authorized) {
     return (
-      <div>
+      <div className='min-h-screen flex flex-col'>
         <Header />
-        <div className='min-h-screen flex items-center justify-center'>
-          <div className='text-center max-w-md mx-auto'>
+        <div className='flex-1 flex items-center justify-center'>
+          <div className='text-center max-w-md mx-auto px-4'>
             <h1 className='text-2xl font-bold mb-4'>Profile Loading Error</h1>
             <p className='text-gray-600 mb-6'>
               There was an issue loading your profile. This could be due to a
@@ -278,6 +280,7 @@ const ProtectedRoute = ({
             </div>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }

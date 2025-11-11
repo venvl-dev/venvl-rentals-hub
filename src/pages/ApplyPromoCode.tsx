@@ -21,6 +21,7 @@ import {
   Ticket,
 } from 'lucide-react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { format, addMonths } from 'date-fns';
@@ -165,23 +166,24 @@ const ApplyPromoCode = () => {
 
   if (authLoading) {
     return (
-      <>
+      <div className='min-h-screen flex flex-col'>
         <Header />
-        <div className='min-h-[calc(100vh-80px)] flex items-center justify-center bg-gray-50'>
+        <div className='flex-1 flex items-center justify-center bg-gray-50'>
           <div className='text-center'>
             <Loader2 className='w-8 h-8 animate-spin mx-auto mb-4' />
             <p className='text-gray-600'>Loading...</p>
           </div>
         </div>
-      </>
+        <Footer />
+      </div>
     );
   }
 
   if (!promoCode) {
     return (
-      <>
+      <div className='min-h-screen flex flex-col'>
         <Header />
-        <div className='min-h-[calc(100vh-80px)] bg-gray-50 p-4 py-8'>
+        <div className='flex-1 bg-gray-50 p-4 py-8'>
           <div className='max-w-4xl mx-auto space-y-6'>
             <Card className='w-full'>
               <CardHeader>
@@ -290,14 +292,15 @@ const ApplyPromoCode = () => {
             )}
           </div>
         </div>
-      </>
+        <Footer />
+      </div>
     );
   }
 
   return (
-    <>
+    <div className='min-h-screen flex flex-col'>
       <Header />
-      <div className='min-h-[calc(100vh-80px)] bg-gray-50 p-4 py-8'>
+      <div className='flex-1 bg-gray-50 p-4 py-8'>
         <div className='max-w-2xl mx-auto'>
           <Card className='w-full'>
             <CardHeader>
@@ -394,7 +397,8 @@ const ApplyPromoCode = () => {
           </Card>
         </div>
       </div>
-    </>
+      <Footer />
+    </div>
   );
 };
 

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { MapPin, Bed, Bath, Users, Star, Calendar, Clock } from 'lucide-react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import RefactoredBookingWidget from '@/components/booking/RefactoredBookingWidget';
 import PropertyPriceDisplay from '@/components/PropertyPriceDisplay';
 import BookingFlow from '@/components/booking/BookingFlow';
@@ -68,6 +69,9 @@ const PropertyListing = () => {
     Record<string, boolean>
   >({});
 
+  // scroll to top on mount
+  window.scrollTo(0, 0);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
@@ -112,9 +116,9 @@ const PropertyListing = () => {
 
   if (loading) {
     return (
-      <div>
+      <div className='min-h-screen flex flex-col'>
         <Header />
-        <div className='container mx-auto px-4 py-8'>
+        <div className='flex-1 container mx-auto px-4 py-8'>
           <div className='animate-pulse space-y-6'>
             <div className='bg-gray-200 h-96 rounded-2xl'></div>
             <div className='space-y-3'>
@@ -123,15 +127,16 @@ const PropertyListing = () => {
             </div>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (!property) {
     return (
-      <div>
+      <div className='min-h-screen flex flex-col'>
         <Header />
-        <div className='container mx-auto px-4 py-8'>
+        <div className='flex-1 container mx-auto px-4 py-8'>
           <div className='text-center'>
             <h1 className='text-2xl font-bold mb-4'>Property Not Found</h1>
             <p className='text-gray-600'>
@@ -139,6 +144,7 @@ const PropertyListing = () => {
             </p>
           </div>
         </div>
+        <Footer />
       </div>
     );
   }
@@ -159,9 +165,9 @@ const PropertyListing = () => {
   const monthlyPrice = getMonthlyPrice(propertyWithDefaults);
 
   return (
-    <div>
+    <div className='min-h-screen flex flex-col'>
       <Header />
-      <div className='container mx-auto px-4 py-8'>
+      <div className='flex-1 container mx-auto px-4 py-8'>
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-8'>
           <div className='lg:col-span-2'>
             {/* Hero Image Carousel */}
@@ -495,6 +501,7 @@ const PropertyListing = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

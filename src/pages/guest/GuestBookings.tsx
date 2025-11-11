@@ -3,6 +3,7 @@ import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -155,20 +156,21 @@ const GuestBookings = () => {
 
   if (loading) {
     return (
-      <div>
+      <div className='min-h-screen flex flex-col'>
         <Header />
-        <div className='min-h-screen flex items-center justify-center'>
+        <div className='flex-1 flex items-center justify-center'>
           <div className='text-center'>Loading your bookings...</div>
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (showCancellation && selectedBooking) {
     return (
-      <div>
+      <div className='min-h-screen flex flex-col'>
         <Header />
-        <div className='container mx-auto px-4 py-8'>
+        <div className='flex-1 container mx-auto px-4 py-8'>
           <BookingCancellation
             booking={selectedBooking}
             onCancel={() => {
@@ -178,15 +180,16 @@ const GuestBookings = () => {
             onSuccess={onBookingCancelled}
           />
         </div>
+        <Footer />
       </div>
     );
   }
 
   if (showReviewForm && selectedBooking) {
     return (
-      <div>
+      <div className='min-h-screen flex flex-col'>
         <Header />
-        <div className='container mx-auto px-4 py-8'>
+        <div className='flex-1 container mx-auto px-4 py-8'>
           <ReviewForm
             booking={selectedBooking}
             onCancel={() => {
@@ -196,14 +199,15 @@ const GuestBookings = () => {
             onSuccess={onReviewSubmitted}
           />
         </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div>
+    <div className='min-h-screen flex flex-col'>
       <Header />
-      <div className='container mx-auto px-4 py-8'>
+      <div className='flex-1 container mx-auto px-4 py-8'>
         <div className='flex items-center justify-between mb-8'>
           <div>
             <h1 className='text-3xl font-bold flex items-center gap-2'>
@@ -438,6 +442,7 @@ const GuestBookings = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <Footer />
     </div>
   );
 };
