@@ -293,26 +293,21 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
                     preloadSources={sourcesToPreload}
                   />
                 </CarouselItem>
+
+                // <CarouselItem key={index}>
+                //   <div className='p-1'>
+                //     <Card>
+                //       <CardContent className='flex aspect-square items-center justify-center p-6'>
+                //         <span className='text-4xl font-semibold'>
+                //           {index + 1}
+                //         </span>
+                //       </CardContent>
+                //     </Card>
+                //   </div>
+                // </CarouselItem>
               ))}
             </CarouselContent>
-            {/* Optimized Image with Lazy Loading */}
-            {/* <OptimizedImage
-            src={images[currentImageIndex]}
-            alt={property.title}
-            className='w-full h-full object-cover'
-            fallbackSrc='https://images.unsplash.com/photo-1560472354-b33ff0c44a43?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'
-            lazy={true}
-            quality={85}
-            width={400}
-            height={300}
-            preloadSources={sourcesToPreload}
-            style={{
-              transform:
-                touchEnd && touchStart
-                  ? `translateX(${(touchEnd - touchStart) * 0.1}px)`
-                  : 'translateX(0)',
-            }}
-          /> */}
+
             {/* Image Navigation */}
             {images.length > 1 && (
               <>
@@ -405,6 +400,26 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
                 </div>
               </>
             )}
+          </Carousel>
+
+          <Carousel className='w-full max-w-xs'>
+            <CarouselContent>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <CarouselItem key={index}>
+                  <div className='p-1'>
+                    <Card>
+                      <CardContent className='flex aspect-square items-center justify-center p-6'>
+                        <span className='text-4xl font-semibold'>
+                          {index + 1}
+                        </span>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
           </Carousel>
 
           {/* Rental Type Badges */}

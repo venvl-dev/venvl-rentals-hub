@@ -1,58 +1,38 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import PropertyCard from '@/components/PropertyCard';
 import VenvlSearchPill from '@/components/search/VenvlSearchPill';
 import StandaloneBookingTypeSelector from '@/components/search/StandaloneBookingTypeSelector';
 import NewAdvancedFilters from '@/components/search/NewAdvancedFilters';
-import FilterBadgeDisplay from '@/components/search/FilterBadgeDisplay';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter } from 'lucide-react';
-import { cleanAmenityIds } from '@/lib/amenitiesUtils';
 import { useAuthImagePreload } from '@/hooks/useAuthImagePreload';
 import { useFilterStore } from '@/hooks/useFilterStore';
 import { usePropertyFiltering } from '@/hooks/usePropertyFiltering';
+import { useInfiniteProperties } from '@/hooks/properties/useProperties';
+import { useInView } from 'react-intersection-observer';
 import React from 'react';
 
-interface Property {
-  id: string;
-  title: string;
-  description: string;
-  price_per_night: number;
-  monthly_price?: number;
-  daily_price?: number;
-  images: string[];
-  city: string;
-  state: string;
-  country: string;
-  property_type: string;
-  bedrooms: number;
-  bathrooms: number;
-  max_guests: number;
-  amenities: string[];
-  booking_types?: string[];
-  rental_type?: string;
-  min_nights?: number;
-  min_months?: number;
-  is_active: boolean;
-  approval_status?: string;
-  created_at: string;
-  updated_at: string;
-  blocked_dates?: string[];
-}
-
 const Index = () => {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [properties, setProperties] = useState<Property[]>([]);
-  const [loading, setLoading] = useState(true);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+
+  // Use infinite properties hook
+  const {
+    properties,
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    error,
+    totalCount,
+  } = useInfiniteProperties();
 
   // Use centralized filter store
   const {
@@ -69,13 +49,7 @@ const Index = () => {
   } = useFilterStore();
 
   // Use authentication-aware image preloading
-  const {
-    user,
-    isLoading: authLoading,
-    imagesPreloaded,
-    preloadImages,
-    refreshImages,
-  } = useAuthImagePreload();
+  // const { preloadImages } = useAuthImagePreload();
 
   // Use property filtering hook
   const { filteredProperties, filteringStats } = usePropertyFiltering(
@@ -83,10 +57,11 @@ const Index = () => {
     getCombinedFilters(),
   );
 
-
-  useEffect(() => {
-    fetchProperties();
-  }, []);
+  // Intersection observer for infinite scroll - trigger on 9th element
+  const { ref: loadMoreRef, inView } = useInView({
+    threshold: 0.1,
+    triggerOnce: false,
+  });
 
   // Sync URL search parameters with filter store
   useEffect(() => {
@@ -100,99 +75,25 @@ const Index = () => {
   }, [searchParams, updateSearchFilters]);
 
   // Preload images when properties change or user auth state changes
+  // useEffect(() => {
+  //   if (properties.length > 0) {
+  //     preloadImages(properties);
+  //   }
+  // }, [properties, preloadImages]);
+
+  // Handle infinite scroll - fetch next page when 9th element is in view
   useEffect(() => {
-    if (properties.length > 0 && !authLoading) {
-      preloadImages(properties);
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
     }
-  }, [properties, authLoading, preloadImages]);
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-  // Refresh images when user logs in/out
+  // Handle errors
   useEffect(() => {
-    if (properties.length > 0 && !authLoading) {
-      refreshImages(properties);
-    }
-  }, [user, refreshImages, properties, authLoading]);
-
-  const fetchProperties = useCallback(async () => {
-    try {
-      setLoading(true);
-
-      // Optimized query - fetch all essential fields
-      const { data, error } = await supabase
-        .from('properties')
-        .select(
-          `
-          id,
-          title,
-          description,
-          price_per_night,
-          daily_price,
-          monthly_price,
-          images,
-          city,
-          state,
-          country,
-          property_type,
-          bedrooms,
-          bathrooms,
-          max_guests,
-          amenities,
-          booking_types,
-          rental_type,
-          min_nights,
-          min_months,
-          blocked_dates,
-          is_active,
-          approval_status,
-          created_at,
-          updated_at
-        `,
-        )
-        .eq('is_active', true)
-        .eq('approval_status', 'approved')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching properties:', error);
-        toast.error('Failed to load properties');
-        return;
-      }
-
-      if (data) {
-        // ✅ SIMPLIFIED: Clean amenities and ensure booking_types defaults
-        data.forEach((p) => {
-          p.amenities = cleanAmenityIds(p.amenities || []);
-
-          // Ensure booking_types has a default value if missing
-          if (
-            !p.booking_types ||
-            !Array.isArray(p.booking_types) ||
-            p.booking_types.length === 0
-          ) {
-            p.booking_types = ['daily']; // Default to daily bookings
-          }
-
-          // Ensure rental_type has a default value if missing
-          if (!p.rental_type) {
-            // If property has monthly_price, assume it supports both, otherwise daily only
-            if (p.monthly_price && p.monthly_price > 0) {
-              p.rental_type = 'both';
-            } else {
-              p.rental_type = 'daily';
-            }
-          }
-        });
-
-        setProperties(data);
-
-        // Properties loaded successfully - filtering will be handled by components
-      }
-    } catch (error) {
+    if (error) {
       toast.error('Failed to load properties');
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [error]);
 
   const handleSearch = useCallback(
     (filters: any) => {
@@ -234,10 +135,6 @@ const Index = () => {
   const handleClearFilters = useCallback(() => {
     clearAllFilters();
   }, [clearAllFilters]);
-
-  // Enhanced loading state
-  const isFullyLoaded = !loading && !authLoading && imagesPreloaded;
-
 
   return (
     <div className='min-h-screen bg-gray-50 overflow-x-hidden'>
@@ -340,7 +237,7 @@ const Index = () => {
         {/* Results Section */}
         <section className='w-full px-4 sm:px-6 lg:px-8 pb-8 sm:pb-12'>
           <div className='max-w-7xl mx-auto'>
-            {loading || authLoading ? (
+            {isLoading ? (
               <motion.div
                 className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
                 initial={{ opacity: 0 }}
@@ -372,8 +269,8 @@ const Index = () => {
                 >
                   <div className='flex items-center gap-4'>
                     <h2 className='text-xl sm:text-2xl font-bold text-gray-900'>
-                      {filteredProperties.length} propert
-                      {filteredProperties.length !== 1 ? 'ies' : 'y'} found
+                      {totalCount} propert
+                      {totalCount !== 1 ? 'ies' : 'y'} found
                     </h2>
 
                     {hasActiveFilters &&
@@ -407,27 +304,51 @@ const Index = () => {
 
                 {/* Properties Grid */}
                 {filteredProperties.length > 0 ? (
-                  <motion.div
-                    className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: 0.8 }}
-                  >
-                    {filteredProperties.map((property, index) => (
-                      <motion.div
-                        key={property.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, delay: index * 0.1 }}
-                      >
-                        <PropertyCard
-                          property={property}
-                          properties={filteredProperties}
-                          index={index}
-                        />
-                      </motion.div>
-                    ))}
-                  </motion.div>
+                  <>
+                    <motion.div
+                      className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6 }}
+                    >
+                      {filteredProperties.map((property, index) => (
+                        <motion.div
+                          key={property.id}
+                          ref={
+                            index === filteredProperties.length - 8
+                              ? loadMoreRef
+                              : null
+                          }
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: 0.2 }}
+                        >
+                          <PropertyCard
+                            property={property}
+                            properties={filteredProperties}
+                            index={index}
+                          />
+                        </motion.div>
+                      ))}
+                    </motion.div>
+
+                    {/* Loading indicator for next page */}
+                    {isFetchingNextPage && (
+                      <div className='flex justify-center items-start py-8'>
+                        <Loader2 className='h-8 w-8 animate-spin text-gray-400' />
+                        <span className='ml-2 text-gray-600'>
+                          Loading more properties...
+                        </span>
+                      </div>
+                    )}
+
+                    {/* End of list indicator */}
+                    {!hasNextPage && (
+                      <div className='text-center pt-20  text-gray-500'>
+                        You've reached the end of the list
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <div className='text-center py-12'>
                     <Search className='h-16 w-16 text-gray-400 mx-auto mb-4' />

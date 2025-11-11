@@ -75,7 +75,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       quality,
       width,
       height,
-      format: getOptimalImageFormat(),
+      format: 'webp',
       fit: 'cover',
     };
 
@@ -87,7 +87,7 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       quality,
       width,
       height,
-      format: getOptimalImageFormat(),
+      format: 'webp',
       fit: 'cover',
     });
 
@@ -176,7 +176,8 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
     }
   }, [isLoaded, src, optimizedSrc]);
 
-  const showLoadingOverlay = !isLoaded;
+  const isInCache = imageCache.has(optimizedSrc);
+  const showLoadingOverlay = !isLoaded && !isInCache;
 
   return (
     <div className={cn('relative   ')}>
@@ -187,11 +188,13 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
       )}
       <img
         ref={imgRef}
-        src={currentSrc}
+        src={isInCache ? optimizedSrc : currentSrc}
         alt={alt}
         className={cn(
           'transition-all duration-500 ease-out',
-          isLoaded ? 'opacity-100 scale-100' : 'opacity-70 scale-105',
+          isLoaded || isInCache
+            ? 'opacity-100 scale-100'
+            : 'opacity-70 scale-105',
           className,
         )}
         onLoad={handleLoad}
@@ -201,11 +204,11 @@ const OptimizedImage: React.FC<OptimizedImageProps> = ({
         decoding='async'
       />
       {/* Progressive loading overlay */}
-      {progressive && !isLoaded && currentSrc !== optimizedSrc && (
+      {progressive && showLoadingOverlay && currentSrc !== optimizedSrc && (
         <div className='absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 animate-pulse' />
       )}
       {/* Loading skeleton */}
-      {!isLoaded &&
+      {showLoadingOverlay &&
         !isError &&
         currentSrc ===
           'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIiBmaWxsPSIjZjNmNGY2Ii8+CjxwYXRoIGQ9Ik0xMDAgMTAwbTAtNTBhNTAgNTAgMCAxIDEgMCAxMDBhNTAgNTAgMCAxIDEgMC0xMDBaIiBmaWxsPSIjZTVlN2ViIi8+Cjwvc3ZnPg==' && (

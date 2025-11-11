@@ -3,7 +3,7 @@
 class ImageCache {
   private cache: Map<string, HTMLImageElement> = new Map();
   private loadingPromises: Map<string, Promise<HTMLImageElement>> = new Map();
-  private maxCacheSize = 50; // Maximum number of cached images
+  private maxCacheSize = 200; // Maximum number of cached images
 
   // Load and cache an image
   async loadImage(src: string): Promise<HTMLImageElement> {
@@ -117,6 +117,9 @@ class ImageCache {
       loadingCount: this.loadingPromises.size,
     };
   }
+  has(src: string): boolean {
+    return this.cache.has(src);
+  }
 }
 
 // Create singleton instance
@@ -148,7 +151,7 @@ export function optimizeImageUrl(
     quality = 85,
     width,
     height,
-    format = 'auto',
+    format = 'webp',
     fit = 'cover',
   } = options;
 
@@ -194,7 +197,7 @@ export function generateLowQualityPlaceholder(
     quality: 20,
     width,
     height,
-    format: 'jpeg',
+    format: 'webp',
   });
 }
 
