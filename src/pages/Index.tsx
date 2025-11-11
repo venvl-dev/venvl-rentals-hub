@@ -57,9 +57,10 @@ const Index = () => {
     getCombinedFilters(),
   );
 
-  // Intersection observer for infinite scroll - trigger on 9th element
+  // Intersection observer for infinite scroll - trigger on 9th element from end
   const { ref: loadMoreRef, inView } = useInView({
-    threshold: 0.1,
+    threshold: 0,
+    rootMargin: '800px', // Start loading 400px before element comes into view
     triggerOnce: false,
   });
 
@@ -81,12 +82,47 @@ const Index = () => {
   //   }
   // }, [properties, preloadImages]);
 
-  // Handle infinite scroll - fetch next page when 9th element is in view
+  // Handle infinite scroll - fetch next page when trigger element is in view
   useEffect(() => {
     if (inView && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  // Fallback: Check scroll position to catch fast scrolling
+  useEffect(() => {
+    const handleScroll = () => {
+      // Only check if we're not already loading and have more pages
+      if (isFetchingNextPage || !hasNextPage || isLoading) return;
+
+      const scrollHeight = document.documentElement.scrollHeight;
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const clientHeight = window.innerHeight;
+
+      // If user is within 800px of the bottom, trigger next page
+      const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+
+      if (distanceFromBottom < 800) {
+        fetchNextPage();
+      }
+    };
+
+    // Throttle scroll events
+    let timeoutId: NodeJS.Timeout;
+    const throttledScroll = () => {
+      if (timeoutId) return;
+      timeoutId = setTimeout(() => {
+        handleScroll();
+        timeoutId = null as any;
+      }, 200);
+    };
+
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', throttledScroll);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, isLoading]);
 
   // Handle errors
   useEffect(() => {
@@ -315,7 +351,7 @@ const Index = () => {
                         <motion.div
                           key={property.id}
                           ref={
-                            index === filteredProperties.length - 8
+                            index === filteredProperties.length - 2
                               ? loadMoreRef
                               : null
                           }
