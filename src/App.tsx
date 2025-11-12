@@ -17,6 +17,7 @@ import ApplyPromoCode from './pages/ApplyPromoCode';
 // Payment pages
 import PaymentCallback from './pages/PaymentCallback';
 import PaymentFailed from './pages/PaymentFailed';
+import UploadGuestIds from './pages/UploadGuestIds';
 
 // Lazy-loaded components (code splitting)
 const Profile = lazy(() => import('./pages/Profile'));
@@ -121,6 +122,14 @@ function App() {
                     element={<PaymentCallback />}
                   />
                   <Route path='/payment-failed' element={<PaymentFailed />} />
+                  <Route
+                    path='/upload-guest-ids/:bookingId'
+                    element={
+                      <ProtectedRoute allowedRoles={['guest']}>
+                        <UploadGuestIds />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* === PROFILE ROUTES === */}
                   <Route

@@ -9,11 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Calendar, MapPin, Users, Star, AlertCircle, Tag } from 'lucide-react';
+import { Calendar, MapPin, Users, Star, AlertCircle, Tag, FileText } from 'lucide-react';
 import { Booking } from '@/types/booking';
 import { Review } from '@/types/review';
 import BookingCancellation from '@/components/booking/BookingCancellation';
 import ReviewForm from '@/components/booking/ReviewForm';
+import ViewUploadedIds from '@/components/booking/ViewUploadedIds';
 
 const GuestBookings = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -23,6 +24,7 @@ const GuestBookings = () => {
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showCancellation, setShowCancellation] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [showViewIds, setShowViewIds] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -94,6 +96,20 @@ const GuestBookings = () => {
   const handleWriteReview = (booking: Booking) => {
     setSelectedBooking(booking);
     setShowReviewForm(true);
+  };
+
+  const handleViewIds = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setShowViewIds(true);
+  };
+
+  const hasUploadedIds = (booking: Booking) => {
+    return !!(
+      booking.guest_id_documents &&
+      (booking.guest_id_documents.main_guest ||
+        (booking.guest_id_documents.additional_guests &&
+          booking.guest_id_documents.additional_guests.length > 0))
+    );
   };
 
   const onBookingCancelled = () => {
@@ -368,6 +384,18 @@ const GuestBookings = () => {
                           >
                             View Property
                           </Button>
+
+                          {hasUploadedIds(booking) && (
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => handleViewIds(booking)}
+                              className='text-blue-600 hover:text-blue-700'
+                            >
+                              <FileText className='h-4 w-4 mr-1' />
+                              View IDs/Passport
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -442,6 +470,20 @@ const GuestBookings = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* View Uploaded IDs Modal */}
+      {selectedBooking && (
+        <ViewUploadedIds
+          isOpen={showViewIds}
+          onClose={() => {
+            setShowViewIds(false);
+            setSelectedBooking(null);
+          }}
+          guestIdDocuments={selectedBooking.guest_id_documents}
+          idVerificationStatus={selectedBooking.id_verification_status}
+          bookingReference={selectedBooking.booking_reference}
+        />
+      )}
       <Footer />
     </div>
   );

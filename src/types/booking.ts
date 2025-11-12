@@ -17,6 +17,13 @@ export interface Booking {
   cancelled_by: string | null;
   created_at: string | null;
   updated_at: string | null;
+  booking_reference?: string;
+  guest_id_documents?: {
+    main_guest?: string;
+    additional_guests?: string[];
+    uploaded_at?: string;
+  } | null;
+  id_verification_status?: string;
 
   // Joined data from other tables
   property?: {

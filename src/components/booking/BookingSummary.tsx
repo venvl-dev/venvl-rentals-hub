@@ -10,7 +10,6 @@ import {
   Users,
   CreditCard,
   MapPin,
-  Clock,
   Check,
   Ticket,
 } from 'lucide-react';
@@ -34,6 +33,8 @@ interface BookingSummaryProps {
     checkIn: Date;
     checkOut: Date;
     guests: number;
+    adults?: number;
+    children?: number;
     bookingType: 'daily' | 'monthly';
     totalPrice: number;
     duration?: number;
@@ -51,7 +52,7 @@ const BookingSummary = ({
   isProcessing = false,
 }: BookingSummaryProps) => {
   const { user } = useAuth();
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'cash'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card'>('card');
   const [promoCodeDetails, setPromoCodeDetails] = useState<{
     code: string;
     value: number;
@@ -103,74 +104,69 @@ const BookingSummary = ({
 
   const handlePayment = async () => {
     try {
-      if (paymentMethod === 'card') {
-        // Check if user is authenticated
-        if (!user) {
-          toast.error('Please log in to complete payment');
-          return;
-        }
+      // Check if user is authenticated
+      if (!user) {
+        toast.error('Please log in to complete payment');
+        return;
+      }
 
-        // Check if PayTabs is configured
-        if (!payTabsService.isConfigured()) {
-          toast.error('Payment system is not configured. Please contact support.');
-          console.error('PayTabs credentials missing in environment variables');
-          return;
-        }
+      // Check if PayTabs is configured
+      if (!payTabsService.isConfigured()) {
+        toast.error('Payment system is not configured. Please contact support.');
+        console.error('PayTabs credentials missing in environment variables');
+        return;
+      }
 
-        setIsInitiatingPayment(true);
+      setIsInitiatingPayment(true);
 
-        // Prepare payment request
-        const paymentRequest = {
-          amount: finalTotal,
-          currency: 'EGP',
-          bookingDetails: {
-            propertyId: booking.property.id,
-            propertyTitle: booking.property.title,
-            checkIn: format(booking.checkIn, 'yyyy-MM-dd'),
-            checkOut: format(booking.checkOut, 'yyyy-MM-dd'),
-            guests: booking.guests,
-            bookingType: booking.bookingType,
-            durationMonths: booking.duration,
-          },
-          customerInfo: {
-            name: user.user_metadata?.full_name || user.email || 'Guest',
-            email: user.email || '',
-            phone: user.user_metadata?.phone || '',
-          },
-          promoCodeId: booking.promo_code_id,
-          metadata: {
-            userId: user.id,
-            nights: booking.bookingType === 'daily' ? nights : undefined,
-            serviceFee,
-            taxes,
-            promoDiscount,
-          },
-        };
+      // Prepare payment request
+      const paymentRequest = {
+        amount: finalTotal,
+        currency: 'EGP',
+        bookingDetails: {
+          propertyId: booking.property.id,
+          propertyTitle: booking.property.title,
+          checkIn: format(booking.checkIn, 'yyyy-MM-dd'),
+          checkOut: format(booking.checkOut, 'yyyy-MM-dd'),
+          guests: booking.guests,
+          bookingType: booking.bookingType,
+          durationMonths: booking.duration,
+        },
+        customerInfo: {
+          name: user.user_metadata?.full_name || user.email || 'Guest',
+          email: user.email || '',
+          phone: user.user_metadata?.phone || '',
+        },
+        promoCodeId: booking.promo_code_id,
+        metadata: {
+          userId: user.id,
+          nights: booking.bookingType === 'daily' ? nights : undefined,
+          serviceFee,
+          taxes,
+          promoDiscount,
+        },
+      };
 
-        // Initiate PayTabs payment
-        const response = await payTabsService.initiatePayment(paymentRequest);
+      // Initiate PayTabs payment
+      const response = await payTabsService.initiatePayment(paymentRequest);
 
-        if (response.success && response.redirectUrl) {
-          // Store booking data in sessionStorage for retrieval after redirect
-          sessionStorage.setItem(
-            'pendingBooking',
-            JSON.stringify({
-              ...booking,
-              finalTotal,
-              transactionRef: response.transactionRef,
-              paymentMethod: 'card',
-            })
-          );
+      if (response.success && response.redirectUrl) {
+        // Store booking data in sessionStorage for retrieval after redirect
+        sessionStorage.setItem(
+          'pendingBooking',
+          JSON.stringify({
+            ...booking,
+            finalTotal,
+            transactionRef: response.transactionRef,
+            paymentMethod: 'card',
+          })
+        );
 
-          // Redirect to PayTabs payment page
-          toast.success('Redirecting to payment page...');
-          window.location.href = response.redirectUrl;
-        } else {
-          throw new Error(response.error || 'Failed to initiate payment');
-        }
+        // Redirect to PayTabs payment page
+        toast.success('Redirecting to payment page...');
+        window.location.href = response.redirectUrl;
       } else {
-        // Cash payment - just confirm booking
-        onConfirmPayment(booking.promo_code_id);
+        throw new Error(response.error || 'Failed to initiate payment');
       }
     } catch (error) {
       console.error('Payment error:', error);
@@ -319,7 +315,7 @@ const BookingSummary = ({
                 <label className='text-sm sm:text-base font-semibold text-gray-900'>
                   Payment method
                 </label>
-                <div className='grid grid-cols-2 gap-2 sm:gap-3'>
+                <div className='grid grid-cols-1 gap-2 sm:gap-3'>
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -333,25 +329,7 @@ const BookingSummary = ({
                     <div className='text-center'>
                       <CreditCard className='h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-gray-700' />
                       <div className='font-semibold text-xs sm:text-sm'>
-                        Card
-                      </div>
-                    </div>
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setPaymentMethod('cash')}
-                    className={`p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 ${
-                      paymentMethod === 'cash'
-                        ? 'border-black bg-gray-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className='text-center'>
-                      <Clock className='h-5 w-5 sm:h-6 sm:w-6 mx-auto mb-1 sm:mb-2 text-gray-700' />
-                      <div className='font-semibold text-xs sm:text-sm'>
-                        Cash
+                        Card Payment
                       </div>
                     </div>
                   </motion.button>
@@ -422,11 +400,7 @@ const BookingSummary = ({
                   ) : (
                     <div className='flex items-center justify-center gap-2'>
                       <Check className='h-4 w-4 sm:h-5 sm:w-5' />
-                      <span className='text-sm sm:text-base'>
-                        {paymentMethod === 'card'
-                          ? 'Pay now'
-                          : 'Confirm booking'}
-                      </span>
+                      <span className='text-sm sm:text-base'>Pay now</span>
                     </div>
                   )}
                 </Button>
@@ -439,15 +413,6 @@ const BookingSummary = ({
                   Cancel
                 </Button>
               </div>
-
-              {paymentMethod === 'cash' && (
-                <div className='bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4'>
-                  <p className='text-xs sm:text-sm text-amber-800'>
-                    You'll pay in cash when you arrive. Your booking will be
-                    confirmed after the host accepts your request.
-                  </p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
