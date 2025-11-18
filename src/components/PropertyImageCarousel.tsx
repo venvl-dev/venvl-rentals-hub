@@ -9,6 +9,7 @@ interface PropertyImageCarouselProps {
   className?: string;
   showBadges?: boolean;
   badges?: React.ReactNode;
+  onImageChange?: () => void;
 }
 
 const PropertyImageCarousel = ({
@@ -17,6 +18,7 @@ const PropertyImageCarousel = ({
   className = '',
   showBadges = true,
   badges,
+  onImageChange,
 }: PropertyImageCarouselProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const touchStartX = useRef<number>(0);
@@ -24,14 +26,17 @@ const PropertyImageCarousel = ({
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
+    onImageChange?.();
   };
 
   const prevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    onImageChange?.();
   };
 
   const goToImage = (index: number) => {
     setCurrentImageIndex(index);
+    onImageChange?.();
   };
 
   // Touch handlers for swipe functionality

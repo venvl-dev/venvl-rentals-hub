@@ -181,7 +181,7 @@ export type Database = {
         Row: {
           action: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           metadata: Json | null
           resource_id: string | null
           resource_type: string | null
@@ -192,7 +192,7 @@ export type Database = {
         Insert: {
           action: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           resource_id?: string | null
           resource_type?: string | null
@@ -203,7 +203,7 @@ export type Database = {
         Update: {
           action?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           resource_id?: string | null
           resource_type?: string | null
@@ -260,7 +260,8 @@ export type Database = {
       }
       bookings: {
         Row: {
-          booking_range: unknown | null
+          adults: number | null
+          booking_range: unknown
           booking_reference: string | null
           booking_type: string | null
           cancellation_reason: string | null
@@ -268,18 +269,26 @@ export type Database = {
           cancelled_by: string | null
           check_in: string
           check_out: string
+          children: number | null
           confirmation_sent_at: string | null
           created_at: string | null
           currency: string | null
+          discount_amount: number | null
           duration_months: number | null
           final_price: number | null
           flexible_option: string | null
           guest_id: string
+          guest_id_documents: Json | null
           guests: number
           host_id: string
           id: string
+          id_verification_status: string | null
           payment_amount: number | null
+          payment_method: string | null
           payment_status: string | null
+          payment_transaction_ref: string | null
+          paytabs_callback_data: Json | null
+          paytabs_transaction_id: string | null
           promo_code_id: string | null
           property_id: string
           status: Database["public"]["Enums"]["booking_status"] | null
@@ -288,7 +297,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          booking_range?: unknown | null
+          adults?: number | null
+          booking_range?: unknown
           booking_reference?: string | null
           booking_type?: string | null
           cancellation_reason?: string | null
@@ -296,18 +306,26 @@ export type Database = {
           cancelled_by?: string | null
           check_in: string
           check_out: string
+          children?: number | null
           confirmation_sent_at?: string | null
           created_at?: string | null
           currency?: string | null
+          discount_amount?: number | null
           duration_months?: number | null
           final_price?: number | null
           flexible_option?: string | null
           guest_id: string
+          guest_id_documents?: Json | null
           guests?: number
           host_id: string
           id?: string
+          id_verification_status?: string | null
           payment_amount?: number | null
+          payment_method?: string | null
           payment_status?: string | null
+          payment_transaction_ref?: string | null
+          paytabs_callback_data?: Json | null
+          paytabs_transaction_id?: string | null
           promo_code_id?: string | null
           property_id: string
           status?: Database["public"]["Enums"]["booking_status"] | null
@@ -316,7 +334,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          booking_range?: unknown | null
+          adults?: number | null
+          booking_range?: unknown
           booking_reference?: string | null
           booking_type?: string | null
           cancellation_reason?: string | null
@@ -324,18 +343,26 @@ export type Database = {
           cancelled_by?: string | null
           check_in?: string
           check_out?: string
+          children?: number | null
           confirmation_sent_at?: string | null
           created_at?: string | null
           currency?: string | null
+          discount_amount?: number | null
           duration_months?: number | null
           final_price?: number | null
           flexible_option?: string | null
           guest_id?: string
+          guest_id_documents?: Json | null
           guests?: number
           host_id?: string
           id?: string
+          id_verification_status?: string | null
           payment_amount?: number | null
+          payment_method?: string | null
           payment_status?: string | null
+          payment_transaction_ref?: string | null
+          paytabs_callback_data?: Json | null
+          paytabs_transaction_id?: string | null
           promo_code_id?: string | null
           property_id?: string
           status?: Database["public"]["Enums"]["booking_status"] | null
@@ -453,6 +480,114 @@ export type Database = {
           updated_at?: string | null
           validation_rules?: Json | null
           version?: number | null
+        }
+        Relationships: []
+      }
+      guest_events: {
+        Row: {
+          device_type: string | null
+          id: string
+          payload: Json
+          ts: string | null
+          type: Database["public"]["Enums"]["guest_event_type"]
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          device_type?: string | null
+          id?: string
+          payload: Json
+          ts?: string | null
+          type: Database["public"]["Enums"]["guest_event_type"]
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          device_type?: string | null
+          id?: string
+          payload?: Json
+          ts?: string | null
+          type?: Database["public"]["Enums"]["guest_event_type"]
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      guest_profiles: {
+        Row: {
+          avg_lead_time_days: number | null
+          avg_stay_length: number | null
+          booking_behavior_score: number | null
+          budget_range: unknown
+          created_at: string | null
+          first_seen: string | null
+          frequent_locations: string[] | null
+          inferred_income_band:
+            | Database["public"]["Enums"]["income_band"]
+            | null
+          last_active_ip: unknown
+          last_seen: string | null
+          lifetime_value_egp: number | null
+          long_term_bookings_count: number | null
+          preferred_rental_duration: string | null
+          risk_score: number | null
+          seasonal_preference:
+            | Database["public"]["Enums"]["seasonal_preference"]
+            | null
+          short_term_bookings_count: number | null
+          tags: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          avg_lead_time_days?: number | null
+          avg_stay_length?: number | null
+          booking_behavior_score?: number | null
+          budget_range?: unknown
+          created_at?: string | null
+          first_seen?: string | null
+          frequent_locations?: string[] | null
+          inferred_income_band?:
+            | Database["public"]["Enums"]["income_band"]
+            | null
+          last_active_ip?: unknown
+          last_seen?: string | null
+          lifetime_value_egp?: number | null
+          long_term_bookings_count?: number | null
+          preferred_rental_duration?: string | null
+          risk_score?: number | null
+          seasonal_preference?:
+            | Database["public"]["Enums"]["seasonal_preference"]
+            | null
+          short_term_bookings_count?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          avg_lead_time_days?: number | null
+          avg_stay_length?: number | null
+          booking_behavior_score?: number | null
+          budget_range?: unknown
+          created_at?: string | null
+          first_seen?: string | null
+          frequent_locations?: string[] | null
+          inferred_income_band?:
+            | Database["public"]["Enums"]["income_band"]
+            | null
+          last_active_ip?: unknown
+          last_seen?: string | null
+          lifetime_value_egp?: number | null
+          long_term_bookings_count?: number | null
+          preferred_rental_duration?: string | null
+          risk_score?: number | null
+          seasonal_preference?:
+            | Database["public"]["Enums"]["seasonal_preference"]
+            | null
+          short_term_bookings_count?: number | null
+          tags?: string[] | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -725,6 +860,10 @@ export type Database = {
       }
       profiles: {
         Row: {
+          business_verification_status: string | null
+          commercial_register: string | null
+          commercial_register_document: string | null
+          company_name: string | null
           created_at: string
           email: string | null
           first_name: string | null
@@ -733,9 +872,15 @@ export type Database = {
           is_pending: boolean | null
           last_name: string | null
           role: Database["public"]["Enums"]["user_role"]
+          tax_card: string | null
+          tax_card_document: string | null
           updated_at: string
         }
         Insert: {
+          business_verification_status?: string | null
+          commercial_register?: string | null
+          commercial_register_document?: string | null
+          company_name?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
@@ -744,9 +889,15 @@ export type Database = {
           is_pending?: boolean | null
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          tax_card?: string | null
+          tax_card_document?: string | null
           updated_at?: string
         }
         Update: {
+          business_verification_status?: string | null
+          commercial_register?: string | null
+          commercial_register_document?: string | null
+          company_name?: string | null
           created_at?: string
           email?: string | null
           first_name?: string | null
@@ -755,6 +906,8 @@ export type Database = {
           is_pending?: boolean | null
           last_name?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          tax_card?: string | null
+          tax_card_document?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1415,7 +1568,7 @@ export type Database = {
           created_at: string | null
           error_message: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           resource_id: string | null
           resource_type: string | null
           success: boolean | null
@@ -1427,7 +1580,7 @@ export type Database = {
           created_at?: string | null
           error_message?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type?: string | null
           success?: boolean | null
@@ -1439,7 +1592,7 @@ export type Database = {
           created_at?: string | null
           error_message?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           resource_id?: string | null
           resource_type?: string | null
           success?: boolean | null
@@ -1650,10 +1803,7 @@ export type Database = {
         Args: { p_promo_code: string; p_user_id: string }
         Returns: undefined
       }
-      can_cancel_booking: {
-        Args: { booking_id: string }
-        Returns: boolean
-      }
+      can_cancel_booking: { Args: { booking_id: string }; Returns: boolean }
       check_booking_conflicts: {
         Args: {
           p_check_in: string
@@ -1663,10 +1813,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      create_test_scenario: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      create_test_scenario: { Args: never; Returns: string }
       decrypt_sensitive_data: {
         Args: { encrypted_data: string; key_name?: string }
         Returns: string
@@ -1675,12 +1822,9 @@ export type Database = {
         Args: { data: string; key_name?: string }
         Returns: string
       }
-      generate_booking_reference: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_booking_reference: { Args: never; Returns: string }
       get_current_user_role: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
       get_price_range: {
@@ -1713,10 +1857,7 @@ export type Database = {
           visit_count: number
         }[]
       }
-      initialize_default_setup: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      initialize_default_setup: { Args: never; Returns: string }
       log_admin_action: {
         Args: {
           p_action: string
@@ -1736,10 +1877,7 @@ export type Database = {
         }
         Returns: undefined
       }
-      restore_property: {
-        Args: { property_id: string }
-        Returns: boolean
-      }
+      restore_property: { Args: { property_id: string }; Returns: boolean }
       seed_sample_bookings_and_reviews: {
         Args: { guest_user_id: string }
         Returns: undefined
@@ -1752,10 +1890,7 @@ export type Database = {
         Args: { host_user_id: string }
         Returns: undefined
       }
-      soft_delete_property: {
-        Args: { property_id: string }
-        Returns: boolean
-      }
+      soft_delete_property: { Args: { property_id: string }; Returns: boolean }
       toggle_user_status: {
         Args: { disable_user: boolean; target_user_id: string }
         Returns: boolean
@@ -1791,6 +1926,17 @@ export type Database = {
         | "checked_in"
         | "cancelled"
         | "completed"
+      guest_event_type:
+        | "session_start"
+        | "search"
+        | "view"
+        | "wishlist_add"
+        | "wishlist_remove"
+        | "start_checkout"
+        | "book"
+        | "cancel"
+        | "rate"
+      income_band: "low" | "mid" | "upper_mid" | "high" | "unknown"
       property_type:
         | "apartment"
         | "house"
@@ -1803,6 +1949,17 @@ export type Database = {
         | "Townhouse"
         | "Twinhouse"
         | "Penthouse"
+      seasonal_preference:
+        | "summer"
+        | "winter"
+        | "shoulder"
+        | "year_round"
+        | "none"
+      support_role:
+        | "admin"
+        | "property_manager"
+        | "support_manager"
+        | "support_agent"
       user_role: "guest" | "host" | "admin" | "super_admin" | "pending"
     }
     CompositeTypes: {
@@ -1938,6 +2095,18 @@ export const Constants = {
         "cancelled",
         "completed",
       ],
+      guest_event_type: [
+        "session_start",
+        "search",
+        "view",
+        "wishlist_add",
+        "wishlist_remove",
+        "start_checkout",
+        "book",
+        "cancel",
+        "rate",
+      ],
+      income_band: ["low", "mid", "upper_mid", "high", "unknown"],
       property_type: [
         "apartment",
         "house",
@@ -1950,6 +2119,19 @@ export const Constants = {
         "Townhouse",
         "Twinhouse",
         "Penthouse",
+      ],
+      seasonal_preference: [
+        "summer",
+        "winter",
+        "shoulder",
+        "year_round",
+        "none",
+      ],
+      support_role: [
+        "admin",
+        "property_manager",
+        "support_manager",
+        "support_agent",
       ],
       user_role: ["guest", "host", "admin", "super_admin", "pending"],
     },

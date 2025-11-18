@@ -32,6 +32,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, Play } from 'lucide-react';
 import PropertyImageCarousel from '@/components/PropertyImageCarousel';
 import PropertyVideoPlayer from '@/components/PropertyVideoPlayer';
 import { saveVisit } from '@/lib/propertyVisitsUtils';
+import { usePropertyViewTracker } from '@/hooks/tracking/usePropertyViewTracker';
 
 interface Property {
   id: string;
@@ -69,8 +70,11 @@ const PropertyListing = () => {
     Record<string, boolean>
   >({});
 
+  // Initialize property view tracking
+  const { trackGalleryClick } = usePropertyViewTracker(id || '');
+
   // scroll to top on mount
-  window.scrollTo(0, 0);
+  // window.scrollTo(0, 0);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -175,6 +179,7 @@ const PropertyListing = () => {
               <PropertyImageCarousel
                 images={property.images}
                 title={property.title}
+                onImageChange={trackGalleryClick}
                 badges={
                   <>
                     {/* Rental Type Badge */}
