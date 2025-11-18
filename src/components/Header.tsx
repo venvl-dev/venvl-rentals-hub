@@ -20,6 +20,7 @@ import {
   Building2,
   Calendar,
   Shield,
+  Heart,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -251,6 +252,16 @@ const Header = () => {
                       >
                         <UserIcon className='h-4 w-4' />
                         <span>My Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to='/wishlist'
+                        className='flex items-center space-x-2'
+                      >
+                        <Heart className='h-4 w-4' />
+                        <span>My Wishlist</span>
                       </Link>
                     </DropdownMenuItem>
 

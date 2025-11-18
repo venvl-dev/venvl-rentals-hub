@@ -27,6 +27,7 @@ import {
 } from '@/lib/rentalTypeUtils';
 import { getTopAmenities, cleanAmenityIds } from '@/lib/amenitiesUtils';
 import OptimizedImage from '@/components/ui/OptimizedImage';
+import { WishlistButton } from '@/components/wishlist/WishlistButton';
 import {
   Carousel,
   CarouselContent,
@@ -470,12 +471,21 @@ const PropertyCard = ({ property, properties, index }: PropertyCardProps) => {
             })()}
           </div>
 
-          {/* Rating Badge */}
-          <div className='absolute top-3 right-3 z-10'>
+          {/* Rating and Wishlist Badges */}
+          <div className='absolute top-3 right-3 z-10 flex flex-col gap-2'>
             <Badge className='bg-white/95 text-gray-900 border-0 shadow-lg backdrop-blur-sm text-xs px-2 py-1'>
               <Star className='h-3 w-3 fill-yellow-400 text-yellow-400 mr-1' />
               4.9
             </Badge>
+            <div onClick={(e) => e.preventDefault()}>
+              <WishlistButton
+                propertyId={property.id}
+                actionSource="search_results"
+                variant="ghost"
+                size="icon"
+                className="bg-white/95 hover:bg-white shadow-lg backdrop-blur-sm h-8 w-8"
+              />
+            </div>
           </div>
 
           {/* VENVL Brand Badge */}

@@ -22,6 +22,7 @@ import UploadGuestIds from './pages/UploadGuestIds';
 // Lazy-loaded components (code splitting)
 const Profile = lazy(() => import('./pages/Profile'));
 const EditProfile = lazy(() => import('./pages/EditProfile'));
+const Wishlist = lazy(() => import('./pages/Wishlist'));
 const GuestSignup = lazy(() => import('./pages/guest/GuestSignup'));
 const GuestBookings = lazy(() => import('./pages/guest/GuestBookings'));
 
@@ -161,6 +162,14 @@ function App() {
                     element={
                       <ProtectedRoute allowedRoles={['guest']}>
                         <GuestBookings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path='/wishlist'
+                    element={
+                      <ProtectedRoute allowedRoles={['guest', 'host', 'super_admin']}>
+                        <Wishlist />
                       </ProtectedRoute>
                     }
                   />
