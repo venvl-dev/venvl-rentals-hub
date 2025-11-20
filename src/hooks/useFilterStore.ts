@@ -1,5 +1,24 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { usePriceRange } from './usePriceRange';
+
+/**
+ * Detects device type from user agent string
+ */
+const detectDeviceType = (
+  userAgent: string,
+): 'mobile' | 'desktop' | 'tablet' => {
+  const ua = userAgent.toLowerCase();
+  if (/(ipad|tablet|playbook|silk)|(android(?!.*mobile))/i.test(ua)) {
+    return 'tablet';
+  }
+  if (/mobile|android|iphone|ipod|blackberry|windows phone/i.test(ua)) {
+    return 'mobile';
+  }
+  return 'desktop';
+};
 
 export interface SearchFilters {
   location: string;
@@ -40,6 +59,7 @@ const DEFAULT_ADVANCED_FILTERS: AdvancedFilters = {
 };
 
 export const useFilterStore = () => {
+  const { user } = useAuth();
   const [searchFilters, setSearchFilters] = useState<SearchFilters>(
     DEFAULT_SEARCH_FILTERS,
   );
@@ -50,6 +70,56 @@ export const useFilterStore = () => {
 
   // Track previous booking type to detect changes
   const prevBookingTypeRef = useRef<string | null>(null);
+
+  // Search event tracking refs
+  const searchDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTrackedFiltersRef = useRef<string | null>(null);
+  const trackSearchEventRef = useRef<(() => void) | null>(null);
+
+  // Search event tracking mutation
+  const searchMutation = useMutation({
+    mutationFn: async (payload: {
+      location?: string;
+      check_in?: string;
+      check_out?: string;
+      guests?: number;
+      price_min?: number;
+      price_max?: number;
+      results_count?: number;
+    }) => {
+      if (!user?.id) {
+        console.log('Skipping search tracking - user not authenticated');
+        return null;
+      }
+
+      const userAgent = navigator.userAgent;
+      const deviceType = detectDeviceType(userAgent);
+
+      const { data, error } = await supabase
+        .from('guest_events')
+        .insert({
+          user_id: user.id,
+          type: 'search',
+          payload: payload,
+          user_agent: userAgent,
+          device_type: deviceType,
+          ts: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error tracking search event:', error);
+        throw error;
+      }
+
+      console.log('Search event tracked successfully:', data);
+      return data;
+    },
+    onError: (error) => {
+      console.error('Failed to track search event:', error);
+    },
+  });
 
   // Get price range for the current booking type
   const effectiveBookingType = useMemo(
@@ -152,12 +222,124 @@ export const useFilterStore = () => {
     advancedFilters.priceRange,
   ]);
 
+  // Helper function to track search event
+  const trackSearchEvent = useCallback(() => {
+    if (!user?.id) {
+      return;
+    }
+
+    // Build search payload
+    const payload: {
+      location?: string;
+      check_in?: string;
+      check_out?: string;
+      guests?: number;
+      price_min?: number;
+      price_max?: number;
+      results_count?: number;
+    } = {};
+
+    if (searchFilters.location.trim()) {
+      payload.location = searchFilters.location.trim();
+    }
+    if (searchFilters.checkIn) {
+      payload.check_in = searchFilters.checkIn.toISOString();
+    }
+    if (searchFilters.checkOut) {
+      payload.check_out = searchFilters.checkOut.toISOString();
+    }
+    if (searchFilters.guests > 1) {
+      payload.guests = searchFilters.guests;
+    }
+    if (
+      advancedFilters.priceRange &&
+      Array.isArray(advancedFilters.priceRange)
+    ) {
+      payload.price_min = advancedFilters.priceRange[0];
+      payload.price_max = advancedFilters.priceRange[1];
+    }
+
+    // Create a fingerprint of current filters to avoid duplicate tracking
+    const currentFingerprint = JSON.stringify({
+      searchFilters,
+      advancedFilters,
+    });
+
+    // Skip if same as last tracked
+    if (lastTrackedFiltersRef.current === currentFingerprint) {
+      return;
+    }
+
+    // Track the event asynchronously (don't await)
+    searchMutation.mutate(payload);
+    lastTrackedFiltersRef.current = currentFingerprint;
+  }, [user?.id, searchFilters, advancedFilters, searchMutation]);
+
+  // Store latest tracking function in ref for unmount access
+  trackSearchEventRef.current = trackSearchEvent;
+
+  // Debounced search tracking effect (30 seconds)
+  useEffect(() => {
+    // Skip if user not authenticated
+    if (!user?.id) {
+      return;
+    }
+
+    // Check if filters are non-default
+    const hasSearchFilters =
+      searchFilters.location.trim() !== '' ||
+      searchFilters.guests > 1 ||
+      !!searchFilters.checkIn ||
+      !!searchFilters.checkOut;
+
+    const hasAdvancedFiltersSet =
+      (advancedFilters.priceRange &&
+        Array.isArray(advancedFilters.priceRange)) ||
+      (advancedFilters.propertyTypes &&
+        advancedFilters.propertyTypes.length > 0) ||
+      (advancedFilters.amenities && advancedFilters.amenities.length > 0) ||
+      advancedFilters.bedrooms !== null ||
+      advancedFilters.bathrooms !== null ||
+      (advancedFilters.bookingType &&
+        advancedFilters.bookingType !== 'flexible');
+
+    const hasNonDefaultFilters = hasSearchFilters || hasAdvancedFiltersSet;
+
+    // Clear existing timer
+    if (searchDebounceTimerRef.current) {
+      clearTimeout(searchDebounceTimerRef.current);
+      searchDebounceTimerRef.current = null;
+    }
+
+    // Only set timer if filters are non-default
+    if (hasNonDefaultFilters) {
+      searchDebounceTimerRef.current = setTimeout(() => {
+        trackSearchEvent();
+      }, 30000); // 30 seconds
+    }
+  }, [user?.id, searchFilters, advancedFilters, trackSearchEvent]);
+
+  // Separate effect for component unmount only
+  useEffect(() => {
+    return () => {
+      // This cleanup ONLY runs on component unmount (not on re-renders)
+      if (searchDebounceTimerRef.current) {
+        clearTimeout(searchDebounceTimerRef.current);
+      }
+
+      // Send final search event using the ref
+      trackSearchEventRef.current?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps = only runs on mount/unmount
+
   // Clear all filters
   const clearAllFilters = useCallback(() => {
     setSearchFilters(DEFAULT_SEARCH_FILTERS);
     setAdvancedFilters(DEFAULT_ADVANCED_FILTERS);
     setIsInitialized(false);
     prevBookingTypeRef.current = null;
+    lastTrackedFiltersRef.current = null; // Reset tracking state
   }, []);
 
   // Clear advanced filters only
@@ -166,8 +348,7 @@ export const useFilterStore = () => {
   }, []);
 
   // Manual sync for external triggers (deprecated - price range only set via Apply button)
-  const syncPriceRange = useCallback(() => {
-  }, []);
+  const syncPriceRange = useCallback(() => {}, []);
 
   // Get combined filters for property filtering - memoized for performance
   const getCombinedFilters = useCallback((): CombinedFilters => {
@@ -178,7 +359,7 @@ export const useFilterStore = () => {
     console.log('📋 getCombinedFilters called:', {
       advancedFilters,
       priceRange: advancedFilters.priceRange,
-      combined
+      combined,
     });
     return combined;
   }, [searchFilters, advancedFilters]);
@@ -210,7 +391,8 @@ export const useFilterStore = () => {
         typeof advancedFilters.bedrooms === 'number') ||
       (advancedFilters.bathrooms !== null &&
         typeof advancedFilters.bathrooms === 'number') ||
-      (advancedFilters.bookingType && advancedFilters.bookingType !== 'flexible');
+      (advancedFilters.bookingType &&
+        advancedFilters.bookingType !== 'flexible');
 
     return hasSearchFilters || hasAdvancedFilters;
   }, [searchFilters, advancedFilters, priceLoading, dbPriceRange]);
