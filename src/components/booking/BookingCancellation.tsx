@@ -43,6 +43,18 @@ const BookingCancellation = ({
         return;
       }
 
+      // Get current user
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+
+      // Calculate refund amount based on cancellation policy
+      const { data: refundData } = await supabase.rpc('calculate_refund_amount', {
+        p_booking_id: booking.id,
+        p_days_before_checkin: daysUntilCheckIn,
+      });
+
+      const refundAmount = refundData?.[0]?.refund_amount || 0;
+
       // Update booking status
       const { error } = await supabase
         .from('bookings')
@@ -50,11 +62,30 @@ const BookingCancellation = ({
           status: 'cancelled',
           cancellation_reason: reason.trim(),
           cancelled_at: new Date().toISOString(),
-          cancelled_by: (await supabase.auth.getUser()).data.user?.id,
+          cancelled_by: userId,
         })
         .eq('id', booking.id);
 
       if (error) throw error;
+
+      // Determine who cancelled (guest or host)
+      const isHostCancelling = userId === booking.host_id;
+      const cancelledBy = isHostCancelling ? 'host' : 'guest';
+
+      // Log cancellation event to guest_events for analytics
+      try {
+        await supabase.rpc('log_cancellation_event', {
+          p_booking_id: booking.id,
+          p_reason_code: reason.trim(),
+          p_refund_amount_egp: refundAmount,
+          p_days_before_checkin: daysUntilCheckIn,
+          p_cancelled_by: cancelledBy,
+        });
+        console.log('✅ Cancellation event logged successfully');
+      } catch (eventError) {
+        // Don't fail the cancellation if event logging fails
+        console.error('⚠️ Failed to log cancellation event:', eventError);
+      }
 
       toast.success('Booking cancelled successfully');
       onSuccess();

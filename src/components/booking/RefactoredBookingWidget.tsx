@@ -15,6 +15,7 @@ import BookingGuestSelector from './components/BookingGuestSelector';
 import BookingPricingSummary from './components/BookingPricingSummary';
 import PromoCodeSelector from './PromoCodeSelector';
 import { useBookingValidation } from '@/hooks/useBookingValidation';
+import { useCheckoutEvents } from '@/hooks/useCheckoutEvents';
 import {
   getRentalType,
   getDailyPrice,
@@ -70,6 +71,7 @@ const RefactoredBookingWidget = ({
   onBookingInitiated,
 }: RefactoredBookingWidgetProps) => {
   const navigate = useNavigate();
+  const { logCheckoutStart } = useCheckoutEvents();
   const [bookingMode, setBookingMode] = useState<'daily' | 'monthly'>('daily');
   const [checkIn, setCheckIn] = useState<Date>();
   const [checkOut, setCheckOut] = useState<Date>();
@@ -425,6 +427,23 @@ const RefactoredBookingWidget = ({
 
     try {
       setIsSubmitting(true);
+
+      // Log checkout start event (A4: Capture Checkout Funnel Events)
+      try {
+        await logCheckoutStart({
+          p_property_id: property.id,
+          p_check_in: checkInDate.toISOString().split('T')[0],
+          p_check_out: checkOutDate.toISOString().split('T')[0],
+          p_guests: guests,
+          p_total_egp: totalPrice - promoCodeDiscount,
+          p_booking_type: bookingMode,
+          p_duration_months: bookingMode === 'monthly' ? monthlyDuration : null,
+          p_payment_method_selected: 'card', // Default payment method
+        });
+      } catch (eventError) {
+        // Don't block booking if event logging fails
+        console.error('⚠️ Failed to log checkout start event:', eventError);
+      }
 
       // Check availability before proceeding
       const { data: conflicts, error } = await supabase.rpc(

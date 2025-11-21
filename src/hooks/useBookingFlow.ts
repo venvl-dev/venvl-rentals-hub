@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
+import { clearFunnelSession } from '@/utils/sessionManager';
 
 type BookingStatus = Database['public']['Enums']['booking_status'];
 
@@ -175,6 +176,26 @@ export const useBookingFlow = ({ user, propertyId }: UseBookingFlowProps) => {
           });
         }
 
+        // Log booking event to guest_events for analytics
+        try {
+          await supabase.rpc('log_booking_event', {
+            p_booking_id: data.id,
+            p_property_id: bookingDetails.property_id,
+            p_check_in: bookingDetails.check_in,
+            p_check_out: bookingDetails.check_out,
+            p_guests: bookingDetails.guests,
+            p_total_egp: bookingDetails.total_price,
+            p_payment_status: bookingDetails.status || 'pending',
+            p_booking_type: bookingDetails.booking_type || 'daily',
+            p_duration_months: bookingDetails.duration_months,
+            p_action_source: 'booking_flow',
+          });
+          console.log('✅ Booking event logged successfully');
+        } catch (eventError) {
+          // Don't fail the booking if event logging fails
+          console.error('⚠️ Failed to log booking event:', eventError);
+        }
+
         return data;
       } catch (error) {
         console.error('=== CATCH BLOCK ERROR ===');
@@ -213,6 +234,9 @@ export const useBookingFlow = ({ user, propertyId }: UseBookingFlowProps) => {
         setConfirmedBooking(booking);
         setCurrentStep('confirmation');
         toast.success('Booking confirmed successfully!');
+
+        // Clear checkout funnel session after successful booking
+        clearFunnelSession();
       }
     } catch (error) {
       console.error('Error confirming booking:', error);
