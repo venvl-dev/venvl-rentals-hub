@@ -379,13 +379,13 @@ const RefactoredBookingWidget = ({
 
       // Debug: Log for a few sample dates
       if (checkDate.getDate() <= 3) {
-        console.log(`✅ Date check ${format(date, 'yyyy-MM-dd')}:`, {
-          isPastDate,
-          isInUnavailableList,
-          unavailableDatesCount: unavailableDates.length,
-          today: format(today, 'yyyy-MM-dd'),
-          blocked: isPastDate || isInUnavailableList,
-        });
+        // console.log(`✅ Date check ${format(date, 'yyyy-MM-dd')}:`, {
+        //   isPastDate,
+        //   isInUnavailableList,
+        //   unavailableDatesCount: unavailableDates.length,
+        //   today: format(today, 'yyyy-MM-dd'),
+        //   blocked: isPastDate || isInUnavailableList,
+        // });
       }
 
       return isInUnavailableList || isPastDate;

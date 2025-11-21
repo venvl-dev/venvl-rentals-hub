@@ -32,7 +32,7 @@ import { ArrowLeft, ChevronDown, ChevronUp, Play } from 'lucide-react';
 import PropertyImageCarousel from '@/components/PropertyImageCarousel';
 import PropertyVideoPlayer from '@/components/PropertyVideoPlayer';
 import { saveVisit } from '@/lib/propertyVisitsUtils';
-import { WishlistButton } from '@/components/wishlist/WishlistButton';
+import { usePropertyViewTracker } from '@/hooks/tracking/usePropertyViewTracker';
 
 interface Property {
   id: string;
@@ -70,8 +70,11 @@ const PropertyListing = () => {
     Record<string, boolean>
   >({});
 
+  // Initialize property view tracking
+  const { trackGalleryClick } = usePropertyViewTracker(id || '');
+
   // scroll to top on mount
-  window.scrollTo(0, 0);
+  // window.scrollTo(0, 0);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -176,6 +179,7 @@ const PropertyListing = () => {
               <PropertyImageCarousel
                 images={property.images}
                 title={property.title}
+                onImageChange={trackGalleryClick}
                 badges={
                   <>
                     {/* Rental Type Badge */}
@@ -195,17 +199,7 @@ const PropertyListing = () => {
 
             {/* Property Details */}
             <div className='mb-6'>
-              <div className='flex items-start justify-between gap-4 mb-2'>
-                <h1 className='text-3xl font-bold flex-1'>{property.title}</h1>
-                <WishlistButton
-                  propertyId={property.id}
-                  actionSource="detail_page"
-                  variant="outline"
-                  size="default"
-                  showLabel={true}
-                  className="flex-shrink-0"
-                />
-              </div>
+              <h1 className='text-3xl font-bold mb-2'>{property.title}</h1>
               <div className='flex items-center text-gray-600 mb-4'>
                 <MapPin className='h-4 w-4 mr-1' />
                 <span>

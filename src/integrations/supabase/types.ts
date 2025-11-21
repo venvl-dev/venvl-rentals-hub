@@ -538,7 +538,6 @@ export type Database = {
           tags: string[] | null
           updated_at: string | null
           user_id: string
-          wishlist_count: number
         }
         Insert: {
           avg_lead_time_days?: number | null
@@ -564,7 +563,6 @@ export type Database = {
           tags?: string[] | null
           updated_at?: string | null
           user_id: string
-          wishlist_count?: number
         }
         Update: {
           avg_lead_time_days?: number | null
@@ -590,7 +588,6 @@ export type Database = {
           tags?: string[] | null
           updated_at?: string | null
           user_id?: string
-          wishlist_count?: number
         }
         Relationships: []
       }
@@ -1634,58 +1631,6 @@ export type Database = {
         }
         Relationships: []
       }
-      wishlists: {
-        Row: {
-          action_source: string | null
-          created_at: string
-          id: string
-          list_name: string
-          property_id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          action_source?: string | null
-          created_at?: string
-          id?: string
-          list_name?: string
-          property_id: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          action_source?: string | null
-          created_at?: string
-          id?: string
-          list_name?: string
-          property_id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "wishlists_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "active_properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "wishlists_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "wishlists_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       active_properties: {
@@ -1854,14 +1799,6 @@ export type Database = {
       }
     }
     Functions: {
-      add_to_wishlist: {
-        Args: {
-          p_action_source?: string
-          p_list_name?: string
-          target_property_id: string
-        }
-        Returns: Json
-      }
       apply_promo_code: {
         Args: { p_promo_code: string; p_user_id: string }
         Returns: undefined
@@ -1920,30 +1857,7 @@ export type Database = {
           visit_count: number
         }[]
       }
-      get_user_wishlist: {
-        Args: {
-          limit_count?: number
-          offset_count?: number
-          p_list_name?: string
-        }
-        Returns: {
-          action_source: string
-          added_at: string
-          city: string
-          images: string[]
-          price_per_night: number
-          property_id: string
-          property_type: Database["public"]["Enums"]["property_type"]
-          title: string
-          wishlist_id: string
-        }[]
-      }
-      get_wishlist_count: { Args: { p_list_name?: string }; Returns: number }
       initialize_default_setup: { Args: never; Returns: string }
-      is_in_wishlist: {
-        Args: { p_list_name?: string; target_property_id: string }
-        Returns: boolean
-      }
       log_admin_action: {
         Args: {
           p_action: string
@@ -1952,16 +1866,6 @@ export type Database = {
           p_resource_type?: string
         }
         Returns: undefined
-      }
-      log_guest_event: {
-        Args: {
-          event_payload: Json
-          event_type: Database["public"]["Enums"]["guest_event_type"]
-          p_device_type?: string
-          p_session_id?: string
-          p_user_agent?: string
-        }
-        Returns: string
       }
       log_security_event: {
         Args: {
@@ -1972,10 +1876,6 @@ export type Database = {
           p_success?: boolean
         }
         Returns: undefined
-      }
-      remove_from_wishlist: {
-        Args: { p_list_name?: string; target_property_id: string }
-        Returns: Json
       }
       restore_property: { Args: { property_id: string }; Returns: boolean }
       seed_sample_bookings_and_reviews: {
