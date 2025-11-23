@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ArrowLeft, Star } from 'lucide-react';
 import { Booking } from '@/types/booking';
+import { logReviewEvent } from '@/utils/reviewEventLogger';
 
 interface ReviewFormProps {
   booking: Booking;
@@ -42,6 +43,9 @@ const ReviewForm = ({ booking, onCancel, onSuccess }: ReviewFormProps) => {
       });
 
       if (error) throw error;
+
+      // Track review event after successful submission
+      logReviewEvent(booking.id, booking.property_id, rating);
 
       toast.success('Review submitted successfully');
       onSuccess();
