@@ -1,11 +1,15 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { fetchProperties } from '@/lib/api/properties/propertiesApi';
+import {
+  fetchProperties,
+  PropertyFilters,
+} from '@/lib/api/properties/propertiesApi';
 import { useMemo } from 'react';
 
 /**
- * Custom hook for fetching properties with infinite scroll support
+ * Custom hook for fetching properties with infinite scroll support and server-side filtering
  * Uses React Query's useInfiniteQuery for automatic caching and pagination
  *
+ * @param filters - Optional filters to apply to the property query
  * @returns Object containing:
  * - properties: Flattened array of all loaded properties
  * - isLoading: Initial loading state
@@ -15,7 +19,7 @@ import { useMemo } from 'react';
  * - error: Error object if fetch failed
  * - totalCount: Total number of properties available
  */
-export function useInfiniteProperties() {
+export function useInfiniteProperties(filters?: PropertyFilters) {
   const {
     data,
     isLoading,
@@ -25,8 +29,9 @@ export function useInfiniteProperties() {
     error,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['properties', 'infinite'],
-    queryFn: ({ pageParam = 0 }) => fetchProperties({ pageParam, limit: 12 }),
+    queryKey: ['properties', 'infinite', filters],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchProperties({ pageParam, limit: 12, filters }),
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5, // Data is fresh for 5 minutes

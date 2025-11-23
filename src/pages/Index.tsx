@@ -1,38 +1,24 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Header from '@/components/Header';
 import PropertyCard from '@/components/PropertyCard';
-import VenvlSearchPill from '@/components/search/VenvlSearchPill';
-import StandaloneBookingTypeSelector from '@/components/search/StandaloneBookingTypeSelector';
 import NewAdvancedFilters from '@/components/search/NewAdvancedFilters';
-import { toast } from 'sonner';
-import { motion } from 'framer-motion';
-import { SlidersHorizontal, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import StandaloneBookingTypeSelector from '@/components/search/StandaloneBookingTypeSelector';
+import VenvlSearchPill from '@/components/search/VenvlSearchPill';
 import { Badge } from '@/components/ui/badge';
-import { Search, Filter } from 'lucide-react';
-import { useAuthImagePreload } from '@/hooks/useAuthImagePreload';
-import { useFilterStore } from '@/hooks/useFilterStore';
-import { usePropertyFiltering } from '@/hooks/usePropertyFiltering';
+import { Button } from '@/components/ui/button';
 import { useInfiniteProperties } from '@/hooks/properties/useProperties';
+import { useFilterStore } from '@/hooks/useFilterStore';
+import { PropertyFilters } from '@/lib/api/properties/propertiesApi';
+import { motion } from 'framer-motion';
+import { Filter, Loader2, Search, SlidersHorizontal } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useInView } from 'react-intersection-observer';
-import React from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const Index = () => {
   const [searchParams] = useSearchParams();
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-
-  // Use infinite properties hook
-  const {
-    properties,
-    isLoading,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-    error,
-    totalCount,
-  } = useInfiniteProperties();
 
   // Use centralized filter store
   const {
@@ -44,18 +30,35 @@ const Index = () => {
     hasActiveFilters,
     getActiveFilterCount,
     getCombinedFilters,
-    priceLoading,
-    dbPriceRange,
   } = useFilterStore();
 
-  // Use authentication-aware image preloading
-  // const { preloadImages } = useAuthImagePreload();
+  // Convert combined filters to API format
+  const apiFilters: PropertyFilters = useMemo(() => {
+    const combined = getCombinedFilters();
+    return {
+      location: combined.location || undefined,
+      guests: combined.guests > 1 ? combined.guests : undefined,
+      bookingType: combined.bookingType,
+      checkIn: combined.checkIn?.toISOString(),
+      checkOut: combined.checkOut?.toISOString(),
+      priceRange: combined.advancedFilters.priceRange || undefined,
+      propertyTypes: combined.advancedFilters.propertyTypes || undefined,
+      amenities: combined.advancedFilters.amenities || undefined,
+      bedrooms: combined.advancedFilters.bedrooms || undefined,
+      bathrooms: combined.advancedFilters.bathrooms || undefined,
+    };
+  }, [getCombinedFilters]);
 
-  // Use property filtering hook
-  const { filteredProperties, filteringStats } = usePropertyFiltering(
+  // Use infinite properties hook with server-side filtering
+  const {
     properties,
-    getCombinedFilters(),
-  );
+    isLoading,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+    error,
+    totalCount,
+  } = useInfiniteProperties(apiFilters);
 
   // Intersection observer for infinite scroll - trigger on 9th element from end
   const { ref: loadMoreRef, inView } = useInView({
@@ -308,13 +311,6 @@ const Index = () => {
                       {totalCount} propert
                       {totalCount !== 1 ? 'ies' : 'y'} found
                     </h2>
-
-                    {hasActiveFilters &&
-                      filteringStats.total > filteredProperties.length && (
-                        <Badge variant='outline' className='text-xs'>
-                          {filteringStats.reduction}% filtered out
-                        </Badge>
-                      )}
                   </div>
 
                   <div className='flex items-center gap-4'>
@@ -339,7 +335,7 @@ const Index = () => {
                 </motion.div>
 
                 {/* Properties Grid */}
-                {filteredProperties.length > 0 ? (
+                {properties.length > 0 ? (
                   <>
                     <motion.div
                       className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6'
@@ -347,11 +343,11 @@ const Index = () => {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.6 }}
                     >
-                      {filteredProperties.map((property, index) => (
+                      {properties.map((property, index) => (
                         <motion.div
                           key={property.id}
                           ref={
-                            index === filteredProperties.length - 2
+                            index === properties.length - 2
                               ? loadMoreRef
                               : null
                           }
@@ -361,7 +357,7 @@ const Index = () => {
                         >
                           <PropertyCard
                             property={property}
-                            properties={filteredProperties}
+                            properties={properties}
                             index={index}
                           />
                         </motion.div>
